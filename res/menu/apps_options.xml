@@ -1,0 +1,13 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<item android:id="@+id/mi_operations" android:title="@string/operations"
+		android:visible="false">
+		<menu>
+			<item android:id="@+id/mi_export" android:title="@string/export"></item>
+		</menu>
+	</item>
+	<item android:id="@+id/mi_export" android:title="@string/export"></item>
+	<item android:id="@+id/mi_select_all" android:title="@string/select_all"></item>
+	<item android:id="@+id/mi_deselect_all" android:title="@string/deselect_all"></item>
+
+</menu>

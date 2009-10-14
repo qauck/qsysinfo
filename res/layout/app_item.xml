@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:orientation="horizontal"
+	android:minHeight="?android:attr/listPreferredItemHeight"
+	android:layout_height="wrap_content" android:layout_gravity="center_vertical">
+
+	<ImageView android:layout_gravity="center_vertical"
+		android:id="@+id/img_app_icon" android:layout_height="48dip"
+		android:layout_width="48dip" android:scaleType="fitCenter"></ImageView>
+	<LinearLayout android:layout_height="wrap_content"
+		android:orientation="vertical" android:layout_gravity="center_vertical"
+		android:layout_width="fill_parent" android:layout_weight="1">
+		<TextView android:textAppearance="?android:attr/textAppearanceMedium"
+			android:layout_height="wrap_content" android:layout_width="wrap_content"
+			android:id="@+id/app_name" android:layout_marginBottom="2dip"
+			android:text="name" android:paddingLeft="3dip"></TextView>
+		<TextView android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:id="@+id/app_size"
+			android:textAppearance="?android:attr/textAppearanceSmall"
+			android:layout_marginTop="-4dip" android:text="size"
+			android:paddingLeft="3dip"></TextView>
+	</LinearLayout>
+
+	<CheckBox android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:id="@+id/ckb_app"
+		android:layout_gravity="center_vertical" android:focusable="false" android:focusableInTouchMode="false"></CheckBox>
+
+</LinearLayout>
