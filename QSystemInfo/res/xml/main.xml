@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<Preference style="?android:preferenceInformationStyle"
+		android:key="processor" android:title="@string/processor"></Preference>
+
+	<Preference style="?android:preferenceInformationStyle"
+		android:key="total_memory" android:title="@string/total_memory"></Preference>
+
+	<Preference android:key="available_memory"
+		style="?android:preferenceInformationStyle" android:title="@string/available_memory"/>
+
+	<Preference android:key="total_sd_storage"
+		style="?android:preferenceInformationStyle" android:title="@string/total_sd_storage"/>
+
+	<Preference android:key="available_sd_storage"
+		style="?android:preferenceInformationStyle" android:title="@string/available_sd_storage"/>
+
+	<Preference android:key="available_internal_storage"
+		style="?android:preferenceInformationStyle" android:title="@string/available_internal_storage"/>
+
+	<Preference android:key="battery_level"
+		style="?android:preferenceInformationStyle" android:title="@string/battery_level" android:summary="@string/retrieving"/>
+
+
+	<PreferenceCategory android:title="@string/about_phone">
+		<PreferenceScreen android:title="@string/more_info" android:summary="@string/more_info_summary">
+			<intent android:action="android.intent.action.MAIN"
+				android:targetPackage="com.android.settings" android:targetClass="com.android.settings.DeviceInfoSettings" />
+		</PreferenceScreen>
+	</PreferenceCategory>
+
+
+</PreferenceScreen>
