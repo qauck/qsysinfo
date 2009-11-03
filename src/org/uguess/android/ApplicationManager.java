@@ -43,13 +43,18 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
+import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.IPackageStatsObserver;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageStats;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
@@ -57,6 +62,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
 import android.text.format.Formatter;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -87,7 +93,11 @@ public class ApplicationManager extends ListActivity
 	private static final int MSG_REFRESH_PKG_LABEL = 12;
 	private static final int MSG_REFRESH_PKG_ICON = 13;
 
-	private static final int DLG_WARNING = 1;
+	private static final int APP_TYPE_ALL = 0;
+	private static final int APP_TYPE_SYS = 1;
+	private static final int APP_TYPE_USER = 2;
+
+	private static final String PREF_KEY_FILTER_APP_TYPE = "filter_app_type"; //$NON-NLS-1$
 
 	private static final String EXPORT_FOLDER = "/sdcard/backups/"; //$NON-NLS-1$
 
@@ -103,7 +113,9 @@ public class ApplicationManager extends ListActivity
 		}
 		catch ( Exception e )
 		{
-			e.printStackTrace( );
+			Log.e( ApplicationManager.class.getName( ),
+					e.getLocalizedMessage( ),
+					e );
 		}
 	}
 
@@ -114,6 +126,8 @@ public class ApplicationManager extends ListActivity
 	private ProgressDialog progress;
 
 	private Drawable defaultIcon;
+
+	private String versinoPrefix;
 
 	private OnCheckedChangeListener checkListener = new OnCheckedChangeListener( ) {
 
@@ -131,6 +145,8 @@ public class ApplicationManager extends ListActivity
 		super.onCreate( savedInstanceState );
 
 		defaultIcon = getResources( ).getDrawable( R.drawable.icon );
+
+		versinoPrefix = getResources( ).getString( R.string.version );
 
 		lstApps = getListView( );
 
@@ -161,49 +177,57 @@ public class ApplicationManager extends ListActivity
 		loadApps( );
 	}
 
-	@Override
-	protected Dialog onCreateDialog( int id )
+	private int getAppFilterType( )
 	{
-		if ( id == DLG_WARNING )
-		{
-			OnClickListener listener = new OnClickListener( ) {
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
 
-				public void onClick( DialogInterface dialog, int which )
-				{
-					if ( which == Dialog.BUTTON_POSITIVE )
-					{
-						exportSelected( );
-					}
-				}
-			};
+		return sp.getInt( PREF_KEY_FILTER_APP_TYPE, APP_TYPE_ALL );
+	}
 
-			AlertDialog.Builder builder = new AlertDialog.Builder( this );
-			builder.setTitle( R.string.warning );
-			builder.setMessage( MessageFormat.format( getResources( ).getString( R.string.warning_msg ),
-					EXPORT_FOLDER ) );
+	private void setAppFilterType( int type )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
 
-			builder.setPositiveButton( R.string.cont, listener );
-
-			builder.setNegativeButton( R.string.cancel, listener );
-
-			return builder.create( );
-		}
-		return super.onCreateDialog( id );
+		Editor et = sp.edit( );
+		et.putInt( PREF_KEY_FILTER_APP_TYPE, type );
+		et.commit( );
 	}
 
 	private void loadApps( )
 	{
 		final PackageManager pm = getPackageManager( );
-		final List<ApplicationInfo> apps = pm.getInstalledApplications( 0 );
+		List<ApplicationInfo> allApps = pm.getInstalledApplications( 0 );
 
-		Collections.sort( apps, new ApplicationInfo.DisplayNameComparator( pm ) );
+		final List<ApplicationInfo> filteredApps = filterApps( allApps );
+
+		if ( filteredApps == null || filteredApps.size( ) == 0 )
+		{
+			Toast.makeText( this, R.string.no_app_show, Toast.LENGTH_SHORT );
+		}
+
+		Collections.sort( filteredApps,
+				new ApplicationInfo.DisplayNameComparator( pm ) );
 
 		ArrayList<AppInfoHolder> dataList = new ArrayList<AppInfoHolder>( );
 
-		for ( Iterator<ApplicationInfo> itr = apps.iterator( ); itr.hasNext( ); )
+		for ( Iterator<ApplicationInfo> itr = filteredApps.iterator( ); itr.hasNext( ); )
 		{
 			AppInfoHolder holder = new AppInfoHolder( );
 			holder.appInfo = itr.next( );
+
+			try
+			{
+				PackageInfo pi = pm.getPackageInfo( holder.appInfo.packageName,
+						0 );
+
+				holder.version = pi.versionName;
+			}
+			catch ( NameNotFoundException e )
+			{
+				Log.e( ApplicationManager.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
 
 			dataList.add( holder );
 		}
@@ -216,7 +240,7 @@ public class ApplicationManager extends ListActivity
 					android.view.View convertView, android.view.ViewGroup parent )
 			{
 				View view;
-				TextView txt_name, txt_size;
+				TextView txt_name, txt_size, txt_ver;
 				ImageView img_type;
 				CheckBox ckb_app;
 
@@ -240,6 +264,16 @@ public class ApplicationManager extends ListActivity
 				else
 				{
 					txt_name.setText( itm.appInfo.packageName );
+				}
+
+				txt_ver = (TextView) view.findViewById( R.id.app_version );
+				if ( itm.version != null )
+				{
+					txt_ver.setText( versinoPrefix + " " + itm.version ); //$NON-NLS-1$
+				}
+				else
+				{
+					txt_ver.setText( "" ); //$NON-NLS-1$
 				}
 
 				txt_size = (TextView) view.findViewById( R.id.app_size );
@@ -278,9 +312,9 @@ public class ApplicationManager extends ListActivity
 
 			public void run( )
 			{
-				for ( int i = 0; i < apps.size( ); i++ )
+				for ( int i = 0; i < filteredApps.size( ); i++ )
 				{
-					invokeGetPkgSize( i, apps.get( i ).packageName, pm );
+					invokeGetPkgSize( i, filteredApps.get( i ).packageName, pm );
 				}
 
 			}
@@ -291,9 +325,9 @@ public class ApplicationManager extends ListActivity
 			public void run( )
 			{
 				ArrayList<CharSequence> labels = new ArrayList<CharSequence>( );
-				for ( int i = 0; i < apps.size( ); i++ )
+				for ( int i = 0; i < filteredApps.size( ); i++ )
 				{
-					CharSequence label = apps.get( i ).loadLabel( pm );
+					CharSequence label = filteredApps.get( i ).loadLabel( pm );
 
 					labels.add( label );
 				}
@@ -303,9 +337,9 @@ public class ApplicationManager extends ListActivity
 				handler.sendMessage( msg );
 
 				ArrayList<Drawable> icons = new ArrayList<Drawable>( );
-				for ( int i = 0; i < apps.size( ); i++ )
+				for ( int i = 0; i < filteredApps.size( ); i++ )
 				{
-					Drawable icon = apps.get( i ).loadIcon( pm );
+					Drawable icon = filteredApps.get( i ).loadIcon( pm );
 
 					icons.add( icon );
 				}
@@ -315,6 +349,47 @@ public class ApplicationManager extends ListActivity
 				handler.sendMessage( msg );
 			}
 		} ).start( );
+	}
+
+	private List<ApplicationInfo> filterApps( List<ApplicationInfo> apps )
+	{
+		if ( apps == null || apps.size( ) == 0 )
+		{
+			return apps;
+		}
+
+		int type = getAppFilterType( );
+
+		if ( type == APP_TYPE_SYS )
+		{
+			List<ApplicationInfo> sysApps = new ArrayList<ApplicationInfo>( );
+
+			for ( ApplicationInfo ai : apps )
+			{
+				if ( ( ai.flags & ApplicationInfo.FLAG_SYSTEM ) != 0 )
+				{
+					sysApps.add( ai );
+				}
+			}
+
+			return sysApps;
+		}
+		else if ( type == APP_TYPE_USER )
+		{
+			List<ApplicationInfo> userApps = new ArrayList<ApplicationInfo>( );
+
+			for ( ApplicationInfo ai : apps )
+			{
+				if ( ( ai.flags & ApplicationInfo.FLAG_SYSTEM ) == 0 )
+				{
+					userApps.add( ai );
+				}
+			}
+
+			return userApps;
+		}
+
+		return apps;
 	}
 
 	private void invokeGetPkgSize( int idx, String pkgName, PackageManager pm )
@@ -329,7 +404,9 @@ public class ApplicationManager extends ListActivity
 			}
 			catch ( Exception e )
 			{
-				e.printStackTrace( );
+				Log.e( ApplicationManager.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
 			}
 		}
 	}
@@ -425,7 +502,7 @@ public class ApplicationManager extends ListActivity
 		return Environment.MEDIA_MOUNTED.equals( state );
 	}
 
-	private void exportSelected( )
+	private List<ApplicationInfo> getSelected( )
 	{
 		int count = lstApps.getCount( );
 
@@ -441,7 +518,7 @@ public class ApplicationManager extends ListActivity
 			}
 		}
 
-		export( apps );
+		return apps;
 	}
 
 	private void export( final List<ApplicationInfo> apps )
@@ -563,14 +640,39 @@ public class ApplicationManager extends ListActivity
 	{
 		if ( item.getItemId( ) == R.id.mi_export )
 		{
-			if ( !ensureSDCard( ) )
+			final List<ApplicationInfo> sels = getSelected( );
+
+			if ( sels == null || sels.size( ) == 0 )
+			{
+				Toast.makeText( this,
+						R.string.no_app_selected,
+						Toast.LENGTH_SHORT ).show( );
+			}
+			else if ( !ensureSDCard( ) )
 			{
 				Toast.makeText( this, R.string.sd_error, Toast.LENGTH_SHORT )
 						.show( );
 			}
 			else
 			{
-				showDialog( DLG_WARNING );
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						if ( which == Dialog.BUTTON_POSITIVE )
+						{
+							export( sels );
+						}
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.warning )
+						.setMessage( MessageFormat.format( getResources( ).getString( R.string.warning_msg ),
+								EXPORT_FOLDER ) )
+						.setPositiveButton( R.string.cont, listener )
+						.setNegativeButton( R.string.cancel, listener )
+						.create( )
+						.show( );
 			}
 			return true;
 		}
@@ -583,6 +685,34 @@ public class ApplicationManager extends ListActivity
 		else if ( item.getItemId( ) == R.id.mi_deselect_all )
 		{
 			toggleAllSelection( false );
+
+			return true;
+		}
+		else if ( item.getItemId( ) == R.id.mi_filter )
+		{
+			OnClickListener listener = new OnClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which )
+				{
+					setAppFilterType( which );
+
+					dialog.dismiss( );
+
+					loadApps( );
+				}
+			};
+
+			new AlertDialog.Builder( this ).setTitle( R.string.filter_title )
+					.setNeutralButton( R.string.close, null )
+					.setSingleChoiceItems( new CharSequence[]{
+							getText( R.string.all_apps ),
+							getText( R.string.sys_apps ),
+							getText( R.string.user_apps )
+					},
+							getAppFilterType( ),
+							listener )
+					.create( )
+					.show( );
 
 			return true;
 		}
@@ -744,6 +874,8 @@ public class ApplicationManager extends ListActivity
 		ApplicationInfo appInfo;
 
 		CharSequence label;
+
+		CharSequence version;
 
 		Drawable icon;
 

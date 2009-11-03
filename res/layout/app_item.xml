@@ -16,6 +16,10 @@
 			android:id="@+id/app_name" android:layout_marginBottom="2dip"
 			android:text="name" android:paddingLeft="3dip"></TextView>
 		<TextView android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:textAppearance="?android:attr/textAppearanceSmall"
+			android:layout_marginTop="-4dip" android:paddingLeft="3dip"
+			android:id="@+id/app_version" android:text="version"></TextView>
+		<TextView android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:id="@+id/app_size"
 			android:textAppearance="?android:attr/textAppearanceSmall"
 			android:layout_marginTop="-4dip" android:text="size"
@@ -24,6 +28,7 @@
 
 	<CheckBox android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:id="@+id/ckb_app"
-		android:layout_gravity="center_vertical" android:focusable="false" android:focusableInTouchMode="false"></CheckBox>
+		android:layout_gravity="center_vertical" android:focusable="false"
+		android:focusableInTouchMode="false"></CheckBox>
 
 </LinearLayout>
