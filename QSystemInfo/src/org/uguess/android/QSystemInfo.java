@@ -26,19 +26,25 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.text.MessageFormat;
 
 import android.app.ActivityManager;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ActivityManager.MemoryInfo;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.StatFs;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceScreen;
 import android.text.format.Formatter;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -48,6 +54,8 @@ import android.view.MenuItem;
  */
 public class QSystemInfo extends PreferenceActivity
 {
+
+	private static final int DLG_ABOUT = 1;
 
 	private Preference prefBatteryLevel;
 
@@ -304,6 +312,71 @@ public class QSystemInfo extends PreferenceActivity
 	}
 
 	@Override
+	public boolean onPreferenceTreeClick( PreferenceScreen preferenceScreen,
+			Preference preference )
+	{
+		if ( "refresh_status".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		{
+			updateInfo( );
+			return true;
+		}
+		else if ( "manage_apps".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		{
+			Intent intent = new Intent( Intent.ACTION_VIEW );
+			intent.setClass( this, ApplicationManager.class );
+			startActivity( intent );
+			return true;
+		}
+		else if ( "more_info".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		{
+			Intent intent = new Intent( Intent.ACTION_VIEW );
+			intent.setClassName( "com.android.settings", //$NON-NLS-1$
+					"com.android.settings.DeviceInfoSettings" ); //$NON-NLS-1$
+			startActivity( intent );
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	protected Dialog onCreateDialog( int id )
+	{
+		if ( id == DLG_ABOUT )
+		{
+			AlertDialog.Builder builder = new AlertDialog.Builder( this );
+			builder.setTitle( R.string.app_name );
+			builder.setIcon( R.drawable.icon );
+
+			String ver = null;
+
+			try
+			{
+				ver = getPackageManager( ).getPackageInfo( getPackageName( ), 0 ).versionName;
+			}
+			catch ( NameNotFoundException e )
+			{
+				Log.e( QSystemInfo.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+
+			if ( ver == null )
+			{
+				ver = ""; //$NON-NLS-1$
+			}
+
+			builder.setMessage( MessageFormat.format( getResources( ).getString( R.string.about_msg ),
+					ver ) );
+
+			builder.setNegativeButton( R.string.close, null );
+
+			return builder.create( );
+		}
+		return super.onCreateDialog( id );
+	}
+
+	@Override
 	public boolean onCreateOptionsMenu( Menu menu )
 	{
 		MenuInflater inflater = getMenuInflater( );
@@ -314,17 +387,9 @@ public class QSystemInfo extends PreferenceActivity
 	@Override
 	public boolean onOptionsItemSelected( MenuItem item )
 	{
-		if ( item.getItemId( ) == R.id.mi_manage_apps )
+		if ( item.getItemId( ) == R.id.mi_about )
 		{
-			Intent it = new Intent( this, ApplicationManager.class );
-
-			startActivity( it );
-
-			return true;
-		}
-		else if ( item.getItemId( ) == R.id.mi_refresh )
-		{
-			updateInfo( );
+			showDialog( DLG_ABOUT );
 			return true;
 		}
 
