@@ -50,5 +50,6 @@
 	<string name="sys_apps">System</string>
 	<string name="user_apps">User</string>
 	<string name="version">Version</string>
+	<string name="loading">Loading...</string>
 
 </resources>

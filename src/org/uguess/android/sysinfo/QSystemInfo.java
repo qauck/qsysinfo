@@ -19,7 +19,7 @@
  * in the United States and other countries.]
  ********************************************************************************/
 
-package org.uguess.android;
+package org.uguess.android.sysinfo;
 
 import java.io.File;
 import java.io.FileInputStream;
