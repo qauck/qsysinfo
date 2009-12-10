@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:orientation="horizontal"
+	android:layout_height="wrap_content" android:layout_gravity="center_vertical">
+
+	<ImageView android:layout_gravity="center_vertical"
+		android:scaleType="fitCenter" android:id="@+id/img_proc_icon" android:layout_height="32dip" android:layout_width="32dip" android:layout_marginLeft="3dip"></ImageView>
+	<TextView android:layout_height="wrap_content" android:layout_marginBottom="2dip" android:text="name" android:paddingLeft="3dip" android:id="@+id/txt_proc_name" android:textAppearance="?android:attr/textAppearanceMedium" android:layout_width="fill_parent"></TextView>
+
+	
+
+</LinearLayout>

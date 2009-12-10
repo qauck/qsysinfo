@@ -327,6 +327,13 @@ public class QSystemInfo extends PreferenceActivity
 			startActivity( intent );
 			return true;
 		}
+		else if ( "manage_procs".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		{
+			Intent intent = new Intent( Intent.ACTION_VIEW );
+			intent.setClass( this, ProcessManager.class );
+			startActivity( intent );
+			return true;
+		}
 		else if ( "more_info".equals( preference.getKey( ) ) ) //$NON-NLS-1$
 		{
 			Intent intent = new Intent( Intent.ACTION_VIEW );
