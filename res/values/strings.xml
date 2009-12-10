@@ -51,5 +51,7 @@
 	<string name="user_apps">User</string>
 	<string name="version">Version</string>
 	<string name="loading">Loading...</string>
+	<string name="manage_procs">View Processes</string>
+	<string name="end_proc_hint">- Click a task to end it\n- Click me to end all</string>
 
 </resources>

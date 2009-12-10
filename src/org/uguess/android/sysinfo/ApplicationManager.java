@@ -43,9 +43,11 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
 import android.content.SharedPreferences.Editor;
@@ -125,11 +127,15 @@ public class ApplicationManager extends ListActivity
 
 	private CopyHandler handler = new CopyHandler( );
 
+	private PackageEventReceiver pkgEventReceiver = new PackageEventReceiver( );
+
 	private ProgressDialog progress;
 
 	private Drawable defaultIcon;
 
 	private String versionPrefix;
+
+	private boolean needReload;
 
 	private OnCheckedChangeListener checkListener = new OnCheckedChangeListener( ) {
 
@@ -170,7 +176,9 @@ public class ApplicationManager extends ListActivity
 			}
 		} );
 
-		loadApps( );
+		pkgEventReceiver.registerReceiver( );
+
+		needReload = true;
 	}
 
 	@Override
@@ -178,7 +186,22 @@ public class ApplicationManager extends ListActivity
 	{
 		( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).cancel( MSG_COPING_FINISHED );
 
+		unregisterReceiver( pkgEventReceiver );
+
 		super.onDestroy( );
+	}
+
+	@Override
+	protected void onStart( )
+	{
+		super.onStart( );
+
+		if ( needReload )
+		{
+			needReload = false;
+
+			loadApps( );
+		}
 	}
 
 	private int getAppFilterType( )
@@ -894,6 +917,29 @@ public class ApplicationManager extends ListActivity
 			handler.sendMessage( msg );
 		}
 
+	}
+
+	/**
+	 * PackageEventReceiver
+	 */
+	class PackageEventReceiver extends BroadcastReceiver
+	{
+
+		void registerReceiver( )
+		{
+			IntentFilter filter = new IntentFilter( Intent.ACTION_PACKAGE_ADDED );
+			filter.addAction( Intent.ACTION_PACKAGE_REMOVED );
+			filter.addAction( Intent.ACTION_PACKAGE_CHANGED );
+			filter.addDataScheme( "package" ); //$NON-NLS-1$
+			
+			ApplicationManager.this.registerReceiver( this, filter );
+		}
+
+		@Override
+		public void onReceive( Context context, Intent intent )
+		{
+			ApplicationManager.this.needReload = true;
+		}
 	}
 
 	/**

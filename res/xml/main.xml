@@ -27,6 +27,7 @@
 	<PreferenceCategory android:title="@string/actions">
 		<Preference android:key="refresh_status" android:title="@string/refresh" />
 		<Preference android:key="manage_apps" android:title="@string/manage_apps" />
+		<Preference android:key="manage_procs" android:title="@string/manage_procs" />
 		<Preference android:key="more_info" android:title="@string/more_info" />
 	</PreferenceCategory>
 	
