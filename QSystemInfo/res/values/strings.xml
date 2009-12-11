@@ -53,5 +53,7 @@
 	<string name="loading">Loading...</string>
 	<string name="manage_procs">View Processes</string>
 	<string name="end_proc_hint">- Click a task to end it\n- Click me to end all</string>
+	<string name="switch_to">Switch To</string>
+	<string name="end_task">End Task</string>
 
 </resources>

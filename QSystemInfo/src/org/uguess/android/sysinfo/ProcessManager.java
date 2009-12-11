@@ -27,19 +27,27 @@ import java.util.List;
 import android.app.ActivityManager;
 import android.app.ListActivity;
 import android.app.ActivityManager.RunningAppProcessInfo;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
 /**
@@ -48,7 +56,10 @@ import android.widget.AdapterView.OnItemClickListener;
 public class ProcessManager extends ListActivity
 {
 
-	private RunningAppProcessInfo dmmyInfo;
+	private static final int MI_DISPLAY = 1;
+	private static final int MI_ENDTASK = 2;
+
+	private RunningAppProcessInfo dummyInfo;
 	private ListView lstProcs;
 
 	@Override
@@ -58,7 +69,9 @@ public class ProcessManager extends ListActivity
 
 		lstProcs = getListView( );
 
-		dmmyInfo = new RunningAppProcessInfo( ) {
+		registerForContextMenu( lstProcs );
+
+		dummyInfo = new RunningAppProcessInfo( ) {
 
 			{
 				this.processName = ProcessManager.this.getString( R.string.end_proc_hint );
@@ -72,7 +85,7 @@ public class ProcessManager extends ListActivity
 			{
 				RunningAppProcessInfo rap = (RunningAppProcessInfo) parent.getItemAtPosition( position );
 
-				if ( rap == dmmyInfo )
+				if ( rap == dummyInfo )
 				{
 					endAll( );
 				}
@@ -90,16 +103,94 @@ public class ProcessManager extends ListActivity
 		refresh( );
 	}
 
+	@Override
+	public void onCreateContextMenu( ContextMenu menu, View v,
+			ContextMenuInfo menuInfo )
+	{
+		super.onCreateContextMenu( menu, v, menuInfo );
+
+		int pos = ( (AdapterContextMenuInfo) menuInfo ).position;
+		RunningAppProcessInfo rap = (RunningAppProcessInfo) lstProcs.getItemAtPosition( pos );
+
+		if ( rap != dummyInfo )
+		{
+			menu.add( Menu.NONE, MI_DISPLAY, MI_DISPLAY, R.string.switch_to );
+			menu.add( Menu.NONE, MI_ENDTASK, MI_ENDTASK, R.string.end_task );
+		}
+	}
+
+	@Override
+	public boolean onContextItemSelected( MenuItem item )
+	{
+		if ( item.getItemId( ) == MI_DISPLAY )
+		{
+			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
+			RunningAppProcessInfo rap = (RunningAppProcessInfo) lstProcs.getItemAtPosition( pos );
+
+			Intent it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
+
+			List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
+					0 );
+
+			if ( acts != null )
+			{
+				for ( ResolveInfo ri : acts )
+				{
+					if ( rap.processName.equals( ri.activityInfo.packageName ) )
+					{
+						it.setClassName( ri.activityInfo.packageName,
+								ri.activityInfo.name );
+
+						if ( this.getPackageName( ).equals( rap.processName ) )
+						{
+							it.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
+						}
+						else
+						{
+							it.addFlags( Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP );
+						}
+
+						startActivity( it );
+						break;
+					}
+				}
+			}
+
+			return true;
+		}
+		else if ( item.getItemId( ) == MI_ENDTASK )
+		{
+			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
+			RunningAppProcessInfo rap = (RunningAppProcessInfo) lstProcs.getItemAtPosition( pos );
+
+			ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
+			am.restartPackage( rap.processName );
+
+			refresh( );
+
+			return true;
+		}
+
+		return super.onContextItemSelected( item );
+	}
+
 	private void endAll( )
 	{
 		ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
+
+		String self = this.getPackageName( );
 
 		for ( int i = 0; i < lstProcs.getCount( ); i++ )
 		{
 			RunningAppProcessInfo rap = (RunningAppProcessInfo) lstProcs.getItemAtPosition( i );
 
-			am.restartPackage( rap.processName );
+			if ( !self.equals( rap.processName ) )
+			{
+				am.restartPackage( rap.processName );
+			}
 		}
+
+		am.restartPackage( self );
 	}
 
 	private void refresh( )
@@ -140,13 +231,15 @@ public class ProcessManager extends ListActivity
 
 				img_type = (ImageView) view.findViewById( R.id.img_proc_icon );
 
-				if ( itm == dmmyInfo )
+				if ( itm == dummyInfo )
 				{
 					if ( txt_name.getTypeface( ) == null
 							|| txt_name.getTypeface( ).getStyle( ) != Typeface.ITALIC )
 					{
 						txt_name.setTypeface( Typeface.DEFAULT, Typeface.ITALIC );
 					}
+
+					txt_name.setTextColor( Color.WHITE );
 
 					img_type.setImageDrawable( null );
 				}
@@ -156,6 +249,18 @@ public class ProcessManager extends ListActivity
 							|| txt_name.getTypeface( ).getStyle( ) != Typeface.NORMAL )
 					{
 						txt_name.setTypeface( Typeface.DEFAULT, Typeface.NORMAL );
+					}
+
+					switch ( itm.importance )
+					{
+						case RunningAppProcessInfo.IMPORTANCE_SERVICE :
+							txt_name.setTextColor( Color.GRAY );
+							break;
+						case RunningAppProcessInfo.IMPORTANCE_BACKGROUND :
+							txt_name.setTextColor( Color.YELLOW );
+							break;
+						default :
+							txt_name.setTextColor( Color.WHITE );
 					}
 
 					try
@@ -181,6 +286,10 @@ public class ProcessManager extends ListActivity
 
 							img_type.setImageDrawable( icon );
 						}
+						else
+						{
+							img_type.setImageDrawable( pm.getDefaultActivityIcon( ) );
+						}
 					}
 					catch ( NameNotFoundException e )
 					{
@@ -201,7 +310,7 @@ public class ProcessManager extends ListActivity
 	{
 		ArrayList<RunningAppProcessInfo> procs = new ArrayList<RunningAppProcessInfo>( );
 
-		procs.add( dmmyInfo );
+		procs.add( dummyInfo );
 
 		if ( list != null )
 		{
@@ -210,12 +319,12 @@ public class ProcessManager extends ListActivity
 			{
 				name = rap.processName;
 
-				if ( name.contains( "com.google.process" ) //$NON-NLS-1$
-						|| name.contains( "com.android.phone" ) //$NON-NLS-1$
-						|| name.contains( "android.process" ) //$NON-NLS-1$
-						|| name.contains( "system" ) //$NON-NLS-1$
-						|| name.contains( "com.android.inputmethod" ) //$NON-NLS-1$
-						|| name.contains( "com.android.alarmclock" ) ) //$NON-NLS-1$
+				if ( name.startsWith( "com.google.process" ) //$NON-NLS-1$
+						|| name.startsWith( "com.android.phone" ) //$NON-NLS-1$
+						|| name.startsWith( "android.process" ) //$NON-NLS-1$
+						|| name.startsWith( "system" ) //$NON-NLS-1$
+						|| name.startsWith( "com.android.inputmethod" ) //$NON-NLS-1$
+						|| name.startsWith( "com.android.alarmclock" ) ) //$NON-NLS-1$
 				{
 					continue;
 				}

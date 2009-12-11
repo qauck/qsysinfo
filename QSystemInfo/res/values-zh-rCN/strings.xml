@@ -48,5 +48,7 @@
 	<string name="loading">正在加载...</string>
 	<string name="manage_procs">查看进程</string>
 	<string name="end_proc_hint">- 单击列表结束进程\n- 单击此处结束所有进程</string>
+	<string name="switch_to">切换任务</string>
+	<string name="end_task">结束任务</string>
 
 </resources>
