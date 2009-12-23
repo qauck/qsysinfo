@@ -99,6 +99,12 @@ public class ProcessManager extends ListActivity
 				}
 			}
 		} );
+	}
+
+	@Override
+	protected void onResume( )
+	{
+		super.onResume( );
 
 		refresh( );
 	}

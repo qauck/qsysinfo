@@ -63,6 +63,9 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+import android.preference.Preference;
+import android.preference.PreferenceActivity;
+import android.preference.PreferenceScreen;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Menu;
@@ -70,10 +73,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -101,9 +106,16 @@ public class ApplicationManager extends ListActivity
 	private static final int APP_TYPE_SYS = 1;
 	private static final int APP_TYPE_USER = 2;
 
-	private static final String PREF_KEY_FILTER_APP_TYPE = "filter_app_type"; //$NON-NLS-1$
+	private static final int REQUEST_SETTINGS = 1;
 
-	private static final String EXPORT_FOLDER = "/sdcard/backups/"; //$NON-NLS-1$
+	private static final String PREF_KEY_FILTER_APP_TYPE = "filter_app_type"; //$NON-NLS-1$
+	private static final String PREF_KEY_APP_EXPORT_DIR = "app_export_dir"; //$NON-NLS-1$
+
+	private static final String DEFAULT_EXPORT_FOLDER = "/sdcard/backups/"; //$NON-NLS-1$
+
+	private static final String SYS_APP = "system/"; //$NON-NLS-1$
+
+	private static final String USER_APP = "user/"; //$NON-NLS-1$
 
 	private static Method mdGetPackageSizeInfo;
 
@@ -192,9 +204,9 @@ public class ApplicationManager extends ListActivity
 	}
 
 	@Override
-	protected void onStart( )
+	protected void onResume( )
 	{
-		super.onStart( );
+		super.onResume( );
 
 		if ( needReload )
 		{
@@ -202,6 +214,29 @@ public class ApplicationManager extends ListActivity
 
 			loadApps( );
 		}
+	}
+
+	private String getAppExportDir( )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		return sp.getString( PREF_KEY_APP_EXPORT_DIR, DEFAULT_EXPORT_FOLDER );
+	}
+
+	private void setAppExportDir( String val )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		if ( val == null )
+		{
+			et.remove( PREF_KEY_APP_EXPORT_DIR );
+		}
+		else
+		{
+			et.putString( PREF_KEY_APP_EXPORT_DIR, val );
+		}
+		et.commit( );
 	}
 
 	private int getAppFilterType( )
@@ -585,11 +620,51 @@ public class ApplicationManager extends ListActivity
 
 			public void run( )
 			{
-				File output = new File( EXPORT_FOLDER );
+				String exportFolder = getAppExportDir( );
+
+				File output = new File( exportFolder );
 
 				if ( !output.exists( ) )
 				{
-					output.mkdirs( );
+					if ( !output.mkdirs( ) )
+					{
+						handler.sendMessage( Message.obtain( handler,
+								MSG_COPING_ERROR,
+								new IOException( MessageFormat.format( getResources( ).getString( R.string.error_create_folder ),
+										output.getAbsolutePath( ) ) ) ) );
+
+						return;
+					}
+				}
+
+				File sysoutput = new File( output, SYS_APP );
+
+				if ( !sysoutput.exists( ) )
+				{
+					if ( !sysoutput.mkdirs( ) )
+					{
+						handler.sendMessage( Message.obtain( handler,
+								MSG_COPING_ERROR,
+								new IOException( MessageFormat.format( getResources( ).getString( R.string.error_create_folder ),
+										sysoutput.getAbsolutePath( ) ) ) ) );
+
+						return;
+					}
+				}
+
+				File useroutput = new File( output, USER_APP );
+
+				if ( !useroutput.exists( ) )
+				{
+					if ( !useroutput.mkdirs( ) )
+					{
+						handler.sendMessage( Message.obtain( handler,
+								MSG_COPING_ERROR,
+								new IOException( MessageFormat.format( getResources( ).getString( R.string.error_create_folder ),
+										useroutput.getAbsolutePath( ) ) ) ) );
+
+						return;
+					}
 				}
 
 				for ( int i = 0; i < apps.size( ); i++ )
@@ -606,7 +681,14 @@ public class ApplicationManager extends ListActivity
 
 						if ( appName != null )
 						{
-							File destFile = new File( output, appName );
+							File targetOutput = useroutput;
+
+							if ( ( app.flags & ApplicationInfo.FLAG_SYSTEM ) != 0 )
+							{
+								targetOutput = sysoutput;
+							}
+
+							File destFile = new File( targetOutput, appName );
 
 							handler.sendMessage( Message.obtain( handler,
 									MSG_COPING,
@@ -619,9 +701,14 @@ public class ApplicationManager extends ListActivity
 							}
 							catch ( Exception e )
 							{
+								Log.e( ApplicationManager.class.getName( ),
+										e.getLocalizedMessage( ),
+										e );
+
 								handler.sendMessage( Message.obtain( handler,
 										MSG_COPING_ERROR,
 										e ) );
+								return;
 							}
 						}
 					}
@@ -668,6 +755,39 @@ public class ApplicationManager extends ListActivity
 	}
 
 	@Override
+	protected void onActivityResult( int requestCode, int resultCode,
+			Intent data )
+	{
+		if ( requestCode == REQUEST_SETTINGS )
+		{
+			String nDir = data.getStringExtra( PREF_KEY_APP_EXPORT_DIR );
+
+			if ( nDir != null )
+			{
+				nDir = nDir.trim( );
+
+				if ( nDir.length( ) == 0 )
+				{
+					nDir = null;
+				}
+			}
+
+			if ( !getAppExportDir( ).equals( nDir ) )
+			{
+				setAppExportDir( nDir );
+			}
+
+			int nt = data.getIntExtra( PREF_KEY_FILTER_APP_TYPE, APP_TYPE_ALL );
+
+			if ( nt != getAppFilterType( ) )
+			{
+				setAppFilterType( nt );
+				loadApps( );
+			}
+		}
+	}
+
+	@Override
 	public boolean onCreateOptionsMenu( Menu menu )
 	{
 		MenuInflater inflater = getMenuInflater( );
@@ -708,7 +828,7 @@ public class ApplicationManager extends ListActivity
 
 				new AlertDialog.Builder( this ).setTitle( R.string.warning )
 						.setMessage( MessageFormat.format( getResources( ).getString( R.string.warning_msg ),
-								EXPORT_FOLDER ) )
+								getAppExportDir( ) ) )
 						.setPositiveButton( R.string.cont, listener )
 						.setNegativeButton( R.string.cancel, listener )
 						.create( )
@@ -728,31 +848,16 @@ public class ApplicationManager extends ListActivity
 
 			return true;
 		}
-		else if ( item.getItemId( ) == R.id.mi_filter )
+		else if ( item.getItemId( ) == R.id.mi_preference )
 		{
-			OnClickListener listener = new OnClickListener( ) {
+			Intent intent = new Intent( Intent.ACTION_VIEW );
 
-				public void onClick( DialogInterface dialog, int which )
-				{
-					setAppFilterType( which );
+			intent.setClass( this, AppSettings.class );
 
-					dialog.dismiss( );
+			intent.putExtra( PREF_KEY_FILTER_APP_TYPE, getAppFilterType( ) );
+			intent.putExtra( PREF_KEY_APP_EXPORT_DIR, getAppExportDir( ) );
 
-					loadApps( );
-				}
-			};
-
-			new AlertDialog.Builder( this ).setTitle( R.string.filter_title )
-					.setNeutralButton( R.string.close, null )
-					.setSingleChoiceItems( new CharSequence[]{
-							getText( R.string.all_apps ),
-							getText( R.string.sys_apps ),
-							getText( R.string.user_apps )
-					},
-							getAppFilterType( ),
-							listener )
-					.create( )
-					.show( );
+			startActivityForResult( intent, REQUEST_SETTINGS );
 
 			return true;
 		}
@@ -820,6 +925,12 @@ public class ApplicationManager extends ListActivity
 					break;
 				case MSG_COPING_ERROR :
 
+					if ( progress != null )
+					{
+						progress.dismiss( );
+						progress = null;
+					}
+
 					Toast.makeText( ApplicationManager.this,
 							MessageFormat.format( getResources( ).getString( R.string.copy_error ),
 									( (Exception) msg.obj ).getLocalizedMessage( ) ),
@@ -840,7 +951,7 @@ public class ApplicationManager extends ListActivity
 					Toast.makeText( ApplicationManager.this,
 							MessageFormat.format( getResources( ).getString( R.string.exported_to ),
 									msg.obj,
-									EXPORT_FOLDER ),
+									getAppExportDir( ) ),
 							Toast.LENGTH_SHORT )
 							.show( );
 
@@ -931,7 +1042,7 @@ public class ApplicationManager extends ListActivity
 			filter.addAction( Intent.ACTION_PACKAGE_REMOVED );
 			filter.addAction( Intent.ACTION_PACKAGE_CHANGED );
 			filter.addDataScheme( "package" ); //$NON-NLS-1$
-			
+
 			ApplicationManager.this.registerReceiver( this, filter );
 		}
 
@@ -961,4 +1072,130 @@ public class ApplicationManager extends ListActivity
 		Boolean checked;
 	}
 
+	/**
+	 * AppSettings
+	 */
+	public static class AppSettings extends PreferenceActivity
+	{
+
+		@Override
+		protected void onCreate( Bundle savedInstanceState )
+		{
+			requestWindowFeature( Window.FEATURE_NO_TITLE );
+
+			super.onCreate( savedInstanceState );
+
+			addPreferencesFromResource( R.xml.app_pref );
+
+			refreshBackupFolder( );
+			refreshAppType( );
+
+			setResult( RESULT_OK, getIntent( ) );
+		}
+
+		private void refreshBackupFolder( )
+		{
+			findPreference( "export_dir" ).setSummary( getIntent( ).getStringExtra( PREF_KEY_APP_EXPORT_DIR ) ); //$NON-NLS-1$
+		}
+
+		private void refreshAppType( )
+		{
+			int type = getIntent( ).getIntExtra( PREF_KEY_FILTER_APP_TYPE,
+					APP_TYPE_ALL );
+
+			int res = R.string.all_apps;
+			if ( type == APP_TYPE_SYS )
+			{
+				res = R.string.sys_apps;
+			}
+			else if ( type == APP_TYPE_USER )
+			{
+				res = R.string.user_apps;
+			}
+
+			findPreference( "app_filter" ).setSummary( res ); //$NON-NLS-1$
+		}
+
+		@Override
+		public boolean onPreferenceTreeClick(
+				PreferenceScreen preferenceScreen, Preference preference )
+		{
+			final Intent it = getIntent( );
+
+			if ( "export_dir".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+			{
+				final EditText txt = new EditText( this );
+				txt.setText( it.getStringExtra( PREF_KEY_APP_EXPORT_DIR ) );
+
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						String path = txt.getText( ).toString( );
+
+						if ( path != null )
+						{
+							path = path.trim( );
+
+							if ( path.length( ) == 0 )
+							{
+								path = null;
+							}
+						}
+
+						if ( path == null )
+						{
+							path = DEFAULT_EXPORT_FOLDER;
+						}
+
+						it.putExtra( PREF_KEY_APP_EXPORT_DIR, path );
+
+						dialog.dismiss( );
+
+						refreshBackupFolder( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.export_dir )
+						.setPositiveButton( android.R.string.ok, listener )
+						.setNegativeButton( R.string.cancel, null )
+						.setView( txt )
+						.create( )
+						.show( );
+
+				return true;
+			}
+			else if ( "app_filter".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+			{
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						it.putExtra( PREF_KEY_FILTER_APP_TYPE, which );
+
+						dialog.dismiss( );
+
+						refreshAppType( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.filter_title )
+						.setNeutralButton( R.string.close, null )
+						.setSingleChoiceItems( new CharSequence[]{
+								getText( R.string.all_apps ),
+								getText( R.string.sys_apps ),
+								getText( R.string.user_apps )
+						},
+								it.getIntExtra( PREF_KEY_FILTER_APP_TYPE,
+										APP_TYPE_ALL ),
+								listener )
+						.create( )
+						.show( );
+
+				return true;
+			}
+
+			return false;
+		}
+	}
 }

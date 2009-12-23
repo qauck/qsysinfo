@@ -21,62 +21,17 @@
 
 package org.uguess.android.sysinfo;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
-import java.text.MessageFormat;
-
-import android.app.ActivityManager;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.ActivityManager.MemoryInfo;
-import android.content.BroadcastReceiver;
-import android.content.Context;
+import android.app.TabActivity;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.StatFs;
-import android.preference.Preference;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceScreen;
-import android.text.format.Formatter;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.view.Window;
+import android.widget.TabHost;
 
 /**
  * QSystemInfo
  */
-public class QSystemInfo extends PreferenceActivity
+public class QSystemInfo extends TabActivity
 {
-
-	private static final int DLG_ABOUT = 1;
-
-	private Preference prefBatteryLevel;
-
-	private BroadcastReceiver mBatteryInfoReceiver = new BroadcastReceiver( ) {
-
-		@Override
-		public void onReceive( Context context, Intent intent )
-		{
-			String action = intent.getAction( );
-			if ( Intent.ACTION_BATTERY_CHANGED.equals( action ) )
-			{
-				int level = intent.getIntExtra( "level", 0 ); //$NON-NLS-1$
-				int scale = intent.getIntExtra( "scale", 100 ); //$NON-NLS-1$
-
-				prefBatteryLevel.setSummary( String.valueOf( level
-						* 100
-						/ scale )
-						+ "%" ); //$NON-NLS-1$
-			}
-		}
-	};
 
 	/** Called when the activity is first created. */
 	@Override
@@ -84,323 +39,30 @@ public class QSystemInfo extends PreferenceActivity
 	{
 		super.onCreate( savedInstanceState );
 
-		addPreferencesFromResource( R.xml.main );
+		requestWindowFeature( Window.FEATURE_NO_TITLE );
 
-		prefBatteryLevel = findPreference( "battery_level" ); //$NON-NLS-1$
-	}
+		TabHost th = getTabHost( );
 
-	@Override
-	protected void onResume( )
-	{
-		super.onResume( );
+		Intent it = new Intent( Intent.ACTION_VIEW );
+		it.setClass( this, SysInfoManager.class );
+		th.addTab( th.newTabSpec( SysInfoManager.class.getName( ) )
+				.setContent( it )
+				.setIndicator( getResources( ).getString( R.string.tab_info ),
+						getResources( ).getDrawable( R.drawable.info ) ) );
 
-		registerReceiver( mBatteryInfoReceiver,
-				new IntentFilter( Intent.ACTION_BATTERY_CHANGED ) );
+		it = new Intent( Intent.ACTION_VIEW );
+		it.setClass( this, ApplicationManager.class );
+		th.addTab( th.newTabSpec( ApplicationManager.class.getName( ) )
+				.setContent( it )
+				.setIndicator( getResources( ).getString( R.string.tab_apps ),
+						getResources( ).getDrawable( R.drawable.applications ) ) );
 
-		updateInfo( );
-	}
-
-	@Override
-	protected void onPause( )
-	{
-		super.onPause( );
-
-		unregisterReceiver( mBatteryInfoReceiver );
-	}
-
-	private void updateInfo( )
-	{
-		findPreference( "processor" ).setSummary( getCpuInfo( ) ); //$NON-NLS-1$
-		findPreference( "total_memory" ).setSummary( getTotalMemInfo( ) ); //$NON-NLS-1$
-
-		ActivityManager am = (ActivityManager) getSystemService( ACTIVITY_SERVICE );
-
-		MemoryInfo mi = new MemoryInfo( );
-		am.getMemoryInfo( mi );
-
-		findPreference( "available_memory" ).setSummary( Formatter.formatFileSize( this, //$NON-NLS-1$
-				mi.availMem ) );
-
-		String state = Environment.getExternalStorageState( );
-
-		if ( Environment.MEDIA_MOUNTED_READ_ONLY.equals( state )
-				|| Environment.MEDIA_MOUNTED.equals( state ) )
-		{
-			File path = Environment.getExternalStorageDirectory( );
-			StatFs stat = new StatFs( path.getPath( ) );
-			long blockSize = stat.getBlockSize( );
-			long totalBlocks = stat.getBlockCount( );
-			long availableBlocks = stat.getAvailableBlocks( );
-
-			findPreference( "total_sd_storage" ).setSummary( Formatter.formatFileSize( this, //$NON-NLS-1$
-					totalBlocks * blockSize ) );
-
-			findPreference( "available_sd_storage" ).setSummary( Formatter.formatFileSize( this, //$NON-NLS-1$
-					availableBlocks * blockSize ) );
-		}
-		else
-		{
-			findPreference( "total_sd_storage" ).setSummary( R.string.info_not_available ); //$NON-NLS-1$
-			findPreference( "available_sd_storage" ).setSummary( R.string.info_not_available ); //$NON-NLS-1$
-		}
-
-		File path = Environment.getDataDirectory( );
-		StatFs stat = new StatFs( path.getPath( ) );
-		long blockSize = stat.getBlockSize( );
-		long availableBlocks = stat.getAvailableBlocks( );
-
-		findPreference( "available_internal_storage" ).setSummary( Formatter.formatFileSize( this, //$NON-NLS-1$
-				availableBlocks * blockSize ) );
-	}
-
-	private CharSequence getTotalMemInfo( )
-	{
-		FileInputStream fi = null;
-
-		try
-		{
-			fi = new FileInputStream( new File( "/proc/meminfo" ) ); //$NON-NLS-1$
-
-			InputStreamReader reader = new InputStreamReader( fi );
-
-			LineNumberReader lre = new LineNumberReader( reader );
-
-			String line;
-			String totalMsg = null;
-
-			while ( ( line = lre.readLine( ) ) != null )
-			{
-				if ( line.startsWith( "MemTotal" ) ) //$NON-NLS-1$
-				{
-					totalMsg = line;
-					break;
-				}
-			}
-
-			if ( totalMsg != null )
-			{
-				int idx = totalMsg.indexOf( ':' );
-
-				if ( idx != -1 )
-				{
-					totalMsg = totalMsg.substring( idx + 1 ).trim( );
-
-					idx = totalMsg.lastIndexOf( ' ' );
-
-					if ( idx != -1 )
-					{
-						String unit = totalMsg.substring( idx + 1 );
-
-						try
-						{
-							long size = Long.parseLong( totalMsg.substring( 0,
-									idx ).trim( ) );
-
-							if ( "kb".equalsIgnoreCase( unit ) ) //$NON-NLS-1$
-							{
-								size *= 1024;
-							}
-							else if ( "mb".equalsIgnoreCase( unit ) ) //$NON-NLS-1$
-							{
-								size *= 1024 * 1024;
-							}
-							else if ( "gb".equalsIgnoreCase( unit ) ) //$NON-NLS-1$
-							{
-								size *= 1024 * 1024 * 1024;
-							}
-
-							totalMsg = Formatter.formatFileSize( this, size );
-						}
-						catch ( Exception e )
-						{
-						}
-					}
-
-					return totalMsg;
-				}
-			}
-		}
-		catch ( IOException e )
-		{
-		}
-		finally
-		{
-			if ( fi != null )
-			{
-				try
-				{
-					fi.close( );
-				}
-				catch ( IOException ie )
-				{
-				}
-			}
-		}
-
-		return getResources( ).getString( R.string.info_not_available );
-	}
-
-	private CharSequence getCpuInfo( )
-	{
-		FileInputStream fi = null;
-
-		try
-		{
-			fi = new FileInputStream( new File( "/proc/cpuinfo" ) ); //$NON-NLS-1$
-
-			InputStreamReader reader = new InputStreamReader( fi );
-
-			LineNumberReader lre = new LineNumberReader( reader );
-
-			String line;
-			String processor = null;
-			String mips = null;
-
-			while ( ( line = lre.readLine( ) ) != null )
-			{
-				if ( line.startsWith( "Processor" ) ) //$NON-NLS-1$
-				{
-					processor = line;
-				}
-				else if ( line.startsWith( "BogoMIPS" ) ) //$NON-NLS-1$
-				{
-					mips = line;
-				}
-
-				if ( processor != null && mips != null )
-				{
-					break;
-				}
-			}
-
-			if ( processor != null && mips != null )
-			{
-				int idx = processor.indexOf( ':' );
-				if ( idx != -1 )
-				{
-					processor = processor.substring( idx + 1 ).trim( );
-
-					idx = mips.indexOf( ':' );
-					if ( idx != -1 )
-					{
-						mips = mips.substring( idx + 1 ).trim( );
-
-						return processor + "  " + mips + "MHz"; //$NON-NLS-1$ //$NON-NLS-2$
-					}
-				}
-			}
-		}
-		catch ( IOException e )
-		{
-		}
-		finally
-		{
-			if ( fi != null )
-			{
-				try
-				{
-					fi.close( );
-				}
-				catch ( IOException ie )
-				{
-				}
-			}
-		}
-
-		return getResources( ).getString( R.string.info_not_available );
-
-	}
-
-	@Override
-	public boolean onPreferenceTreeClick( PreferenceScreen preferenceScreen,
-			Preference preference )
-	{
-		if ( "refresh_status".equals( preference.getKey( ) ) ) //$NON-NLS-1$
-		{
-			updateInfo( );
-			return true;
-		}
-		else if ( "manage_apps".equals( preference.getKey( ) ) ) //$NON-NLS-1$
-		{
-			Intent intent = new Intent( Intent.ACTION_VIEW );
-			intent.setClass( this, ApplicationManager.class );
-			startActivity( intent );
-			return true;
-		}
-		else if ( "manage_procs".equals( preference.getKey( ) ) ) //$NON-NLS-1$
-		{
-			Intent intent = new Intent( Intent.ACTION_VIEW );
-			intent.setClass( this, ProcessManager.class );
-			startActivity( intent );
-			return true;
-		}
-		else if ( "more_info".equals( preference.getKey( ) ) ) //$NON-NLS-1$
-		{
-			Intent intent = new Intent( Intent.ACTION_VIEW );
-			intent.setClassName( "com.android.settings", //$NON-NLS-1$
-					"com.android.settings.DeviceInfoSettings" ); //$NON-NLS-1$
-			startActivity( intent );
-			return true;
-		}
-
-		return false;
-	}
-
-	@Override
-	protected Dialog onCreateDialog( int id )
-	{
-		if ( id == DLG_ABOUT )
-		{
-			AlertDialog.Builder builder = new AlertDialog.Builder( this );
-			builder.setTitle( R.string.app_name );
-			builder.setIcon( R.drawable.icon );
-
-			String ver = null;
-
-			try
-			{
-				ver = getPackageManager( ).getPackageInfo( getPackageName( ), 0 ).versionName;
-			}
-			catch ( NameNotFoundException e )
-			{
-				Log.e( QSystemInfo.class.getName( ),
-						e.getLocalizedMessage( ),
-						e );
-			}
-
-			if ( ver == null )
-			{
-				ver = ""; //$NON-NLS-1$
-			}
-
-			builder.setMessage( MessageFormat.format( getResources( ).getString( R.string.about_msg ),
-					ver ) );
-
-			builder.setNegativeButton( R.string.close, null );
-
-			return builder.create( );
-		}
-		return super.onCreateDialog( id );
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu( Menu menu )
-	{
-		MenuInflater inflater = getMenuInflater( );
-		inflater.inflate( R.menu.main_options, menu );
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected( MenuItem item )
-	{
-		if ( item.getItemId( ) == R.id.mi_about )
-		{
-			showDialog( DLG_ABOUT );
-			return true;
-		}
-
-		return false;
+		it = new Intent( Intent.ACTION_VIEW );
+		it.setClass( this, ProcessManager.class );
+		th.addTab( th.newTabSpec( ProcessManager.class.getName( ) )
+				.setContent( it )
+				.setIndicator( getResources( ).getString( R.string.tab_procs ),
+						getResources( ).getDrawable( R.drawable.processes ) ) );
 	}
 
 }

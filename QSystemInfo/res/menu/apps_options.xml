@@ -1,9 +1,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-	
-	<item android:id="@+id/mi_export" android:title="@string/export" android:icon="@android:drawable/ic_menu_upload"></item>
-	<item android:id="@+id/mi_select_all" android:title="@string/select_all" android:icon="@android:drawable/ic_menu_agenda"></item>
-	<item android:id="@+id/mi_deselect_all" android:title="@string/deselect_all" android:icon="@android:drawable/ic_menu_close_clear_cancel"></item>
 
-<item android:id="@+id/mi_filter" android:title="@string/filter" android:icon="@drawable/filter"></item>
+	<item android:id="@+id/mi_export" android:title="@string/export"
+		android:icon="@android:drawable/ic_menu_upload"></item>
+	<item android:id="@+id/mi_select_all" android:title="@string/select_all"
+		android:icon="@android:drawable/ic_menu_agenda"></item>
+	<item android:id="@+id/mi_deselect_all" android:title="@string/deselect_all"
+		android:icon="@android:drawable/ic_menu_close_clear_cancel"></item>
+	<item android:icon="@android:drawable/ic_menu_preferences"
+		android:id="@+id/mi_preference" android:title="@string/preference"></item>
 </menu>

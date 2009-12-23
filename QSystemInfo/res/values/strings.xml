@@ -24,7 +24,7 @@
 	<string name="deselect_all">Deselect All</string>
 	<string name="no_app_selected">No selected application to export.</string>
 	<string name="no_app_show">No application available under current filter
- condition.</string>
+		condition.</string>
 	<string name="warning">Warning</string>
 	<string name="warning_msg">Applications will be exported to ''{0}'', any
 		existing file in the folder will be overwritten, are you sure to
@@ -50,10 +50,17 @@
 	<string name="sys_apps">System</string>
 	<string name="user_apps">User</string>
 	<string name="version">Version</string>
-	<string name="loading">Loading...</string>
+	<string name="loading">Refreshing...</string>
 	<string name="manage_procs">View Processes</string>
-	<string name="end_proc_hint">- Click a task to end it\n- Click me to end all</string>
+	<string name="end_proc_hint">- Click a task to end it\n- Click me to end all
+	</string>
 	<string name="switch_to">Switch To</string>
 	<string name="end_task">End Task</string>
+	<string name="tab_info">Basic Info</string>
+	<string name="tab_apps">Applications</string>
+	<string name="tab_procs">Processes</string>
+	<string name="preference">Preferences</string>
+	<string name="export_dir">Backup Folder</string>
+	<string name="error_create_folder">Failed to create folder {0}.</string>
 
 </resources>
