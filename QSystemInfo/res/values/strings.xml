@@ -62,5 +62,6 @@
 	<string name="preference">Preferences</string>
 	<string name="export_dir">Backup Folder</string>
 	<string name="error_create_folder">Failed to create folder {0}.</string>
+	<string name="error_switch_task">Cannot switch to this task.</string>
 
 </resources>

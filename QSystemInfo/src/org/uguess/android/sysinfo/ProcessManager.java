@@ -47,6 +47,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
@@ -134,31 +135,48 @@ public class ProcessManager extends ListActivity
 			RunningAppProcessInfo rap = (RunningAppProcessInfo) lstProcs.getItemAtPosition( pos );
 
 			Intent it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
+			it.addCategory( Intent.CATEGORY_LAUNCHER );
 
 			List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
 					0 );
 
 			if ( acts != null )
 			{
+				String pkgName = rap.processName;
+
+				if ( rap.pkgList != null
+						&& rap.pkgList.length > 0
+						&& rap.pkgList[0] != null )
+				{
+					pkgName = rap.pkgList[0];
+				}
+
+				boolean started = false;
+
 				for ( ResolveInfo ri : acts )
 				{
-					if ( rap.processName.equals( ri.activityInfo.packageName ) )
+					if ( pkgName.equals( ri.activityInfo.packageName ) )
 					{
-						it.setClassName( ri.activityInfo.packageName,
-								ri.activityInfo.name );
+						if ( !pkgName.equals( this.getPackageName( ) ) )
+						{
+							it.setClassName( ri.activityInfo.packageName,
+									ri.activityInfo.name );
 
-						if ( this.getPackageName( ).equals( rap.processName ) )
-						{
-							it.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
-						}
-						else
-						{
 							it.addFlags( Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP );
+
+							startActivity( it );
 						}
 
-						startActivity( it );
+						started = true;
 						break;
 					}
+				}
+
+				if ( !started )
+				{
+					Toast.makeText( this,
+							R.string.error_switch_task,
+							Toast.LENGTH_SHORT ).show( );
 				}
 			}
 
@@ -187,7 +205,10 @@ public class ProcessManager extends ListActivity
 		{
 			for ( String pkg : pkgs )
 			{
-				am.restartPackage( pkg );
+				if ( pkg != null )
+				{
+					am.restartPackage( pkg );
+				}
 			}
 		}
 	}
@@ -283,8 +304,16 @@ public class ProcessManager extends ListActivity
 
 					try
 					{
-						ApplicationInfo ai = pm.getApplicationInfo( itm.processName,
-								0 );
+						String pkgName = itm.processName;
+
+						if ( itm.pkgList != null
+								&& itm.pkgList.length > 0
+								&& itm.pkgList[0] != null )
+						{
+							pkgName = itm.pkgList[0];
+						}
+
+						ApplicationInfo ai = pm.getApplicationInfo( pkgName, 0 );
 
 						if ( ai != null )
 						{

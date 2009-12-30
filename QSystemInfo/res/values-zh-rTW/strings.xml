@@ -56,5 +56,6 @@
 	<string name="preference">設定</string>
 	<string name="export_dir">備份目錄</string>
 	<string name="error_create_folder">創建目錄 {0} 失敗.</string>
+	<string name="error_switch_task">無法切換至該任務.</string>
 
 </resources>
