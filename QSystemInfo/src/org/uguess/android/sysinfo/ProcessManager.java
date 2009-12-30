@@ -93,7 +93,7 @@ public class ProcessManager extends ListActivity
 				{
 					ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
 
-					am.restartPackage( rap.processName );
+					endProcess( am, rap.pkgList );
 
 					refresh( );
 				}
@@ -170,7 +170,8 @@ public class ProcessManager extends ListActivity
 			RunningAppProcessInfo rap = (RunningAppProcessInfo) lstProcs.getItemAtPosition( pos );
 
 			ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
-			am.restartPackage( rap.processName );
+
+			endProcess( am, rap.pkgList );
 
 			refresh( );
 
@@ -178,6 +179,17 @@ public class ProcessManager extends ListActivity
 		}
 
 		return super.onContextItemSelected( item );
+	}
+
+	private void endProcess( ActivityManager am, String[] pkgs )
+	{
+		if ( pkgs != null )
+		{
+			for ( String pkg : pkgs )
+			{
+				am.restartPackage( pkg );
+			}
+		}
 	}
 
 	private void endAll( )
@@ -192,7 +204,7 @@ public class ProcessManager extends ListActivity
 
 			if ( !self.equals( rap.processName ) )
 			{
-				am.restartPackage( rap.processName );
+				endProcess( am, rap.pkgList );
 			}
 		}
 
