@@ -170,6 +170,8 @@ public class ApplicationManager extends ListActivity
 
 		lstApps = getListView( );
 
+		lstApps.setFastScrollEnabled( true );
+
 		lstApps.setOnItemClickListener( new OnItemClickListener( ) {
 
 			public void onItemClick( AdapterView<?> parent, View view,
@@ -984,15 +986,19 @@ public class ApplicationManager extends ListActivity
 					break;
 				case MSG_REFRESH_PKG_SIZE :
 
-					PackageStats ps = (PackageStats) msg.obj;
-					holder = (AppInfoHolder) lstApps.getItemAtPosition( msg.arg1 );
-					holder.size = Formatter.formatFileSize( ApplicationManager.this,
-							ps.codeSize )
-							+ " + " //$NON-NLS-1$
-							+ Formatter.formatFileSize( ApplicationManager.this,
-									ps.dataSize );
+					// to ignore some outdated requests
+					if ( msg.arg1 < lstApps.getCount( ) )
+					{
+						PackageStats ps = (PackageStats) msg.obj;
+						holder = (AppInfoHolder) lstApps.getItemAtPosition( msg.arg1 );
+						holder.size = Formatter.formatFileSize( ApplicationManager.this,
+								ps.codeSize )
+								+ " + " //$NON-NLS-1$
+								+ Formatter.formatFileSize( ApplicationManager.this,
+										ps.dataSize );
 
-					refreshPkgSize( msg.arg1 );
+						refreshPkgSize( msg.arg1 );
+					}
 					break;
 				case MSG_REFRESH_PKG_LABEL :
 
