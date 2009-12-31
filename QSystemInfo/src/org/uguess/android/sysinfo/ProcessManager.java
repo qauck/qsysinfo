@@ -143,13 +143,7 @@ public class ProcessManager extends ListActivity
 			if ( acts != null )
 			{
 				String pkgName = rap.processName;
-
-				if ( rap.pkgList != null
-						&& rap.pkgList.length > 0
-						&& rap.pkgList[0] != null )
-				{
-					pkgName = rap.pkgList[0];
-				}
+				String self = this.getPackageName( );
 
 				boolean started = false;
 
@@ -157,7 +151,7 @@ public class ProcessManager extends ListActivity
 				{
 					if ( pkgName.equals( ri.activityInfo.packageName ) )
 					{
-						if ( !pkgName.equals( this.getPackageName( ) ) )
+						if ( !pkgName.equals( self ) )
 						{
 							it.setClassName( ri.activityInfo.packageName,
 									ri.activityInfo.name );
@@ -304,16 +298,8 @@ public class ProcessManager extends ListActivity
 
 					try
 					{
-						String pkgName = itm.processName;
-
-						if ( itm.pkgList != null
-								&& itm.pkgList.length > 0
-								&& itm.pkgList[0] != null )
-						{
-							pkgName = itm.pkgList[0];
-						}
-
-						ApplicationInfo ai = pm.getApplicationInfo( pkgName, 0 );
+						ApplicationInfo ai = pm.getApplicationInfo( itm.processName,
+								0 );
 
 						if ( ai != null )
 						{
