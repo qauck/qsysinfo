@@ -52,7 +52,7 @@
 	<string name="version">Version</string>
 	<string name="loading">Refreshing...</string>
 	<string name="manage_procs">View Processes</string>
-	<string name="end_proc_hint">- Click a task to end it\n- Click me to end all
+	<string name="end_proc_hint">- Click a task to end\n- Click me to end all
 	</string>
 	<string name="switch_to">Switch To</string>
 	<string name="end_task">End Task</string>
@@ -63,5 +63,6 @@
 	<string name="export_dir">Backup Folder</string>
 	<string name="error_create_folder">Failed to create folder {0}.</string>
 	<string name="error_switch_task">Cannot switch to this task.</string>
+	<string name="net_address">Network Address</string>
 
 </resources>

@@ -20,6 +20,9 @@
 	<Preference style="?android:preferenceInformationStyle"
 		android:key="processor" android:title="@string/processor"></Preference>
 
+	<Preference android:key="net_address"
+		style="?android:preferenceInformationStyle" android:title="@string/net_address" />
+
 	<Preference android:key="battery_level"
 		style="?android:preferenceInformationStyle" android:title="@string/battery_level"
 		android:summary="@string/retrieving" />

@@ -26,7 +26,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.text.MessageFormat;
+import java.util.Enumeration;
 
 import android.app.ActivityManager;
 import android.app.AlertDialog;
@@ -43,6 +47,7 @@ import android.os.StatFs;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
+import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Menu;
@@ -151,6 +156,33 @@ public class SysInfoManager extends PreferenceActivity
 
 		findPreference( "available_internal_storage" ).setSummary( Formatter.formatFileSize( this, //$NON-NLS-1$
 				availableBlocks * blockSize ) );
+
+		try
+		{
+			String netAddress = null;
+
+			LOOP: for ( Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces( ); en.hasMoreElements( ); )
+			{
+				NetworkInterface intf = en.nextElement( );
+				for ( Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses( ); enumIpAddr.hasMoreElements( ); )
+				{
+					InetAddress inetAddress = enumIpAddr.nextElement( );
+					if ( !inetAddress.isLoopbackAddress( ) )
+					{
+						netAddress = inetAddress.getHostAddress( );
+						break LOOP;
+					}
+				}
+			}
+
+			findPreference( "net_address" ).setSummary( !TextUtils.isEmpty( netAddress ) ? netAddress //$NON-NLS-1$
+					: getString( R.string.info_not_available ) );
+		}
+		catch ( SocketException e )
+		{
+			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
+		}
+
 	}
 
 	private CharSequence getTotalMemInfo( )
@@ -225,9 +257,7 @@ public class SysInfoManager extends PreferenceActivity
 		}
 		catch ( IOException e )
 		{
-			Log.e( SysInfoManager.class.getName( ),
-					e.getLocalizedMessage( ),
-					e );
+			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
 		}
 		finally
 		{
@@ -301,9 +331,7 @@ public class SysInfoManager extends PreferenceActivity
 		}
 		catch ( IOException e )
 		{
-			Log.e( SysInfoManager.class.getName( ),
-					e.getLocalizedMessage( ),
-					e );
+			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
 		}
 		finally
 		{
