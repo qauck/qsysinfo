@@ -30,7 +30,7 @@ import android.widget.TabHost;
 /**
  * QSystemInfo
  */
-public class QSystemInfo extends TabActivity
+public final class QSystemInfo extends TabActivity
 {
 
 	/** Called when the activity is first created. */

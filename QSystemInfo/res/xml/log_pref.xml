@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<PreferenceCategory android:title="@string/preference">
+		<Preference android:key="level_filter" android:title="@string/level_filter" />
+		<Preference android:key="tag_filter" android:title="@string/tag_filter" />
+		<Preference android:key="pid_filter" android:title="@string/pid_filter" />
+	</PreferenceCategory>
+
+</PreferenceScreen>

@@ -2,20 +2,14 @@
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-	<Preference android:key="total_sd_storage"
-		style="?android:preferenceInformationStyle" android:title="@string/total_sd_storage" />
-
-	<Preference android:key="available_sd_storage"
-		style="?android:preferenceInformationStyle" android:title="@string/available_sd_storage" />
-
-	<Preference android:key="available_internal_storage"
-		style="?android:preferenceInformationStyle" android:title="@string/available_internal_storage" />
+	<Preference style="?android:preferenceInformationStyle"
+		android:key="sd_storage" android:title="@string/sd_storage" />
 
 	<Preference style="?android:preferenceInformationStyle"
-		android:key="total_memory" android:title="@string/total_memory"></Preference>
+		android:key="internal_storage" android:title="@string/internal_storage" />
 
-	<Preference android:key="available_memory"
-		style="?android:preferenceInformationStyle" android:title="@string/available_memory" />
+	<Preference style="?android:preferenceInformationStyle"
+		android:key="memory" android:title="@string/memory"></Preference>
 
 	<Preference style="?android:preferenceInformationStyle"
 		android:key="processor" android:title="@string/processor"></Preference>
@@ -31,5 +25,5 @@
 		<Preference android:key="refresh_status" android:title="@string/refresh" />
 		<Preference android:key="more_info" android:title="@string/more_info" />
 	</PreferenceCategory>
-	
+
 </PreferenceScreen>

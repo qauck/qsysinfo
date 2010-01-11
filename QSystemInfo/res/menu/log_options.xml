@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<item android:icon="@android:drawable/ic_menu_upload"
+		android:title="@string/send_log">
+		<menu>
+			<item android:id="@+id/mi_plain_text" android:title="@string/plain_text"></item>
+			<item android:id="@+id/mi_csv" android:title="@string/csv"></item>
+			<item android:title="@string/plain_text_zip" android:id="@+id/mi_text_compressed"></item>
+			<item android:id="@+id/mi_csv_compressed" android:title="@string/csv_zip"></item>
+		</menu>
+	</item>
+
+	<item android:icon="@android:drawable/ic_menu_preferences"
+		android:title="@string/preference" android:id="@+id/mi_preference"></item>
+
+</menu>

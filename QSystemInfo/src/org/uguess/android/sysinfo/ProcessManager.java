@@ -36,7 +36,6 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -54,7 +53,7 @@ import android.widget.AdapterView.OnItemClickListener;
 /**
  * ProcessManager
  */
-public class ProcessManager extends ListActivity
+public final class ProcessManager extends ListActivity
 {
 
 	private static final int MI_DISPLAY = 1;
@@ -326,9 +325,7 @@ public class ProcessManager extends ListActivity
 					}
 					catch ( NameNotFoundException e )
 					{
-						Log.e( ProcessManager.class.getName( ),
-								e.getLocalizedMessage( ),
-								e );
+						// just ignore this exception
 					}
 				}
 

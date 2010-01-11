@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -90,7 +89,7 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 /**
  * ApplicationManager
  */
-public class ApplicationManager extends ListActivity
+public final class ApplicationManager extends ListActivity
 {
 
 	private static final int MSG_COPING = 1;
@@ -632,7 +631,7 @@ public class ApplicationManager extends ListActivity
 					{
 						handler.sendMessage( Message.obtain( handler,
 								MSG_COPING_ERROR,
-								new IOException( MessageFormat.format( getResources( ).getString( R.string.error_create_folder ),
+								new IOException( getString( R.string.error_create_folder,
 										output.getAbsolutePath( ) ) ) ) );
 
 						return;
@@ -647,7 +646,7 @@ public class ApplicationManager extends ListActivity
 					{
 						handler.sendMessage( Message.obtain( handler,
 								MSG_COPING_ERROR,
-								new IOException( MessageFormat.format( getResources( ).getString( R.string.error_create_folder ),
+								new IOException( getString( R.string.error_create_folder,
 										sysoutput.getAbsolutePath( ) ) ) ) );
 
 						return;
@@ -662,7 +661,7 @@ public class ApplicationManager extends ListActivity
 					{
 						handler.sendMessage( Message.obtain( handler,
 								MSG_COPING_ERROR,
-								new IOException( MessageFormat.format( getResources( ).getString( R.string.error_create_folder ),
+								new IOException( getString( R.string.error_create_folder,
 										useroutput.getAbsolutePath( ) ) ) ) );
 
 						return;
@@ -812,7 +811,7 @@ public class ApplicationManager extends ListActivity
 			}
 			else if ( !ensureSDCard( ) )
 			{
-				Toast.makeText( this, R.string.sd_error, Toast.LENGTH_SHORT )
+				Toast.makeText( this, R.string.error_sdcard, Toast.LENGTH_SHORT )
 						.show( );
 			}
 			else
@@ -829,10 +828,10 @@ public class ApplicationManager extends ListActivity
 				};
 
 				new AlertDialog.Builder( this ).setTitle( R.string.warning )
-						.setMessage( MessageFormat.format( getResources( ).getString( R.string.warning_msg ),
+						.setMessage( getString( R.string.warning_msg,
 								getAppExportDir( ) ) )
 						.setPositiveButton( R.string.cont, listener )
-						.setNegativeButton( R.string.cancel, listener )
+						.setNegativeButton( android.R.string.cancel, listener )
 						.create( )
 						.show( );
 			}
@@ -892,7 +891,7 @@ public class ApplicationManager extends ListActivity
 	/**
 	 * CopyHandler
 	 */
-	class CopyHandler extends Handler
+	final class CopyHandler extends Handler
 	{
 
 		@Override
@@ -912,7 +911,7 @@ public class ApplicationManager extends ListActivity
 					{
 						Toast.makeText( ApplicationManager.this,
 								R.string.no_app_show,
-								Toast.LENGTH_SHORT );
+								Toast.LENGTH_SHORT ).show( );
 					}
 
 					break;
@@ -920,7 +919,7 @@ public class ApplicationManager extends ListActivity
 
 					if ( progress != null )
 					{
-						progress.setMessage( MessageFormat.format( getResources( ).getString( R.string.exporting ),
+						progress.setMessage( getString( R.string.exporting,
 								msg.obj ) );
 						progress.setProgress( progress.getProgress( ) + 1 );
 					}
@@ -934,7 +933,7 @@ public class ApplicationManager extends ListActivity
 					}
 
 					Toast.makeText( ApplicationManager.this,
-							MessageFormat.format( getResources( ).getString( R.string.copy_error ),
+							getString( R.string.copy_error,
 									( (Exception) msg.obj ).getLocalizedMessage( ) ),
 							Toast.LENGTH_LONG )
 							.show( );
@@ -943,7 +942,7 @@ public class ApplicationManager extends ListActivity
 
 					if ( progress != null )
 					{
-						progress.setMessage( MessageFormat.format( getResources( ).getString( R.string.exported ),
+						progress.setMessage( getString( R.string.exported,
 								msg.obj ) );
 						progress.setProgress( progress.getMax( ) );
 						progress.dismiss( );
@@ -951,11 +950,10 @@ public class ApplicationManager extends ListActivity
 					}
 
 					Toast.makeText( ApplicationManager.this,
-							MessageFormat.format( getResources( ).getString( R.string.exported_to ),
+							getString( R.string.exported_to,
 									msg.obj,
 									getAppExportDir( ) ),
-							Toast.LENGTH_SHORT )
-							.show( );
+							Toast.LENGTH_SHORT ).show( );
 
 					Notification nc = new Notification( R.drawable.icon,
 							getResources( ).getString( R.string.export_complete ),
@@ -969,8 +967,7 @@ public class ApplicationManager extends ListActivity
 					nc.flags |= Notification.FLAG_AUTO_CANCEL;
 					nc.setLatestEventInfo( ApplicationManager.this,
 							getResources( ).getString( R.string.export_complete ),
-							MessageFormat.format( getResources( ).getString( R.string.exported ),
-									msg.obj ),
+							getString( R.string.exported, msg.obj ),
 							pit );
 
 					( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).notify( MSG_COPING_FINISHED,
@@ -1015,7 +1012,7 @@ public class ApplicationManager extends ListActivity
 	/**
 	 * PackageSizeObserver
 	 */
-	class PkgSizeObserver extends IPackageStatsObserver.Stub
+	final class PkgSizeObserver extends IPackageStatsObserver.Stub
 	{
 
 		int idx;
@@ -1039,7 +1036,7 @@ public class ApplicationManager extends ListActivity
 	/**
 	 * PackageEventReceiver
 	 */
-	class PackageEventReceiver extends BroadcastReceiver
+	final class PackageEventReceiver extends BroadcastReceiver
 	{
 
 		void registerReceiver( )
@@ -1062,7 +1059,7 @@ public class ApplicationManager extends ListActivity
 	/**
 	 * AppInfoHolder
 	 */
-	static class AppInfoHolder
+	private static final class AppInfoHolder
 	{
 
 		ApplicationInfo appInfo;
@@ -1081,7 +1078,7 @@ public class ApplicationManager extends ListActivity
 	/**
 	 * AppSettings
 	 */
-	public static class AppSettings extends PreferenceActivity
+	public static final class AppSettings extends PreferenceActivity
 	{
 
 		@Override
@@ -1164,7 +1161,7 @@ public class ApplicationManager extends ListActivity
 
 				new AlertDialog.Builder( this ).setTitle( R.string.export_dir )
 						.setPositiveButton( android.R.string.ok, listener )
-						.setNegativeButton( R.string.cancel, null )
+						.setNegativeButton( android.R.string.cancel, null )
 						.setView( txt )
 						.create( )
 						.show( );

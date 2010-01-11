@@ -4,11 +4,9 @@
 	<string name="app_name">Quick System Info</string>
 	<string name="info_not_available">Information not available</string>
 	<string name="processor">Processor</string>
-	<string name="total_memory">Total memory</string>
-	<string name="available_memory">Available memory</string>
-	<string name="total_sd_storage">Total SD card storage</string>
-	<string name="available_sd_storage">Available SD card storage</string>
-	<string name="available_internal_storage">Available internal storage</string>
+	<string name="memory">Memory</string>
+	<string name="sd_storage">SD card storage</string>
+	<string name="internal_storage">Internal storage</string>
 	<string name="battery_level">Battery level</string>
 	<string name="retrieving">Retrieving...</string>
 	<string name="about_phone">About phone</string>
@@ -16,42 +14,36 @@
 	<string name="more_info_summary">View detailed phone info</string>
 	<string name="actions">Actions</string>
 	<string name="refresh">Refresh</string>
-	<string name="manage_apps">Manage Applications</string>
-	<string name="manage_apps_summary">View and manage installed applications</string>
 	<string name="export">Export</string>
-	<string name="operations">Operations</string>
 	<string name="select_all">Select All</string>
 	<string name="deselect_all">Deselect All</string>
 	<string name="no_app_selected">No selected application to export.</string>
 	<string name="no_app_show">No application available under current filter
 		condition.</string>
 	<string name="warning">Warning</string>
-	<string name="warning_msg">Applications will be exported to ''{0}'', any
+	<string name="warning_msg">Applications will be exported to ''%s'', any
 		existing file in the folder will be overwritten, are you sure to
 		continue?</string>
 	<string name="cont">Continue</string>
-	<string name="cancel">Cancel</string>
 	<string name="start_exporting">Start exporting...</string>
-	<string name="exporting">Exporting {0}...</string>
-	<string name="copy_error">Error happened during copying: {0}</string>
-	<string name="exported">Total {0} applications exported.</string>
-	<string name="exported_to">Total {0} applications exported to ''{1}''.
-	</string>
+	<string name="exporting">Exporting %s...</string>
+	<string name="copy_error">Error happened during copying: %s</string>
+	<string name="exported">Total %s applications exported.</string>
+	<string name="exported_to">Total %s applications exported to ''%s''.</string>
 	<string name="export_complete">Export completed</string>
-	<string name="sd_error">Please ensure the SD card is mounted with necessary
-		usable storage space.</string>
+	<string name="error_sdcard">Please ensure the SD card is mounted as writable.
+	</string>
 	<string name="computing">Computing...</string>
 	<string name="about">About</string>
-	<string name="about_msg">Version {0}\r\n\r\nCreated by Shawn Q.</string>
+	<string name="about_msg">Version %s\nCreated by Shawn
+		Q.\n\nqauck.aa@gmail.com\n</string>
 	<string name="close">Close</string>
-	<string name="filter">Filter</string>
 	<string name="filter_title">Application Type</string>
 	<string name="all_apps">All</string>
 	<string name="sys_apps">System</string>
 	<string name="user_apps">User</string>
 	<string name="version">Version</string>
 	<string name="loading">Refreshing...</string>
-	<string name="manage_procs">View Processes</string>
 	<string name="end_proc_hint">- Click a task to end\n- Click me to end all
 	</string>
 	<string name="switch_to">Switch To</string>
@@ -61,8 +53,32 @@
 	<string name="tab_procs">Processes</string>
 	<string name="preference">Preferences</string>
 	<string name="export_dir">Backup Folder</string>
-	<string name="error_create_folder">Failed to create folder {0}.</string>
+	<string name="error_create_folder">Failed to create folder %s.</string>
 	<string name="error_switch_task">Cannot switch to this task.</string>
 	<string name="net_address">Network Address</string>
+	<string name="verbose">Verbose</string>
+	<string name="debug">Debug</string>
+	<string name="info">Info</string>
+	<string name="error">Error</string>
+	<string name="asser_t">Assert</string>
+	<string name="emmergency">Emmergency</string>
+	<string name="alert">Alert</string>
+	<string name="critical">Critical</string>
+	<string name="notice">Notice</string>
+	<string name="level_filter">Log Level</string>
+	<string name="tag_filter">Tag Filter</string>
+	<string name="pid_filter">PID Filter</string>
+	<string name="none">None</string>
+	<string name="no_log_info">No log item found.</string>
+	<string name="log_head">Device: %s\nModel: %s\nProduct: %s\nBrand:
+		%s\nRelease: %s\nBuild: %s\n\n</string>
+	<string name="collector_head">#Created by %s version %s\n\n</string>
+	<string name="storage_summary">Total: %s, Free: %s</string>
+	<string name="view_logs">View Logs</string>
+	<string name="send_log">Send Log</string>
+	<string name="plain_text">Plain Text</string>
+	<string name="csv">CSV</string>
+	<string name="plain_text_zip">Plain Text (Compressed)</string>
+	<string name="csv_zip">CSV (Compressed)</string>
 
 </resources>
