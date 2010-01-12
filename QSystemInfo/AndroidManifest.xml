@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="org.uguess.android.sysinfo" android:versionCode="8"
-	android:versionName="1.2.4">
+	package="org.uguess.android.sysinfo" android:versionName="1.2.5"
+	android:versionCode="9">
 
 	<application android:icon="@drawable/icon" android:label="@string/app_name">
 		<activity android:name=".QSystemInfo" android:label="@string/app_name">
@@ -17,12 +17,12 @@
 		<activity android:name=".SysInfoManager$LogViewer"></activity>
 		<activity android:name=".SysInfoManager$LogSettings"></activity>
 	</application>
-	
+
 	<uses-sdk android:minSdkVersion="3" />
 	<uses-permission android:name="android.permission.GET_PACKAGE_SIZE"></uses-permission>
 	<uses-permission android:name="android.permission.GET_TASKS"></uses-permission>
 	<uses-permission android:name="android.permission.RESTART_PACKAGES"></uses-permission>
 	<uses-permission android:name="android.permission.INTERNET"></uses-permission>
 	<uses-permission android:name="android.permission.READ_LOGS"></uses-permission>
-	
+
 </manifest> 
