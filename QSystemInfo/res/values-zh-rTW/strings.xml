@@ -54,7 +54,7 @@
 	<string name="debug">除错</string>
 	<string name="info">資訊</string>
 	<string name="error">錯誤</string>
-	<string name="asser_t">斷言</string>
+	<string name="asser_t">嚴重</string>
 	<string name="emmergency">危急</string>
 	<string name="alert">警報</string>
 	<string name="critical">嚴重</string>

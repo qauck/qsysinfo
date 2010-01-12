@@ -60,7 +60,7 @@
 	<string name="debug">Debug</string>
 	<string name="info">Info</string>
 	<string name="error">Error</string>
-	<string name="asser_t">Assert</string>
+	<string name="asser_t">Fatal</string>
 	<string name="emmergency">Emmergency</string>
 	<string name="alert">Alert</string>
 	<string name="critical">Critical</string>
