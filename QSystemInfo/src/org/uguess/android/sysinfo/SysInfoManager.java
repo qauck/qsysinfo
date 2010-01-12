@@ -1175,7 +1175,7 @@ public final class SysInfoManager extends PreferenceActivity
 		{
 			int levelOffset = line.indexOf( '>' );
 
-			if ( levelOffset == -1 )
+			if ( levelOffset < 1 )
 			{
 				return null;
 			}
@@ -1192,7 +1192,7 @@ public final class SysInfoManager extends PreferenceActivity
 
 			int timeOffset = line.indexOf( ']' );
 
-			if ( timeOffset != -1 )
+			if ( timeOffset != -1 && timeOffset > levelOffset )
 			{
 				String timeRaw = line.substring( levelOffset + 1, timeOffset )
 						.trim( );
