@@ -65,12 +65,14 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
+import android.text.ClipboardManager;
 import android.text.InputFilter;
 import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.text.method.DigitsKeyListener;
 import android.text.util.Linkify;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -78,11 +80,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 
 /**
  * SysInfoManager
@@ -566,7 +570,36 @@ public final class SysInfoManager extends PreferenceActivity
 
 			getListView( ).setFastScrollEnabled( true );
 
+			registerForContextMenu( getListView( ) );
+
 			refreshLogs( );
+		}
+
+		@Override
+		public void onCreateContextMenu( ContextMenu menu, View v,
+				ContextMenuInfo menuInfo )
+		{
+			menu.setHeaderTitle( R.string.actions );
+			menu.add( R.string.copy_text );
+		}
+
+		@Override
+		public boolean onContextItemSelected( MenuItem item )
+		{
+			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
+			LogItem log = (LogItem) getListView( ).getItemAtPosition( pos );
+
+			if ( log != null && log.getMsg( ) != null )
+			{
+				ClipboardManager cm = (ClipboardManager) getSystemService( CLIPBOARD_SERVICE );
+
+				if ( cm != null )
+				{
+					cm.setText( log.getMsg( ) );
+				}
+			}
+
+			return true;
 		}
 
 		@Override

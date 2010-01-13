@@ -74,5 +74,6 @@
 	<string name="csv">CSV</string>
 	<string name="plain_text_zip">純文本 (壓縮檔)</string>
 	<string name="csv_zip">CSV (壓縮檔)</string>
+	<string name="copy_text">復制文本</string>
 
 </resources>

@@ -120,6 +120,7 @@ public final class ProcessManager extends ListActivity
 
 		if ( rap != dummyInfo )
 		{
+			menu.setHeaderTitle( R.string.actions );
 			menu.add( Menu.NONE, MI_DISPLAY, MI_DISPLAY, R.string.switch_to );
 			menu.add( Menu.NONE, MI_ENDTASK, MI_ENDTASK, R.string.end_task );
 		}

@@ -80,5 +80,6 @@
 	<string name="csv">CSV</string>
 	<string name="plain_text_zip">Plain Text (Compressed)</string>
 	<string name="csv_zip">CSV (Compressed)</string>
+	<string name="copy_text">Copy Text</string>
 
 </resources>

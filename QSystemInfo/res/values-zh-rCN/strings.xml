@@ -74,5 +74,6 @@
 	<string name="csv">CSV</string>
 	<string name="plain_text_zip">纯文本 (压缩包)</string>
 	<string name="csv_zip">CSV (压缩包)</string>
+	<string name="copy_text">复制文本</string>
 
 </resources>
