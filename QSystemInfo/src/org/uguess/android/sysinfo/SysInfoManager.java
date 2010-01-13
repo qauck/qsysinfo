@@ -410,18 +410,31 @@ public final class SysInfoManager extends PreferenceActivity
 			updateInfo( );
 			return true;
 		}
-		else if ( "manage_apps".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		else if ( "view_logs".equals( preference.getKey( ) ) ) //$NON-NLS-1$
 		{
-			Intent intent = new Intent( Intent.ACTION_VIEW );
-			intent.setClass( this, ApplicationManager.class );
-			startActivity( intent );
-			return true;
-		}
-		else if ( "manage_procs".equals( preference.getKey( ) ) ) //$NON-NLS-1$
-		{
-			Intent intent = new Intent( Intent.ACTION_VIEW );
-			intent.setClass( this, ProcessManager.class );
-			startActivity( intent );
+			OnClickListener listener = new OnClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which )
+				{
+					dialog.dismiss( );
+
+					if ( which == 0 )
+					{
+						showLog( true );
+					}
+					else
+					{
+						showLog( false );
+					}
+				}
+			};
+
+			new AlertDialog.Builder( this ).setTitle( R.string.view_logs )
+					.setItems( new CharSequence[]{
+							"Dmesg", "Logcat" //$NON-NLS-1$ //$NON-NLS-2$
+					}, listener )
+					.create( )
+					.show( );
 			return true;
 		}
 		else if ( "more_info".equals( preference.getKey( ) ) ) //$NON-NLS-1$

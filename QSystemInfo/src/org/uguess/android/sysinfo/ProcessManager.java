@@ -60,16 +60,13 @@ public final class ProcessManager extends ListActivity
 	private static final int MI_ENDTASK = 2;
 
 	private RunningAppProcessInfo dummyInfo;
-	private ListView lstProcs;
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState )
 	{
 		super.onCreate( savedInstanceState );
 
-		lstProcs = getListView( );
-
-		registerForContextMenu( lstProcs );
+		registerForContextMenu( getListView( ) );
 
 		dummyInfo = new RunningAppProcessInfo( ) {
 
@@ -78,7 +75,7 @@ public final class ProcessManager extends ListActivity
 			}
 		};
 
-		lstProcs.setOnItemClickListener( new OnItemClickListener( ) {
+		getListView( ).setOnItemClickListener( new OnItemClickListener( ) {
 
 			public void onItemClick( AdapterView<?> parent, View view,
 					int position, long id )
@@ -116,7 +113,7 @@ public final class ProcessManager extends ListActivity
 		super.onCreateContextMenu( menu, v, menuInfo );
 
 		int pos = ( (AdapterContextMenuInfo) menuInfo ).position;
-		RunningAppProcessInfo rap = (RunningAppProcessInfo) lstProcs.getItemAtPosition( pos );
+		RunningAppProcessInfo rap = (RunningAppProcessInfo) getListView( ).getItemAtPosition( pos );
 
 		if ( rap != dummyInfo )
 		{
@@ -132,7 +129,7 @@ public final class ProcessManager extends ListActivity
 		if ( item.getItemId( ) == MI_DISPLAY )
 		{
 			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
-			RunningAppProcessInfo rap = (RunningAppProcessInfo) lstProcs.getItemAtPosition( pos );
+			RunningAppProcessInfo rap = (RunningAppProcessInfo) getListView( ).getItemAtPosition( pos );
 
 			Intent it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
 			it.addCategory( Intent.CATEGORY_LAUNCHER );
@@ -179,7 +176,7 @@ public final class ProcessManager extends ListActivity
 		else if ( item.getItemId( ) == MI_ENDTASK )
 		{
 			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
-			RunningAppProcessInfo rap = (RunningAppProcessInfo) lstProcs.getItemAtPosition( pos );
+			RunningAppProcessInfo rap = (RunningAppProcessInfo) getListView( ).getItemAtPosition( pos );
 
 			ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
 
@@ -212,6 +209,8 @@ public final class ProcessManager extends ListActivity
 		ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
 
 		String self = this.getPackageName( );
+
+		ListView lstProcs = getListView( );
 
 		for ( int i = 0; i < lstProcs.getCount( ); i++ )
 		{
@@ -334,7 +333,7 @@ public final class ProcessManager extends ListActivity
 			}
 		};
 
-		lstProcs.setAdapter( adapter );
+		getListView( ).setAdapter( adapter );
 	}
 
 	private List<RunningAppProcessInfo> filter( List<RunningAppProcessInfo> list )

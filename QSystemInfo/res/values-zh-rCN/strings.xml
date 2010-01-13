@@ -75,5 +75,19 @@
 	<string name="plain_text_zip">纯文本 (压缩包)</string>
 	<string name="csv_zip">CSV (压缩包)</string>
 	<string name="copy_text">复制文本</string>
+	<string name="tab_connection">网络连接</string>
+	<string name="update_speed">更新速率</string>
+	<string name="high">高</string>
+	<string name="normal">正常</string>
+	<string name="low">低</string>
+	<string name="paused">暂停</string>
+	<string name="location_info">国家: %s\n地区: %s\n城市: %s</string>
+	<string name="no_ip_info">没有关于此IP地址的公共信息.</string>
+	<string name="query_ip_msg">正在定位远程地址...</string>
+	<string name="ip_location">IP 地址</string>
+	<string name="protocol">协议</string>
+	<string name="local_remote_addr">本地/远程地址</string>
+	<string name="state">状态</string>
+	<string name="copy_ip">复制远程地址</string>
 
 </resources>

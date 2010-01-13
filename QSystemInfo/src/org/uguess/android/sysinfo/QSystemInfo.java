@@ -47,22 +47,29 @@ public final class QSystemInfo extends TabActivity
 		it.setClass( this, SysInfoManager.class );
 		th.addTab( th.newTabSpec( SysInfoManager.class.getName( ) )
 				.setContent( it )
-				.setIndicator( getResources( ).getString( R.string.tab_info ),
+				.setIndicator( getString( R.string.tab_info ),
 						getResources( ).getDrawable( R.drawable.info ) ) );
 
 		it = new Intent( Intent.ACTION_VIEW );
 		it.setClass( this, ApplicationManager.class );
 		th.addTab( th.newTabSpec( ApplicationManager.class.getName( ) )
 				.setContent( it )
-				.setIndicator( getResources( ).getString( R.string.tab_apps ),
+				.setIndicator( getString( R.string.tab_apps ),
 						getResources( ).getDrawable( R.drawable.applications ) ) );
 
 		it = new Intent( Intent.ACTION_VIEW );
 		it.setClass( this, ProcessManager.class );
 		th.addTab( th.newTabSpec( ProcessManager.class.getName( ) )
 				.setContent( it )
-				.setIndicator( getResources( ).getString( R.string.tab_procs ),
+				.setIndicator( getString( R.string.tab_procs ),
 						getResources( ).getDrawable( R.drawable.processes ) ) );
+
+		it = new Intent( Intent.ACTION_VIEW );
+		it.setClass( this, NetStateManager.class );
+		th.addTab( th.newTabSpec( NetStateManager.class.getName( ) )
+				.setContent( it )
+				.setIndicator( getString( R.string.tab_connection ),
+						getResources( ).getDrawable( R.drawable.connection ) ) );
 	}
 
 }
