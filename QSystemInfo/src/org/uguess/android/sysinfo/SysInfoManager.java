@@ -212,9 +212,9 @@ public final class SysInfoManager extends PreferenceActivity
 
 		try
 		{
-			String netAddress = null;
+			StringBuffer sb = new StringBuffer( );
 
-			LOOP: for ( Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces( ); en.hasMoreElements( ); )
+			for ( Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces( ); en.hasMoreElements( ); )
 			{
 				NetworkInterface intf = en.nextElement( );
 				for ( Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses( ); enumIpAddr.hasMoreElements( ); )
@@ -222,11 +222,24 @@ public final class SysInfoManager extends PreferenceActivity
 					InetAddress inetAddress = enumIpAddr.nextElement( );
 					if ( !inetAddress.isLoopbackAddress( ) )
 					{
-						netAddress = inetAddress.getHostAddress( );
-						break LOOP;
+						String addr = inetAddress.getHostAddress( );
+
+						if ( !TextUtils.isEmpty( addr ) )
+						{
+							if ( sb.length( ) == 0 )
+							{
+								sb.append( addr );
+							}
+							else
+							{
+								sb.append( ", " ).append( addr ); //$NON-NLS-1$
+							}
+						}
 					}
 				}
 			}
+
+			String netAddress = sb.toString( );
 
 			findPreference( "net_address" ).setSummary( !TextUtils.isEmpty( netAddress ) ? netAddress //$NON-NLS-1$
 					: getString( R.string.info_not_available ) );
@@ -490,16 +503,6 @@ public final class SysInfoManager extends PreferenceActivity
 			showDialog( DLG_ABOUT );
 			return true;
 		}
-		else if ( item.getItemId( ) == R.id.mi_dmesg )
-		{
-			showLog( true );
-			return true;
-		}
-		else if ( item.getItemId( ) == R.id.mi_logcat )
-		{
-			showLog( false );
-			return true;
-		}
 
 		return false;
 	}
@@ -551,7 +554,23 @@ public final class SysInfoManager extends PreferenceActivity
 				{
 					case MSG_INIT_OK :
 
-						getListView( ).setAdapter( (ListAdapter) msg.obj );
+						ArrayAdapter<LogItem> adapter = (ArrayAdapter<LogItem>) getListView( ).getAdapter( );
+
+						adapter.setNotifyOnChange( false );
+
+						adapter.clear( );
+
+						ArrayList<LogItem> data = (ArrayList<LogItem>) msg.obj;
+
+						if ( data != null )
+						{
+							for ( LogItem log : data )
+							{
+								adapter.add( log );
+							}
+						}
+
+						adapter.notifyDataSetChanged( );
 
 						sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
@@ -584,6 +603,100 @@ public final class SysInfoManager extends PreferenceActivity
 			getListView( ).setFastScrollEnabled( true );
 
 			registerForContextMenu( getListView( ) );
+
+			ArrayAdapter<LogItem> adapter = new ArrayAdapter<LogItem>( LogViewer.this,
+					R.layout.log_item ) {
+
+				@Override
+				public View getView( int position, View convertView,
+						ViewGroup parent )
+				{
+					View view;
+					TextView txt_head, txt_msg;
+
+					if ( convertView == null )
+					{
+						view = LogViewer.this.getLayoutInflater( )
+								.inflate( R.layout.log_item, parent, false );
+					}
+					else
+					{
+						view = convertView;
+					}
+
+					LogItem itm = getItem( position );
+
+					txt_msg = (TextView) view.findViewById( R.id.txt_msg );
+					txt_msg.setText( itm.getMsg( ) );
+
+					txt_head = (TextView) view.findViewById( R.id.txt_head );
+
+					if ( dmesgMode )
+					{
+						txt_head.setText( formatDLog( itm ) );
+
+						switch ( itm.level )
+						{
+							case '0' :
+								txt_head.setTextColor( Color.MAGENTA );
+								break;
+							case '1' :
+								txt_head.setTextColor( Color.MAGENTA );
+								break;
+							case '2' :
+								txt_head.setTextColor( Color.RED );
+								break;
+							case '3' :
+								txt_head.setTextColor( Color.RED );
+								break;
+							case '4' :
+								txt_head.setTextColor( Color.YELLOW );
+								break;
+							case '5' :
+								txt_head.setTextColor( Color.CYAN );
+								break;
+							case '6' :
+								txt_head.setTextColor( Color.GREEN );
+								break;
+							case '7' :
+							default :
+								txt_head.setTextColor( Color.GRAY );
+								break;
+						}
+					}
+					else
+					{
+						txt_head.setText( formatCLog( itm ) );
+
+						switch ( itm.level )
+						{
+							case 'E' :
+								txt_head.setTextColor( Color.RED );
+								break;
+							case 'W' :
+								txt_head.setTextColor( Color.YELLOW );
+								break;
+							case 'I' :
+								txt_head.setTextColor( Color.GREEN );
+								break;
+							case 'D' :
+								txt_head.setTextColor( Color.CYAN );
+								break;
+							case 'A' :
+								txt_head.setTextColor( Color.MAGENTA );
+								break;
+							case 'V' :
+							default :
+								txt_head.setTextColor( Color.GRAY );
+								break;
+						}
+					}
+
+					return view;
+				}
+			};
+
+			getListView( ).setAdapter( adapter );
 
 			refreshLogs( );
 		}
@@ -1106,113 +1219,8 @@ public final class SysInfoManager extends PreferenceActivity
 					ArrayList<LogItem> logs = dmesgMode ? collectDLog( )
 							: collectCLog( );
 
-					LogItem[] data;
-					if ( logs == null )
-					{
-						data = new LogItem[0];
-					}
-					else
-					{
-						data = logs.toArray( new LogItem[logs.size( )] );
-					}
-
-					ArrayAdapter<LogItem> adapter = new ArrayAdapter<LogItem>( LogViewer.this,
-							R.layout.log_item,
-							data ) {
-
-						@Override
-						public View getView( int position, View convertView,
-								ViewGroup parent )
-						{
-							View view;
-							TextView txt_head, txt_msg;
-
-							if ( convertView == null )
-							{
-								view = LogViewer.this.getLayoutInflater( )
-										.inflate( R.layout.log_item,
-												parent,
-												false );
-							}
-							else
-							{
-								view = convertView;
-							}
-
-							LogItem itm = getItem( position );
-
-							txt_msg = (TextView) view.findViewById( R.id.txt_msg );
-							txt_msg.setText( itm.getMsg( ) );
-
-							txt_head = (TextView) view.findViewById( R.id.txt_head );
-
-							if ( dmesgMode )
-							{
-								txt_head.setText( formatDLog( itm ) );
-
-								switch ( itm.level )
-								{
-									case '0' :
-										txt_head.setTextColor( Color.MAGENTA );
-										break;
-									case '1' :
-										txt_head.setTextColor( Color.MAGENTA );
-										break;
-									case '2' :
-										txt_head.setTextColor( Color.RED );
-										break;
-									case '3' :
-										txt_head.setTextColor( Color.RED );
-										break;
-									case '4' :
-										txt_head.setTextColor( Color.YELLOW );
-										break;
-									case '5' :
-										txt_head.setTextColor( Color.CYAN );
-										break;
-									case '6' :
-										txt_head.setTextColor( Color.GREEN );
-										break;
-									case '7' :
-									default :
-										txt_head.setTextColor( Color.GRAY );
-										break;
-								}
-							}
-							else
-							{
-								txt_head.setText( formatCLog( itm ) );
-
-								switch ( itm.level )
-								{
-									case 'E' :
-										txt_head.setTextColor( Color.RED );
-										break;
-									case 'W' :
-										txt_head.setTextColor( Color.YELLOW );
-										break;
-									case 'I' :
-										txt_head.setTextColor( Color.GREEN );
-										break;
-									case 'D' :
-										txt_head.setTextColor( Color.CYAN );
-										break;
-									case 'A' :
-										txt_head.setTextColor( Color.MAGENTA );
-										break;
-									case 'V' :
-									default :
-										txt_head.setTextColor( Color.GRAY );
-										break;
-								}
-							}
-
-							return view;
-						}
-					};
-
 					handler.sendMessage( handler.obtainMessage( MSG_INIT_OK,
-							adapter ) );
+							logs ) );
 				}
 			} ).start( );
 		}

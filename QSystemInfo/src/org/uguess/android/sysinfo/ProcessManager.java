@@ -96,6 +96,107 @@ public final class ProcessManager extends ListActivity
 				}
 			}
 		} );
+
+		final PackageManager pm = getPackageManager( );
+
+		ArrayAdapter<RunningAppProcessInfo> adapter = new ArrayAdapter<RunningAppProcessInfo>( this,
+				R.layout.proc_item ) {
+
+			public android.view.View getView( int position,
+					android.view.View convertView, android.view.ViewGroup parent )
+			{
+				View view;
+				TextView txt_name;
+				ImageView img_type;
+
+				if ( convertView == null )
+				{
+					view = ProcessManager.this.getLayoutInflater( )
+							.inflate( R.layout.proc_item, parent, false );
+				}
+				else
+				{
+					view = convertView;
+				}
+
+				RunningAppProcessInfo itm = getItem( position );
+
+				txt_name = (TextView) view.findViewById( R.id.txt_proc_name );
+				txt_name.setText( itm.processName );
+
+				img_type = (ImageView) view.findViewById( R.id.img_proc_icon );
+
+				if ( itm == dummyInfo )
+				{
+					if ( txt_name.getTypeface( ) == null
+							|| txt_name.getTypeface( ).getStyle( ) != Typeface.ITALIC )
+					{
+						txt_name.setTypeface( Typeface.DEFAULT, Typeface.ITALIC );
+					}
+
+					txt_name.setTextColor( Color.WHITE );
+
+					img_type.setImageDrawable( null );
+				}
+				else
+				{
+					if ( txt_name.getTypeface( ) == null
+							|| txt_name.getTypeface( ).getStyle( ) != Typeface.NORMAL )
+					{
+						txt_name.setTypeface( Typeface.DEFAULT, Typeface.NORMAL );
+					}
+
+					switch ( itm.importance )
+					{
+						case RunningAppProcessInfo.IMPORTANCE_SERVICE :
+							txt_name.setTextColor( Color.GRAY );
+							break;
+						case RunningAppProcessInfo.IMPORTANCE_BACKGROUND :
+							txt_name.setTextColor( Color.YELLOW );
+							break;
+						default :
+							txt_name.setTextColor( Color.WHITE );
+					}
+
+					try
+					{
+						ApplicationInfo ai = pm.getApplicationInfo( itm.processName,
+								0 );
+
+						if ( ai != null )
+						{
+							CharSequence label = pm.getApplicationLabel( ai );
+
+							Drawable icon = pm.getApplicationIcon( ai );
+
+							if ( label != null )
+							{
+								txt_name.setText( label );
+							}
+
+							if ( icon == null )
+							{
+								icon = pm.getDefaultActivityIcon( );
+							}
+
+							img_type.setImageDrawable( icon );
+						}
+						else
+						{
+							img_type.setImageDrawable( pm.getDefaultActivityIcon( ) );
+						}
+					}
+					catch ( NameNotFoundException e )
+					{
+						// just ignore this exception
+					}
+				}
+
+				return view;
+			}
+		};
+
+		getListView( ).setAdapter( adapter );
 	}
 
 	@Override
@@ -229,111 +330,22 @@ public final class ProcessManager extends ListActivity
 	{
 		ActivityManager am = (ActivityManager) this.getSystemService( ACTIVITY_SERVICE );
 
-		final PackageManager pm = getPackageManager( );
-
 		List<RunningAppProcessInfo> procs = am.getRunningAppProcesses( );
 
 		procs = filter( procs );
 
-		ArrayAdapter<RunningAppProcessInfo> adapter = new ArrayAdapter<RunningAppProcessInfo>( this,
-				R.layout.proc_item,
-				procs.toArray( new RunningAppProcessInfo[procs.size( )] ) ) {
+		ArrayAdapter<RunningAppProcessInfo> adapter = (ArrayAdapter<RunningAppProcessInfo>) getListView( ).getAdapter( );
 
-			public android.view.View getView( int position,
-					android.view.View convertView, android.view.ViewGroup parent )
-			{
-				View view;
-				TextView txt_name;
-				ImageView img_type;
+		adapter.setNotifyOnChange( false );
 
-				if ( convertView == null )
-				{
-					view = ProcessManager.this.getLayoutInflater( )
-							.inflate( R.layout.proc_item, parent, false );
-				}
-				else
-				{
-					view = convertView;
-				}
+		adapter.clear( );
 
-				RunningAppProcessInfo itm = getItem( position );
+		for ( RunningAppProcessInfo rap : procs )
+		{
+			adapter.add( rap );
+		}
 
-				txt_name = (TextView) view.findViewById( R.id.txt_proc_name );
-				txt_name.setText( itm.processName );
-
-				img_type = (ImageView) view.findViewById( R.id.img_proc_icon );
-
-				if ( itm == dummyInfo )
-				{
-					if ( txt_name.getTypeface( ) == null
-							|| txt_name.getTypeface( ).getStyle( ) != Typeface.ITALIC )
-					{
-						txt_name.setTypeface( Typeface.DEFAULT, Typeface.ITALIC );
-					}
-
-					txt_name.setTextColor( Color.WHITE );
-
-					img_type.setImageDrawable( null );
-				}
-				else
-				{
-					if ( txt_name.getTypeface( ) == null
-							|| txt_name.getTypeface( ).getStyle( ) != Typeface.NORMAL )
-					{
-						txt_name.setTypeface( Typeface.DEFAULT, Typeface.NORMAL );
-					}
-
-					switch ( itm.importance )
-					{
-						case RunningAppProcessInfo.IMPORTANCE_SERVICE :
-							txt_name.setTextColor( Color.GRAY );
-							break;
-						case RunningAppProcessInfo.IMPORTANCE_BACKGROUND :
-							txt_name.setTextColor( Color.YELLOW );
-							break;
-						default :
-							txt_name.setTextColor( Color.WHITE );
-					}
-
-					try
-					{
-						ApplicationInfo ai = pm.getApplicationInfo( itm.processName,
-								0 );
-
-						if ( ai != null )
-						{
-							CharSequence label = pm.getApplicationLabel( ai );
-
-							Drawable icon = pm.getApplicationIcon( ai );
-
-							if ( label != null )
-							{
-								txt_name.setText( label );
-							}
-
-							if ( icon == null )
-							{
-								icon = pm.getDefaultActivityIcon( );
-							}
-
-							img_type.setImageDrawable( icon );
-						}
-						else
-						{
-							img_type.setImageDrawable( pm.getDefaultActivityIcon( ) );
-						}
-					}
-					catch ( NameNotFoundException e )
-					{
-						// just ignore this exception
-					}
-				}
-
-				return view;
-			}
-		};
-
-		getListView( ).setAdapter( adapter );
+		adapter.notifyDataSetChanged( );
 	}
 
 	private List<RunningAppProcessInfo> filter( List<RunningAppProcessInfo> list )

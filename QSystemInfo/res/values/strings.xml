@@ -31,7 +31,8 @@
 	<string name="exported">Total %s applications exported.</string>
 	<string name="exported_to">Total %s applications exported to ''%s''.</string>
 	<string name="export_complete">Export completed</string>
-	<string name="error_sdcard">Please ensure the SD card is mounted as writable.
+	<string name="error_sdcard">Please ensure the SD card is mounted as writable
+		with sufficient free space.
 	</string>
 	<string name="computing">Computing...</string>
 	<string name="about">About</string>
@@ -81,7 +82,7 @@
 	<string name="plain_text_zip">Plain Text (Compressed)</string>
 	<string name="csv_zip">CSV (Compressed)</string>
 	<string name="copy_text">Copy Text</string>
-	<string name="tab_connection">Connections</string>
+	<string name="tab_connection">Net States</string>
 	<string name="update_speed">Update Speed</string>
 	<string name="high">High</string>
 	<string name="normal">Normal</string>
@@ -89,8 +90,9 @@
 	<string name="paused">Paused</string>
 	<string name="location_info">Country: %s\nRegion: %s\nCity: %s</string>
 	<string name="no_ip_info">No public information available for this IP
-		address.</string>
-	<string name="query_ip_msg">Locating Remote Address...</string>
+		address
+		at this time.</string>
+	<string name="query_ip_msg">Acquiring Remote Information...</string>
 	<string name="ip_location">IP Location</string>
 	<string name="protocol">Protocol</string>
 	<string name="local_remote_addr">Local/Remote Address</string>

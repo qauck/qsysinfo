@@ -213,6 +213,61 @@ public final class NetStateManager extends ListActivity
 				}
 			}
 		} );
+
+		ArrayAdapter<ConnectionItem> adapter = new ArrayAdapter<ConnectionItem>( this,
+				R.layout.net_item ) {
+
+			public android.view.View getView( int position,
+					android.view.View convertView, android.view.ViewGroup parent )
+			{
+				View view;
+				TextView txt_proto, txt_ip, txt_state;
+
+				if ( convertView == null )
+				{
+					view = NetStateManager.this.getLayoutInflater( )
+							.inflate( R.layout.net_item, parent, false );
+				}
+				else
+				{
+					view = convertView;
+				}
+
+				ConnectionItem itm = getItem( position );
+
+				txt_proto = (TextView) view.findViewById( R.id.txt_proto );
+				txt_ip = (TextView) view.findViewById( R.id.txt_ip );
+				txt_state = (TextView) view.findViewById( R.id.txt_state );
+
+				txt_proto.setText( itm.proto );
+				txt_ip.setText( itm.ip );
+				txt_state.setText( itm.state );
+
+				if ( itm == dummyInfo )
+				{
+					setFont( txt_proto, Typeface.BOLD );
+					setFont( txt_ip, Typeface.BOLD );
+					setFont( txt_state, Typeface.BOLD );
+
+					txt_proto.setTextColor( Color.WHITE );
+					txt_ip.setTextColor( Color.WHITE );
+					txt_state.setTextColor( Color.WHITE );
+				}
+				else
+				{
+					txt_proto.setTextAppearance( NetStateManager.this,
+							android.R.style.TextAppearance_Small );
+					txt_ip.setTextAppearance( NetStateManager.this,
+							android.R.style.TextAppearance_Small );
+					txt_state.setTextAppearance( NetStateManager.this,
+							android.R.style.TextAppearance_Small );
+				}
+
+				return view;
+			}
+		};
+
+		getListView( ).setAdapter( adapter );
 	}
 
 	@Override
@@ -317,7 +372,7 @@ public final class NetStateManager extends ListActivity
 	{
 		if ( ip != null )
 		{
-			int idx = ip.indexOf( ':' );
+			int idx = ip.lastIndexOf( ':' );
 
 			if ( idx != -1 )
 			{
@@ -463,61 +518,18 @@ public final class NetStateManager extends ListActivity
 			data.addAll( items );
 		}
 
-		ArrayAdapter<ConnectionItem> adapter = new ArrayAdapter<ConnectionItem>( this,
-				R.layout.net_item,
-				data ) {
+		ArrayAdapter<ConnectionItem> adapter = (ArrayAdapter<ConnectionItem>) getListView( ).getAdapter( );
 
-			public android.view.View getView( int position,
-					android.view.View convertView, android.view.ViewGroup parent )
-			{
-				View view;
-				TextView txt_proto, txt_ip, txt_state;
+		adapter.setNotifyOnChange( false );
 
-				if ( convertView == null )
-				{
-					view = NetStateManager.this.getLayoutInflater( )
-							.inflate( R.layout.net_item, parent, false );
-				}
-				else
-				{
-					view = convertView;
-				}
+		adapter.clear( );
 
-				ConnectionItem itm = getItem( position );
+		for ( ConnectionItem ci : data )
+		{
+			adapter.add( ci );
+		}
 
-				txt_proto = (TextView) view.findViewById( R.id.txt_proto );
-				txt_ip = (TextView) view.findViewById( R.id.txt_ip );
-				txt_state = (TextView) view.findViewById( R.id.txt_state );
-
-				txt_proto.setText( itm.proto );
-				txt_ip.setText( itm.ip );
-				txt_state.setText( itm.state );
-
-				if ( itm == dummyInfo )
-				{
-					setFont( txt_proto, Typeface.BOLD );
-					setFont( txt_ip, Typeface.BOLD );
-					setFont( txt_state, Typeface.BOLD );
-
-					txt_proto.setTextColor( Color.WHITE );
-					txt_ip.setTextColor( Color.WHITE );
-					txt_state.setTextColor( Color.WHITE );
-				}
-				else
-				{
-					txt_proto.setTextAppearance( NetStateManager.this,
-							android.R.style.TextAppearance_Small );
-					txt_ip.setTextAppearance( NetStateManager.this,
-							android.R.style.TextAppearance_Small );
-					txt_state.setTextAppearance( NetStateManager.this,
-							android.R.style.TextAppearance_Small );
-				}
-
-				return view;
-			}
-		};
-
-		getListView( ).setAdapter( adapter );
+		adapter.notifyDataSetChanged( );
 	}
 
 	private void setFont( TextView txt, int type )

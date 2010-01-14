@@ -71,7 +71,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -79,7 +78,6 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -136,8 +134,6 @@ public final class ApplicationManager extends ListActivity
 
 	private ListView lstApps;
 
-	private CopyHandler handler = new CopyHandler( );
-
 	private PackageEventReceiver pkgEventReceiver = new PackageEventReceiver( );
 
 	private ProgressDialog progress;
@@ -148,13 +144,163 @@ public final class ApplicationManager extends ListActivity
 
 	private boolean needReload;
 
+	private Handler handler = new Handler( ) {
+
+		@Override
+		public void handleMessage( Message msg )
+		{
+			AppInfoHolder holder;
+
+			switch ( msg.what )
+			{
+				case MSG_INIT_OK :
+
+					ArrayAdapter<AppInfoHolder> adapter = (ArrayAdapter<AppInfoHolder>) getListView( ).getAdapter( );
+
+					adapter.setNotifyOnChange( false );
+
+					adapter.clear( );
+
+					ArrayList<AppInfoHolder> data = (ArrayList<AppInfoHolder>) msg.obj;
+
+					if ( data != null )
+					{
+						for ( AppInfoHolder info : data )
+						{
+							adapter.add( info );
+						}
+					}
+
+					adapter.notifyDataSetChanged( );
+
+					sendEmptyMessage( MSG_DISMISS_PROGRESS );
+
+					if ( lstApps.getCount( ) == 0 )
+					{
+						Toast.makeText( ApplicationManager.this,
+								R.string.no_app_show,
+								Toast.LENGTH_SHORT ).show( );
+					}
+
+					break;
+				case MSG_COPING :
+
+					if ( progress != null )
+					{
+						progress.setMessage( getString( R.string.exporting,
+								msg.obj ) );
+						progress.setProgress( progress.getProgress( ) + 1 );
+					}
+					break;
+				case MSG_COPING_ERROR :
+
+					if ( progress != null )
+					{
+						progress.dismiss( );
+						progress = null;
+					}
+
+					Toast.makeText( ApplicationManager.this,
+							getString( R.string.copy_error,
+									( (Exception) msg.obj ).getLocalizedMessage( ) ),
+							Toast.LENGTH_LONG )
+							.show( );
+					break;
+				case MSG_COPING_FINISHED :
+
+					if ( progress != null )
+					{
+						progress.setMessage( getString( R.string.exported,
+								msg.obj ) );
+						progress.setProgress( progress.getMax( ) );
+						progress.dismiss( );
+						progress = null;
+					}
+
+					Toast.makeText( ApplicationManager.this,
+							getString( R.string.exported_to,
+									msg.obj,
+									getAppExportDir( ) ),
+							Toast.LENGTH_SHORT ).show( );
+
+					Notification nc = new Notification( R.drawable.icon,
+							getResources( ).getString( R.string.export_complete ),
+							System.currentTimeMillis( ) );
+
+					PendingIntent pit = PendingIntent.getActivity( ApplicationManager.this,
+							0,
+							new Intent( ),
+							0 );
+
+					nc.flags |= Notification.FLAG_AUTO_CANCEL;
+					nc.setLatestEventInfo( ApplicationManager.this,
+							getResources( ).getString( R.string.export_complete ),
+							getString( R.string.exported, msg.obj ),
+							pit );
+
+					( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).notify( MSG_COPING_FINISHED,
+							nc );
+					break;
+				case MSG_DISMISS_PROGRESS :
+
+					if ( progress != null )
+					{
+						progress.dismiss( );
+						progress = null;
+					}
+					break;
+				case MSG_REFRESH_PKG_SIZE :
+
+					// to ignore some outdated requests
+					if ( msg.arg1 < lstApps.getCount( ) )
+					{
+						PackageStats ps = (PackageStats) msg.obj;
+						holder = (AppInfoHolder) lstApps.getItemAtPosition( msg.arg1 );
+						holder.size = Formatter.formatFileSize( ApplicationManager.this,
+								ps.codeSize )
+								+ " + " //$NON-NLS-1$
+								+ Formatter.formatFileSize( ApplicationManager.this,
+										ps.dataSize );
+
+						( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
+					}
+					break;
+				case MSG_REFRESH_PKG_LABEL :
+
+					ArrayList<CharSequence> labels = (ArrayList<CharSequence>) msg.obj;
+
+					for ( int i = 0; i < labels.size( ); i++ )
+					{
+						holder = (AppInfoHolder) lstApps.getItemAtPosition( i );
+
+						holder.label = labels.get( i );
+					}
+
+					( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
+					break;
+				case MSG_REFRESH_PKG_ICON :
+
+					ArrayList<Drawable> icons = (ArrayList<Drawable>) msg.obj;
+
+					for ( int i = 0; i < icons.size( ); i++ )
+					{
+						holder = (AppInfoHolder) lstApps.getItemAtPosition( i );
+
+						holder.icon = icons.get( i );
+					}
+
+					( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
+					break;
+			}
+		}
+	};
+
 	private OnCheckedChangeListener checkListener = new OnCheckedChangeListener( ) {
 
 		public void onCheckedChanged( CompoundButton buttonView,
 				boolean isChecked )
 		{
-			( (AppInfoHolder) lstApps.getItemAtPosition( (Integer) buttonView.getTag( ) ) ).checked = isChecked ? Boolean.TRUE
-					: null;
+			( (AppInfoHolder) lstApps.getItemAtPosition( (Integer) buttonView.getTag( ) ) ).checked = isChecked;
 		}
 	};
 
@@ -188,6 +334,80 @@ public final class ApplicationManager extends ListActivity
 				startActivity( intent );
 			}
 		} );
+
+		ArrayAdapter<AppInfoHolder> adapter = new ArrayAdapter<AppInfoHolder>( ApplicationManager.this,
+				R.layout.app_item ) {
+
+			public android.view.View getView( int position,
+					android.view.View convertView, android.view.ViewGroup parent )
+			{
+				View view;
+				TextView txt_name, txt_size, txt_ver;
+				ImageView img_type;
+				CheckBox ckb_app;
+
+				if ( convertView == null )
+				{
+					view = ApplicationManager.this.getLayoutInflater( )
+							.inflate( R.layout.app_item, parent, false );
+				}
+				else
+				{
+					view = convertView;
+				}
+
+				AppInfoHolder itm = getItem( position );
+
+				txt_name = (TextView) view.findViewById( R.id.app_name );
+				if ( itm.label != null )
+				{
+					txt_name.setText( itm.label );
+				}
+				else
+				{
+					txt_name.setText( itm.appInfo.packageName );
+				}
+
+				txt_ver = (TextView) view.findViewById( R.id.app_version );
+				if ( itm.version != null )
+				{
+					txt_ver.setText( versionPrefix + " " + itm.version ); //$NON-NLS-1$
+				}
+				else
+				{
+					txt_ver.setText( "" ); //$NON-NLS-1$
+				}
+
+				txt_size = (TextView) view.findViewById( R.id.app_size );
+				if ( itm.size != null )
+				{
+					txt_size.setText( itm.size );
+				}
+				else
+				{
+					txt_size.setText( R.string.computing );
+				}
+
+				img_type = (ImageView) view.findViewById( R.id.img_app_icon );
+				if ( itm.icon != null )
+				{
+					img_type.setImageDrawable( itm.icon );
+				}
+				else
+				{
+					img_type.setImageDrawable( defaultIcon );
+				}
+
+				ckb_app = (CheckBox) view.findViewById( R.id.ckb_app );
+				ckb_app.setTag( position );
+				ckb_app.setChecked( itm.checked );
+				ckb_app.setOnCheckedChangeListener( checkListener );
+
+				return view;
+			}
+		};
+
+		lstApps.setAdapter( adapter );
 
 		pkgEventReceiver.registerReceiver( );
 
@@ -303,83 +523,8 @@ public final class ApplicationManager extends ListActivity
 					dataList.add( holder );
 				}
 
-				ArrayAdapter<AppInfoHolder> adapter = new ArrayAdapter<AppInfoHolder>( ApplicationManager.this,
-						R.layout.app_item,
-						dataList ) {
-
-					public android.view.View getView( int position,
-							android.view.View convertView,
-							android.view.ViewGroup parent )
-					{
-						View view;
-						TextView txt_name, txt_size, txt_ver;
-						ImageView img_type;
-						CheckBox ckb_app;
-
-						if ( convertView == null )
-						{
-							view = ApplicationManager.this.getLayoutInflater( )
-									.inflate( R.layout.app_item, parent, false );
-						}
-						else
-						{
-							view = convertView;
-						}
-
-						AppInfoHolder itm = getItem( position );
-
-						txt_name = (TextView) view.findViewById( R.id.app_name );
-						if ( itm.label != null )
-						{
-							txt_name.setText( itm.label );
-						}
-						else
-						{
-							txt_name.setText( itm.appInfo.packageName );
-						}
-
-						txt_ver = (TextView) view.findViewById( R.id.app_version );
-						if ( itm.version != null )
-						{
-							txt_ver.setText( versionPrefix + " " + itm.version ); //$NON-NLS-1$
-						}
-						else
-						{
-							txt_ver.setText( "" ); //$NON-NLS-1$
-						}
-
-						txt_size = (TextView) view.findViewById( R.id.app_size );
-						if ( itm.size != null )
-						{
-							txt_size.setText( itm.size );
-						}
-						else
-						{
-							txt_size.setText( R.string.computing );
-						}
-
-						img_type = (ImageView) view.findViewById( R.id.img_app_icon );
-						if ( itm.icon != null )
-						{
-							img_type.setImageDrawable( itm.icon );
-						}
-						else
-						{
-							img_type.setImageDrawable( defaultIcon );
-						}
-
-						ckb_app = (CheckBox) view.findViewById( R.id.ckb_app );
-						ckb_app.setTag( position );
-						ckb_app.setChecked( itm.checked != null
-								&& itm.checked.booleanValue( ) );
-						ckb_app.setOnCheckedChangeListener( checkListener );
-
-						return view;
-					}
-				};
-
 				handler.sendMessage( handler.obtainMessage( MSG_INIT_OK,
-						adapter ) );
+						dataList ) );
 
 				new Thread( new Runnable( ) {
 
@@ -487,90 +632,6 @@ public final class ApplicationManager extends ListActivity
 		}
 	}
 
-	private void refreshPkgSize( int idx )
-	{
-		int count = lstApps.getChildCount( );
-
-		for ( int i = 0; i < count; i++ )
-		{
-			ViewGroup vg = (ViewGroup) lstApps.getChildAt( i );
-
-			CheckBox ckb_app = (CheckBox) vg.findViewById( R.id.ckb_app );
-			int pos = ( (Integer) ckb_app.getTag( ) ).intValue( );
-
-			if ( pos == idx )
-			{
-				String size = ( (AppInfoHolder) lstApps.getItemAtPosition( idx ) ).size;
-
-				if ( size != null )
-				{
-					TextView txt_size = (TextView) vg.findViewById( R.id.app_size );
-
-					txt_size.setText( size );
-				}
-				break;
-			}
-		}
-	}
-
-	private void refreshPkgLabel( ArrayList<CharSequence> labels )
-	{
-		for ( int i = 0; i < labels.size( ); i++ )
-		{
-			AppInfoHolder holder = (AppInfoHolder) lstApps.getItemAtPosition( i );
-
-			holder.label = labels.get( i );
-		}
-
-		int count = lstApps.getChildCount( );
-
-		for ( int i = 0; i < count; i++ )
-		{
-			ViewGroup vg = (ViewGroup) lstApps.getChildAt( i );
-
-			CheckBox ckb_app = (CheckBox) vg.findViewById( R.id.ckb_app );
-			int pos = ( (Integer) ckb_app.getTag( ) ).intValue( );
-
-			CharSequence label = labels.get( pos );
-
-			if ( label != null )
-			{
-				TextView txt_name = (TextView) vg.findViewById( R.id.app_name );
-
-				txt_name.setText( label );
-			}
-		}
-	}
-
-	private void refreshPkgIcon( ArrayList<Drawable> icons )
-	{
-		for ( int i = 0; i < icons.size( ); i++ )
-		{
-			AppInfoHolder holder = (AppInfoHolder) lstApps.getItemAtPosition( i );
-
-			holder.icon = icons.get( i );
-		}
-
-		int count = lstApps.getChildCount( );
-
-		for ( int i = 0; i < count; i++ )
-		{
-			ViewGroup vg = (ViewGroup) lstApps.getChildAt( i );
-
-			CheckBox ckb_app = (CheckBox) vg.findViewById( R.id.ckb_app );
-			int pos = ( (Integer) ckb_app.getTag( ) ).intValue( );
-
-			Drawable icon = icons.get( pos );
-
-			if ( icon != null )
-			{
-				ImageView img_icon = (ImageView) vg.findViewById( R.id.img_app_icon );
-
-				img_icon.setImageDrawable( icon );
-			}
-		}
-	}
-
 	private boolean ensureSDCard( )
 	{
 		String state = Environment.getExternalStorageState( );
@@ -588,7 +649,7 @@ public final class ApplicationManager extends ListActivity
 		{
 			AppInfoHolder holder = (AppInfoHolder) lstApps.getItemAtPosition( i );
 
-			if ( holder.checked != null && holder.checked.booleanValue( ) )
+			if ( holder.checked )
 			{
 				apps.add( holder.appInfo );
 			}
@@ -868,145 +929,16 @@ public final class ApplicationManager extends ListActivity
 
 	private void toggleAllSelection( boolean selected )
 	{
-		// reset visible view item states
-		int count = lstApps.getChildCount( );
-		for ( int i = 0; i < count; i++ )
-		{
-			ViewGroup vg = (ViewGroup) lstApps.getChildAt( i );
-
-			CheckBox ckb_app = (CheckBox) vg.findViewById( R.id.ckb_app );
-			ckb_app.setChecked( selected );
-		}
-
 		// reset hidden item states
 		int totalCount = lstApps.getCount( );
 		for ( int i = 0; i < totalCount; i++ )
 		{
 			AppInfoHolder holder = (AppInfoHolder) lstApps.getItemAtPosition( i );
 
-			holder.checked = selected ? Boolean.TRUE : null;
+			holder.checked = selected;
 		}
-	}
 
-	/**
-	 * CopyHandler
-	 */
-	final class CopyHandler extends Handler
-	{
-
-		@Override
-		public void handleMessage( Message msg )
-		{
-			AppInfoHolder holder;
-
-			switch ( msg.what )
-			{
-				case MSG_INIT_OK :
-
-					lstApps.setAdapter( (ListAdapter) msg.obj );
-
-					sendEmptyMessage( MSG_DISMISS_PROGRESS );
-
-					if ( lstApps.getCount( ) == 0 )
-					{
-						Toast.makeText( ApplicationManager.this,
-								R.string.no_app_show,
-								Toast.LENGTH_SHORT ).show( );
-					}
-
-					break;
-				case MSG_COPING :
-
-					if ( progress != null )
-					{
-						progress.setMessage( getString( R.string.exporting,
-								msg.obj ) );
-						progress.setProgress( progress.getProgress( ) + 1 );
-					}
-					break;
-				case MSG_COPING_ERROR :
-
-					if ( progress != null )
-					{
-						progress.dismiss( );
-						progress = null;
-					}
-
-					Toast.makeText( ApplicationManager.this,
-							getString( R.string.copy_error,
-									( (Exception) msg.obj ).getLocalizedMessage( ) ),
-							Toast.LENGTH_LONG )
-							.show( );
-					break;
-				case MSG_COPING_FINISHED :
-
-					if ( progress != null )
-					{
-						progress.setMessage( getString( R.string.exported,
-								msg.obj ) );
-						progress.setProgress( progress.getMax( ) );
-						progress.dismiss( );
-						progress = null;
-					}
-
-					Toast.makeText( ApplicationManager.this,
-							getString( R.string.exported_to,
-									msg.obj,
-									getAppExportDir( ) ),
-							Toast.LENGTH_SHORT ).show( );
-
-					Notification nc = new Notification( R.drawable.icon,
-							getResources( ).getString( R.string.export_complete ),
-							System.currentTimeMillis( ) );
-
-					PendingIntent pit = PendingIntent.getActivity( ApplicationManager.this,
-							0,
-							new Intent( ),
-							0 );
-
-					nc.flags |= Notification.FLAG_AUTO_CANCEL;
-					nc.setLatestEventInfo( ApplicationManager.this,
-							getResources( ).getString( R.string.export_complete ),
-							getString( R.string.exported, msg.obj ),
-							pit );
-
-					( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).notify( MSG_COPING_FINISHED,
-							nc );
-					break;
-				case MSG_DISMISS_PROGRESS :
-
-					if ( progress != null )
-					{
-						progress.dismiss( );
-						progress = null;
-					}
-					break;
-				case MSG_REFRESH_PKG_SIZE :
-
-					// to ignore some outdated requests
-					if ( msg.arg1 < lstApps.getCount( ) )
-					{
-						PackageStats ps = (PackageStats) msg.obj;
-						holder = (AppInfoHolder) lstApps.getItemAtPosition( msg.arg1 );
-						holder.size = Formatter.formatFileSize( ApplicationManager.this,
-								ps.codeSize )
-								+ " + " //$NON-NLS-1$
-								+ Formatter.formatFileSize( ApplicationManager.this,
-										ps.dataSize );
-
-						refreshPkgSize( msg.arg1 );
-					}
-					break;
-				case MSG_REFRESH_PKG_LABEL :
-
-					refreshPkgLabel( (ArrayList<CharSequence>) msg.obj );
-					break;
-				case MSG_REFRESH_PKG_ICON :
-
-					refreshPkgIcon( (ArrayList<Drawable>) msg.obj );
-					break;
-			}
-		}
+		( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
 	}
 
 	/**
@@ -1072,7 +1004,7 @@ public final class ApplicationManager extends ListActivity
 
 		String size;
 
-		Boolean checked;
+		boolean checked;
 	}
 
 	/**

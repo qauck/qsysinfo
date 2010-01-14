@@ -1,12 +1,5 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-	<item android:title="@string/view_logs" android:icon="@android:drawable/ic_menu_today">
-		<menu>
-			<item android:title="Dmesg" android:id="@+id/mi_dmesg"></item>
-			<item android:id="@+id/mi_logcat" android:title="Logcat"></item>
-		</menu>
-	</item>
-
 	<item android:id="@+id/mi_about" android:title="@string/about"
 		android:icon="@android:drawable/ic_menu_info_details"></item>
 

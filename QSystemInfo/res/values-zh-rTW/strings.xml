@@ -6,7 +6,7 @@
 	<string name="info_not_available">資訊不可用</string>
 	<string name="filter_title">應用程式類型</string>
 	<string name="processor">處理器</string>
-	<string name="memory">內存</string>
+	<string name="memory">記憶體</string>
 	<string name="sd_storage">記憶卡</string>
 	<string name="internal_storage">內部存儲</string>
 	<string name="battery_level">電量</string>
@@ -75,19 +75,19 @@
 	<string name="plain_text_zip">純文本 (壓縮檔)</string>
 	<string name="csv_zip">CSV (壓縮檔)</string>
 	<string name="copy_text">復制文本</string>
-	<string name="tab_connection">網路連接</string>
-	<string name="update_speed">更新頻率</string>
+	<string name="tab_connection">網路狀態</string>
+	<string name="update_speed">重新整理速率</string>
 	<string name="high">高</string>
 	<string name="normal">正常</string>
 	<string name="low">低</string>
 	<string name="paused">暫停</string>
 	<string name="location_info">國家: %s\n地區: %s\n城市: %s</string>
-	<string name="no_ip_info">沒有關于該IP地址的公開資訊.</string>
-	<string name="query_ip_msg">正在定位遠端地址...</string>
-	<string name="ip_location">IP 地址</string>
+	<string name="no_ip_info">沒有關于該IP位址的公開資訊.</string>
+	<string name="query_ip_msg">正在獲取遠端位址資訊...</string>
+	<string name="ip_location">IP 所在</string>
 	<string name="protocol">協議</string>
-	<string name="local_remote_addr">本地/遠端地址</string>
+	<string name="local_remote_addr">本地/遠端位址</string>
 	<string name="state">狀態</string>
-	<string name="copy_ip">復制遠端地址</string>
+	<string name="copy_ip">復制遠端位址</string>
 
 </resources>
