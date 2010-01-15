@@ -262,7 +262,8 @@ public final class ApplicationManager extends ListActivity
 								+ Formatter.formatFileSize( ApplicationManager.this,
 										ps.dataSize );
 
-						( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
+						this.removeCallbacks( refreshTask );
+						this.postDelayed( refreshTask, 500 );
 					}
 					break;
 				case MSG_REFRESH_PKG_LABEL :
@@ -292,6 +293,14 @@ public final class ApplicationManager extends ListActivity
 					( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
 					break;
 			}
+		}
+	};
+
+	private Runnable refreshTask = new Runnable( ) {
+
+		public void run( )
+		{
+			( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
 		}
 	};
 

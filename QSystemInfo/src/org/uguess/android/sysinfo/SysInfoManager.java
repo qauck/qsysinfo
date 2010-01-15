@@ -574,12 +574,17 @@ public final class SysInfoManager extends PreferenceActivity
 
 						sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
-						if ( getListView( ).getCount( ) == 0 )
+						if ( adapter.getCount( ) == 0 )
 						{
 							Toast.makeText( LogViewer.this,
 									R.string.no_log_info,
 									Toast.LENGTH_SHORT ).show( );
 						}
+						else
+						{
+							getListView( ).setSelection( adapter.getCount( ) - 1 );
+						}
+
 						break;
 					case MSG_DISMISS_PROGRESS :
 
