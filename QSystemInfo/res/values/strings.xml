@@ -36,8 +36,8 @@
 	</string>
 	<string name="computing">Computing...</string>
 	<string name="about">About</string>
-	<string name="about_msg">Version %s\nCreated by Shawn
-		Q.\n\nqauck.aa@gmail.com\n</string>
+	<string name="about_msg">Version %s\n\nShawn Q.\nqauck.aa@gmail.com\n
+	</string>
 	<string name="close">Close</string>
 	<string name="filter_title">Application Type</string>
 	<string name="all_apps">All</string>
@@ -88,15 +88,21 @@
 	<string name="normal">Normal</string>
 	<string name="low">Low</string>
 	<string name="paused">Paused</string>
-	<string name="location_info">Country: %s\nRegion: %s\nCity: %s</string>
 	<string name="no_ip_info">No public information available for this IP
 		address
 		at this time.</string>
 	<string name="query_ip_msg">Acquiring Remote Information...</string>
-	<string name="ip_location">IP Location</string>
+	<string name="ip_location">Remote Information</string>
 	<string name="protocol">Protocol</string>
 	<string name="local_remote_addr">Local/Remote Address</string>
 	<string name="state">State</string>
 	<string name="copy_ip">Copy Remote Address</string>
+	<string name="location_info">&lt;b>%s&lt;/b>&lt;br>%s&lt;br>&lt;br>Country:
+		%s&lt;br>Region: %s&lt;br>City: %s</string>
+	<string name="view_map">View in Map</string>
+	<string name="remote_query">Remote Information Query</string>
+	<string name="enabled">Enabled</string>
+	<string name="disabled">Disabled</string>
+	<string name="wifi_only">Wi-Fi Only</string>
 
 </resources>

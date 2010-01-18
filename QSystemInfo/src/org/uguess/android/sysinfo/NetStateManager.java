@@ -25,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,10 +33,10 @@ import java.util.HashMap;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -44,6 +45,8 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -52,6 +55,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.text.ClipboardManager;
+import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -74,11 +78,16 @@ public final class NetStateManager extends ListActivity
 {
 
 	private static final String PREF_KEY_REFRESH_INTERVAL = "refresh_interval"; //$NON-NLS-1$
+	private static final String PREF_KEY_REMOTE_QUERY = "remote_query"; //$NON-NLS-1$
 
 	private static final int REFRESH_HIGH = 0;
 	private static final int REFRESH_NORMAL = 1;
 	private static final int REFRESH_LOW = 2;
 	private static final int REFRESH_PAUSED = 3;
+
+	private static final int ENABLED = 0;
+	private static final int DISABLED = 1;
+	private static final int WIFI_ONLY = 2;
 
 	private static final int MSG_IP_READY = 1;
 	private static final int MSG_DISMISS_PROGRESS = 2;
@@ -99,39 +108,43 @@ public final class NetStateManager extends ListActivity
 
 					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
-					IpInfo info = (IpInfo) msg.obj;
+					final IpInfo info = (IpInfo) msg.obj;
 
 					if ( info != null
-							&& !TextUtils.isEmpty( info.longitude )
-							&& !TextUtils.isEmpty( info.latitude ) )
+							&& !TextUtils.isEmpty( info.latitude )
+							&& !TextUtils.isEmpty( info.longitude ) )
 					{
-						Intent it = new Intent( Intent.ACTION_VIEW );
 
-						it.setData( Uri.parse( "geo:0,0?q=" //$NON-NLS-1$
-								+ info.latitude
-								+ "," //$NON-NLS-1$
-								+ info.longitude
-								+ "&z=8" ) ); //$NON-NLS-1$
+						OnClickListener listener = new OnClickListener( ) {
 
-						try
-						{
-							startActivity( it );
-						}
-						catch ( ActivityNotFoundException e )
-						{
-							Log.w( NetStateManager.class.getName( ),
-									"No activity found to handle uri: " //$NON-NLS-1$
-											+ it.getData( ) );
+							public void onClick( DialogInterface dialog,
+									int which )
+							{
+								Intent it = new Intent( Intent.ACTION_VIEW );
 
-							new AlertDialog.Builder( NetStateManager.this ).setTitle( R.string.ip_location )
-									.setNeutralButton( R.string.close, null )
-									.setMessage( getString( R.string.location_info,
-											info.country,
-											info.region,
-											info.city ) )
-									.create( )
-									.show( );
-						}
+								it.setData( Uri.parse( "geo:0,0?q=" //$NON-NLS-1$
+										+ info.latitude
+										+ "," //$NON-NLS-1$
+										+ info.longitude
+										+ "&z=8" ) ); //$NON-NLS-1$
+
+								it = Intent.createChooser( it, null );
+
+								startActivity( it );
+							}
+						};
+
+						new AlertDialog.Builder( NetStateManager.this ).setTitle( R.string.ip_location )
+								.setPositiveButton( R.string.view_map, listener )
+								.setNegativeButton( R.string.close, null )
+								.setMessage( Html.fromHtml( getString( R.string.location_info,
+										info.ip,
+										info.host,
+										info.country,
+										info.region,
+										info.city ) ) )
+								.create( )
+								.show( );
 					}
 					else
 					{
@@ -196,6 +209,24 @@ public final class NetStateManager extends ListActivity
 			{
 				if ( position > 0 )
 				{
+					int state = getRemoteQueryState( );
+
+					if ( state == DISABLED )
+					{
+						return;
+					}
+					else if ( state == WIFI_ONLY )
+					{
+						ConnectivityManager cm = (ConnectivityManager) getSystemService( Activity.CONNECTIVITY_SERVICE );
+
+						NetworkInfo info = cm.getNetworkInfo( ConnectivityManager.TYPE_WIFI );
+
+						if ( info == null || !info.isConnected( ) )
+						{
+							return;
+						}
+					}
+
 					ConnectionItem itm = (ConnectionItem) parent.getItemAtPosition( position );
 
 					String ip = getValidIP( itm.remote );
@@ -307,6 +338,7 @@ public final class NetStateManager extends ListActivity
 			it.setClass( this, NetStateSettings.class );
 
 			it.putExtra( PREF_KEY_REFRESH_INTERVAL, getRefreshInterval( ) );
+			it.putExtra( PREF_KEY_REMOTE_QUERY, getRemoteQueryState( ) );
 
 			startActivityForResult( it, 1 );
 
@@ -365,6 +397,12 @@ public final class NetStateManager extends ListActivity
 			{
 				setRefreshInterval( interval );
 			}
+
+			int state = data.getIntExtra( PREF_KEY_REMOTE_QUERY, WIFI_ONLY );
+			if ( state != getRemoteQueryState( ) )
+			{
+				setRemoteQueryState( state );
+			}
 		}
 	}
 
@@ -414,6 +452,26 @@ public final class NetStateManager extends ListActivity
 				IpInfo info = null;
 				try
 				{
+					info = new IpInfo( );
+
+					info.ip = ip;
+
+					try
+					{
+						String host = InetAddress.getByName( ip ).getHostName( );
+
+						if ( !ip.equals( host ) )
+						{
+							info.host = host;
+						}
+					}
+					catch ( Exception e )
+					{
+						Log.e( NetStateManager.class.getName( ),
+								e.getLocalizedMessage( ),
+								e );
+					}
+
 					URL url = new URL( "http://ipinfodb.com/ip_query.php?ip=" //$NON-NLS-1$
 							+ ip );
 
@@ -423,8 +481,6 @@ public final class NetStateManager extends ListActivity
 					input = url.openStream( );
 
 					parser.setInput( input, null );
-
-					info = new IpInfo( );
 
 					String name, value;
 					while ( parser.next( ) != XmlPullParser.END_DOCUMENT )
@@ -652,6 +708,22 @@ public final class NetStateManager extends ListActivity
 		et.commit( );
 	}
 
+	private int getRemoteQueryState( )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		return sp.getInt( PREF_KEY_REMOTE_QUERY, WIFI_ONLY );
+	}
+
+	private void setRemoteQueryState( int state )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		et.putInt( PREF_KEY_REMOTE_QUERY, state );
+		et.commit( );
+	}
+
 	/**
 	 * NetStateSettings
 	 */
@@ -674,10 +746,15 @@ public final class NetStateManager extends ListActivity
 			Preference perfInterval = new Preference( this );
 			perfInterval.setKey( PREF_KEY_REFRESH_INTERVAL );
 			perfInterval.setTitle( R.string.update_speed );
-
 			pc.addPreference( perfInterval );
 
+			Preference perfRemote = new Preference( this );
+			perfRemote.setKey( PREF_KEY_REMOTE_QUERY );
+			perfRemote.setTitle( R.string.remote_query );
+			pc.addPreference( perfRemote );
+
 			refreshInterval( );
+			refreshRemoteQuery( );
 
 			setResult( RESULT_OK, getIntent( ) );
 		}
@@ -702,6 +779,25 @@ public final class NetStateManager extends ListActivity
 			}
 
 			findPreference( PREF_KEY_REFRESH_INTERVAL ).setSummary( label );
+		}
+
+		private void refreshRemoteQuery( )
+		{
+			int state = getIntent( ).getIntExtra( PREF_KEY_REMOTE_QUERY,
+					WIFI_ONLY );
+
+			CharSequence label = getString( R.string.wifi_only );
+			switch ( state )
+			{
+				case DISABLED :
+					label = getString( R.string.disabled );
+					break;
+				case ENABLED :
+					label = getString( R.string.enabled );
+					break;
+			}
+
+			findPreference( PREF_KEY_REMOTE_QUERY ).setSummary( label );
 		}
 
 		@Override
@@ -740,6 +836,35 @@ public final class NetStateManager extends ListActivity
 
 				return true;
 			}
+			else if ( PREF_KEY_REMOTE_QUERY.equals( preference.getKey( ) ) )
+			{
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						it.putExtra( PREF_KEY_REMOTE_QUERY, which );
+
+						dialog.dismiss( );
+
+						refreshRemoteQuery( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.remote_query )
+						.setNeutralButton( R.string.close, null )
+						.setSingleChoiceItems( new CharSequence[]{
+								getString( R.string.enabled ),
+								getString( R.string.disabled ),
+								getString( R.string.wifi_only ),
+						},
+								it.getIntExtra( PREF_KEY_REMOTE_QUERY,
+										WIFI_ONLY ),
+								listener )
+						.create( )
+						.show( );
+
+				return true;
+			}
 
 			return false;
 		}
@@ -766,5 +891,6 @@ public final class NetStateManager extends ListActivity
 
 		String country, region, city;
 		String latitude, longitude;
+		String ip, host;
 	}
 }

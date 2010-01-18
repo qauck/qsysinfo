@@ -13,7 +13,7 @@
 	<string name="retrieving">正在獲取...</string>
 	<string name="about_phone">關于手機</string>
 	<string name="more_info">更多資訊</string>
-	<string name="more_info_summary">查看更多關于手機的詳細資訊</string>
+	<string name="more_info_summary">檢視更多關于手機的詳細資訊</string>
 	<string name="no_app_show">當前過濾條件下沒有應用程式可以顯示.</string>
 	<string name="refresh">重新整理</string>
 	<string name="export">匯出</string>
@@ -34,7 +34,7 @@
 	<string name="error_sdcard">請確認SD存儲卡已正確載入并有足夠的可寫入空間.</string>
 	<string name="computing">計算中...</string>
 	<string name="about">關于</string>
-	<string name="about_msg">版本 %s\nCreated by Shawn Q.\n\nqauck.aa@gmail.com\n</string>
+	<string name="about_msg">版本 %s\n\nShawn Q.\nqauck.aa@gmail.com\n</string>
 	<string name="actions">操作</string>
 	<string name="close">關閉</string>
 	<string name="version">版本</string>
@@ -65,10 +65,11 @@
 	<string name="none">無</string>
 	<string name="no_log_info">沒有日誌項.</string>
 	<string name="log_head">設備: %s\n型號: %s\n產品: %s\n品牌:
-		%s\n版本: %s\n編譯: %s\n\n</string>
+		%s\n版本: %s\n編譯: %s\n\n
+	</string>
 	<string name="collector_head">#Created by %s version %s\n\n</string>
 	<string name="storage_summary">總計: %s, 可用: %s</string>
-	<string name="view_logs">查看日誌</string>
+	<string name="view_logs">檢視日誌</string>
 	<string name="send_log">發送日誌</string>
 	<string name="plain_text">純文本</string>
 	<string name="csv">CSV</string>
@@ -81,13 +82,19 @@
 	<string name="normal">正常</string>
 	<string name="low">低</string>
 	<string name="paused">暫停</string>
-	<string name="location_info">國家: %s\n地區: %s\n城市: %s</string>
 	<string name="no_ip_info">沒有關于該IP位址的公開資訊.</string>
 	<string name="query_ip_msg">正在獲取遠端位址資訊...</string>
-	<string name="ip_location">IP 所在</string>
+	<string name="ip_location">遠端位址資訊</string>
 	<string name="protocol">協議</string>
 	<string name="local_remote_addr">本地/遠端位址</string>
 	<string name="state">狀態</string>
 	<string name="copy_ip">復制遠端位址</string>
+	<string name="location_info">&lt;b>%s&lt;/b>&lt;br>%s&lt;br>&lt;br>國家:
+		%s&lt;br>區域: %s&lt;br>城市: %s</string>
+	<string name="view_map">檢視地圖</string>
+	<string name="remote_query">遠端資訊獲取</string>
+	<string name="enabled">開啟</string>
+	<string name="disabled">關閉</string>
+	<string name="wifi_only">僅 Wi-Fi</string>
 
 </resources>
