@@ -810,8 +810,10 @@ public final class ApplicationManager extends ListActivity
 
 	private void copyFile( File src, File dest ) throws IOException
 	{
-		InputStream fis = new BufferedInputStream( new FileInputStream( src ) );
-		OutputStream fos = new BufferedOutputStream( new FileOutputStream( dest ) );
+		InputStream fis = new BufferedInputStream( new FileInputStream( src ),
+				8192 * 4 );
+		OutputStream fos = new BufferedOutputStream( new FileOutputStream( dest ),
+				8192 * 4 );
 
 		byte[] buf = new byte[4096];
 

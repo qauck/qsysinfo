@@ -495,6 +495,10 @@ public final class NetStateManager extends ListActivity
 
 								if ( !"OK".equals( value ) ) //$NON-NLS-1$
 								{
+									Log.d( NetStateManager.class.getName( ),
+											"Invalid ip?", //$NON-NLS-1$
+											new IllegalArgumentException( ip ) );
+
 									break;
 								}
 							}
@@ -504,6 +508,10 @@ public final class NetStateManager extends ListActivity
 
 								if ( "Reserved".equals( value ) ) //$NON-NLS-1$
 								{
+									Log.d( NetStateManager.class.getName( ),
+											"Reserved ip?", //$NON-NLS-1$
+											new IllegalArgumentException( ip ) );
+
 									break;
 								}
 
@@ -586,6 +594,12 @@ public final class NetStateManager extends ListActivity
 		}
 
 		adapter.notifyDataSetChanged( );
+
+		if ( adapter.getCount( ) == 1 )
+		{
+			Log.d( NetStateManager.class.getName( ),
+					"No network traffic detected" ); //$NON-NLS-1$
+		}
 	}
 
 	private void setFont( TextView txt, int type )
@@ -597,7 +611,7 @@ public final class NetStateManager extends ListActivity
 		}
 	}
 
-	private ArrayList<ConnectionItem> readStates( )
+	static ArrayList<ConnectionItem> readStates( )
 	{
 		BufferedReader reader = null;
 		try
@@ -618,6 +632,10 @@ public final class NetStateManager extends ListActivity
 				{
 					if ( !line.startsWith( "Proto" ) ) //$NON-NLS-1$
 					{
+						Log.e( NetStateManager.class.getName( ),
+								"Unexpected header format", //$NON-NLS-1$
+								new IllegalStateException( line ) );
+
 						break;
 					}
 
@@ -631,6 +649,10 @@ public final class NetStateManager extends ListActivity
 							|| foreignOffset == -1
 							|| stateOffset == -1 )
 					{
+						Log.e( NetStateManager.class.getName( ),
+								"Unexpected header format", //$NON-NLS-1$
+								new IllegalStateException( line ) );
+
 						break;
 					}
 
