@@ -24,6 +24,7 @@
 	<PreferenceCategory android:title="@string/actions">
 		<Preference android:key="refresh_status" android:title="@string/refresh" />
 		<Preference android:key="view_logs" android:title="@string/view_logs" />
+		<Preference android:key="send_report" android:title="@string/send_report" />
 		<Preference android:key="more_info" android:title="@string/more_info" />
 	</PreferenceCategory>
 

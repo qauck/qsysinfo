@@ -955,7 +955,7 @@ public final class ApplicationManager extends ListActivity
 	/**
 	 * PackageSizeObserver
 	 */
-	final class PkgSizeObserver extends IPackageStatsObserver.Stub
+	private final class PkgSizeObserver extends IPackageStatsObserver.Stub
 	{
 
 		int idx;
@@ -979,7 +979,7 @@ public final class ApplicationManager extends ListActivity
 	/**
 	 * PackageEventReceiver
 	 */
-	final class PackageEventReceiver extends BroadcastReceiver
+	private final class PackageEventReceiver extends BroadcastReceiver
 	{
 
 		void registerReceiver( )

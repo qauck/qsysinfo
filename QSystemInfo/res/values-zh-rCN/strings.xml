@@ -34,7 +34,10 @@
 	<string name="error_sdcard">请确认SD存储卡已正确加载并有足够的可写空间.</string>
 	<string name="computing">计算中...</string>
 	<string name="about">关于</string>
-	<string name="about_msg">版本 %s\n\nShawn Q.\nqauck.aa@gmail.com\n</string>
+	<string name="about_msg">版本 %s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a
+		href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a
+		href="%s">[ 支持此应用 ]&lt;/a>&lt;br>
+	</string>
 	<string name="actions">操作</string>
 	<string name="close">关闭</string>
 	<string name="version">版本</string>
@@ -59,24 +62,20 @@
 	<string name="alert">警报</string>
 	<string name="critical">严重</string>
 	<string name="notice">提示</string>
-	<string name="level_filter">日志级别</string>
+	<string name="log_level">日志级别</string>
 	<string name="tag_filter">标签过滤</string>
 	<string name="pid_filter">PID 过滤</string>
 	<string name="none">无</string>
 	<string name="no_log_info">没有日志项.</string>
-	<string name="log_head">设备: %s\n型号: %s\n产品: %s\n品牌:
-		%s\n版本: %s\n编译: %s\n\n
-	</string>
 	<string name="collector_head">#Created by %s version %s\n\n</string>
 	<string name="storage_summary">总计: %s, 可用: %s</string>
 	<string name="view_logs">查看日志</string>
 	<string name="send_log">发送日志</string>
 	<string name="plain_text">纯文本</string>
 	<string name="csv">CSV</string>
-	<string name="plain_text_zip">纯文本 (压缩包)</string>
-	<string name="csv_zip">CSV (压缩包)</string>
+	<string name="html">HTML</string>
 	<string name="copy_text">复制文本</string>
-	<string name="tab_connection">网络状态</string>
+	<string name="tab_netstat">网络状态</string>
 	<string name="update_speed">更新速率</string>
 	<string name="high">高</string>
 	<string name="normal">正常</string>
@@ -96,5 +95,33 @@
 	<string name="enabled">开启</string>
 	<string name="disabled">关闭</string>
 	<string name="wifi_only">仅 Wi-Fi</string>
+	<string name="compressed">(压缩包)</string>
+	<string name="send_report">发送报告</string>
+	<string name="log">日志</string>
+	<string name="no_report">没有生成报告.</string>
+	<string name="no_report_item">没有选择的报告项.</string>
+	<string name="device">设备</string>
+	<string name="model">型号</string>
+	<string name="product">产品</string>
+	<string name="brand">品牌</string>
+	<string name="release">版本</string>
+	<string name="build">编译</string>
+	<string name="locale">区域</string>
+	<string name="device_info">设备信息</string>
+	<string name="sys_version">系统版本</string>
+	<string name="time">时间</string>
+	<string name="message">信息</string>
+	<string name="pid">进程 ID</string>
+	<string name="tag">标签</string>
+	<string name="pkg_name">包名</string>
+	<string name="app_label">应用程序名称</string>
+	<string name="flags">标注</string>
+	<string name="source">源地址</string>
+	<string name="importance">重要性</string>
+	<string name="proc_name">进程名称</string>
+	<string name="no_cpu_info">没有找到 CPU 信息.</string>
+	<string name="no_mem_info">没有找到 MEM 信息.</string>
+	<string name="no_sc_freq_info">没有找到目标 CPU 频率信息.</string>
+	<string name="sc_freq">目标 CPU 频率: </string>
 
 </resources>

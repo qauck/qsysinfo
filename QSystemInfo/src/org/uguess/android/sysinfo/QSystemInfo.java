@@ -68,7 +68,7 @@ public final class QSystemInfo extends TabActivity
 		it.setClass( this, NetStateManager.class );
 		th.addTab( th.newTabSpec( NetStateManager.class.getName( ) )
 				.setContent( it )
-				.setIndicator( getString( R.string.tab_connection ),
+				.setIndicator( getString( R.string.tab_netstat ),
 						getResources( ).getDrawable( R.drawable.connection ) ) );
 	}
 

@@ -36,7 +36,9 @@
 	</string>
 	<string name="computing">Computing...</string>
 	<string name="about">About</string>
-	<string name="about_msg">Version %s\n\nShawn Q.\nqauck.aa@gmail.com\n
+	<string name="about_msg">Version %s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a
+		href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a
+		href="%s">[ Support this app ]&lt;/a>&lt;br>
 	</string>
 	<string name="close">Close</string>
 	<string name="filter_title">Application Type</string>
@@ -66,23 +68,20 @@
 	<string name="alert">Alert</string>
 	<string name="critical">Critical</string>
 	<string name="notice">Notice</string>
-	<string name="level_filter">Log Level</string>
+	<string name="log_level">Log Level</string>
 	<string name="tag_filter">Tag Filter</string>
 	<string name="pid_filter">PID Filter</string>
 	<string name="none">None</string>
 	<string name="no_log_info">No log item found.</string>
-	<string name="log_head">Device: %s\nModel: %s\nProduct: %s\nBrand:
-		%s\nRelease: %s\nBuild: %s\n\n</string>
 	<string name="collector_head">#Created by %s version %s\n\n</string>
 	<string name="storage_summary">Total: %s, Free: %s</string>
 	<string name="view_logs">View Logs</string>
 	<string name="send_log">Send Log</string>
 	<string name="plain_text">Plain Text</string>
 	<string name="csv">CSV</string>
-	<string name="plain_text_zip">Plain Text (Compressed)</string>
-	<string name="csv_zip">CSV (Compressed)</string>
+	<string name="html">HTML</string>
 	<string name="copy_text">Copy Text</string>
-	<string name="tab_connection">Net States</string>
+	<string name="tab_netstat">Net States</string>
 	<string name="update_speed">Update Speed</string>
 	<string name="high">High</string>
 	<string name="normal">Normal</string>
@@ -104,5 +103,33 @@
 	<string name="enabled">Enabled</string>
 	<string name="disabled">Disabled</string>
 	<string name="wifi_only">Wi-Fi Only</string>
+	<string name="compressed">(Compressed)</string>
+	<string name="send_report">Send Report</string>
+	<string name="log">Log</string>
+	<string name="no_report">No report has been generated.</string>
+	<string name="no_report_item">No report item selected.</string>
+	<string name="device">Device</string>
+	<string name="model">Model</string>
+	<string name="product">Product</string>
+	<string name="brand">Brand</string>
+	<string name="release">Release</string>
+	<string name="build">Build</string>
+	<string name="locale">Locale</string>
+	<string name="device_info">Device Info</string>
+	<string name="sys_version">System Version</string>
+	<string name="time">Time</string>
+	<string name="message">Message</string>
+	<string name="pid">Process ID</string>
+	<string name="tag">Tag</string>
+	<string name="pkg_name">Package Name</string>
+	<string name="app_label">Application Label</string>
+	<string name="flags">Flags</string>
+	<string name="source">Source</string>
+	<string name="importance">Importance</string>
+	<string name="proc_name">Process Name</string>
+	<string name="no_cpu_info">CPU info not found.</string>
+	<string name="no_mem_info">MEM info not found.</string>
+	<string name="no_sc_freq_info">Scaling CPU frequency state not found.</string>
+	<string name="sc_freq">Scaling CPU frequency: </string>
 
 </resources>

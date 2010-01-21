@@ -496,8 +496,7 @@ public final class NetStateManager extends ListActivity
 								if ( !"OK".equals( value ) ) //$NON-NLS-1$
 								{
 									Log.d( NetStateManager.class.getName( ),
-											"Invalid ip?", //$NON-NLS-1$
-											new IllegalArgumentException( ip ) );
+											"Invalid ip?: " + ip ); //$NON-NLS-1$
 
 									break;
 								}
@@ -509,8 +508,7 @@ public final class NetStateManager extends ListActivity
 								if ( "Reserved".equals( value ) ) //$NON-NLS-1$
 								{
 									Log.d( NetStateManager.class.getName( ),
-											"Reserved ip?", //$NON-NLS-1$
-											new IllegalArgumentException( ip ) );
+											"Reserved ip?: " + ip ); //$NON-NLS-1$
 
 									break;
 								}
@@ -611,7 +609,7 @@ public final class NetStateManager extends ListActivity
 		}
 	}
 
-	static ArrayList<ConnectionItem> readStates( )
+	private ArrayList<ConnectionItem> readStates( )
 	{
 		BufferedReader reader = null;
 		try
@@ -633,8 +631,7 @@ public final class NetStateManager extends ListActivity
 					if ( !line.startsWith( "Proto" ) ) //$NON-NLS-1$
 					{
 						Log.e( NetStateManager.class.getName( ),
-								"Unexpected header format", //$NON-NLS-1$
-								new IllegalStateException( line ) );
+								"Unexpected header format: " + line ); //$NON-NLS-1$
 
 						break;
 					}
@@ -650,8 +647,7 @@ public final class NetStateManager extends ListActivity
 							|| stateOffset == -1 )
 					{
 						Log.e( NetStateManager.class.getName( ),
-								"Unexpected header format", //$NON-NLS-1$
-								new IllegalStateException( line ) );
+								"Unexpected header format: " + line ); //$NON-NLS-1$
 
 						break;
 					}

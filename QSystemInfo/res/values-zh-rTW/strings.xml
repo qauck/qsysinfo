@@ -34,7 +34,10 @@
 	<string name="error_sdcard">請確認SD存儲卡已正確載入并有足夠的可寫入空間.</string>
 	<string name="computing">計算中...</string>
 	<string name="about">關于</string>
-	<string name="about_msg">版本 %s\n\nShawn Q.\nqauck.aa@gmail.com\n</string>
+	<string name="about_msg">版本 %s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a
+		href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a
+		href="%s">[ 支持此應用 ]&lt;/a>&lt;br>
+	</string>
 	<string name="actions">操作</string>
 	<string name="close">關閉</string>
 	<string name="version">版本</string>
@@ -42,7 +45,7 @@
 	<string name="end_proc_hint">- 單擊列表結束進程\n- 單擊此處結束所有進程</string>
 	<string name="switch_to">切換任務</string>
 	<string name="end_task">結束任務</string>
-	<string name="tab_info">基本資訊</string>
+	<string name="tab_info">基礎資訊</string>
 	<string name="tab_apps">應用程式</string>
 	<string name="tab_procs">進程</string>
 	<string name="preference">設定</string>
@@ -59,24 +62,20 @@
 	<string name="alert">警報</string>
 	<string name="critical">嚴重</string>
 	<string name="notice">通知</string>
-	<string name="level_filter">日誌級別</string>
+	<string name="log_level">日誌級別</string>
 	<string name="tag_filter">標簽過濾</string>
 	<string name="pid_filter">PID 過濾</string>
 	<string name="none">無</string>
 	<string name="no_log_info">沒有日誌項.</string>
-	<string name="log_head">設備: %s\n型號: %s\n產品: %s\n品牌:
-		%s\n版本: %s\n編譯: %s\n\n
-	</string>
 	<string name="collector_head">#Created by %s version %s\n\n</string>
 	<string name="storage_summary">總計: %s, 可用: %s</string>
 	<string name="view_logs">檢視日誌</string>
 	<string name="send_log">發送日誌</string>
 	<string name="plain_text">純文本</string>
 	<string name="csv">CSV</string>
-	<string name="plain_text_zip">純文本 (壓縮檔)</string>
-	<string name="csv_zip">CSV (壓縮檔)</string>
+	<string name="html">HTML</string>
 	<string name="copy_text">復制文本</string>
-	<string name="tab_connection">網路狀態</string>
+	<string name="tab_netstat">網路狀態</string>
 	<string name="update_speed">重新整理速率</string>
 	<string name="high">高</string>
 	<string name="normal">正常</string>
@@ -96,5 +95,33 @@
 	<string name="enabled">開啟</string>
 	<string name="disabled">關閉</string>
 	<string name="wifi_only">僅 Wi-Fi</string>
+	<string name="compressed">(壓縮檔)</string>
+	<string name="send_report">發送報告</string>
+	<string name="log">日誌</string>
+	<string name="no_report">沒有產生報告.</string>
+	<string name="no_report_item">沒有選取的報告項目.</string>
+	<string name="device">設備</string>
+	<string name="model">型號</string>
+	<string name="product">產品</string>
+	<string name="brand">品牌</string>
+	<string name="release">版本</string>
+	<string name="build">編譯</string>
+	<string name="locale">區域</string>
+	<string name="device_info">設備資訊</string>
+	<string name="sys_version">系統版本</string>
+	<string name="time">時間</string>
+	<string name="message">訊息</string>
+	<string name="pid">進程 ID</string>
+	<string name="tag">標簽</string>
+	<string name="pkg_name">包名</string>
+	<string name="app_label">應用程式名稱</string>
+	<string name="flags">標注</string>
+	<string name="source">源地址</string>
+	<string name="importance">重要級別</string>
+	<string name="proc_name">進程名稱</string>
+	<string name="no_cpu_info">沒有找到 CPU 資訊.</string>
+	<string name="no_mem_info">沒有找到 MEM 資訊.</string>
+	<string name="no_sc_freq_info">沒有找到目標 CPU 頻率資訊.</string>
+	<string name="sc_freq">目標 CPU 頻率: </string>
 
 </resources>

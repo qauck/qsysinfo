@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -34,16 +35,18 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
-import android.app.ActivityManager.MemoryInfo;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -51,7 +54,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
+import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Color;
@@ -66,11 +72,12 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
 import android.text.ClipboardManager;
+import android.text.Html;
 import android.text.InputFilter;
 import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.text.method.DigitsKeyListener;
-import android.text.util.Linkify;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Gravity;
@@ -102,6 +109,30 @@ public final class SysInfoManager extends PreferenceActivity
 	private static final String DMESG_MODE = "dmesgMode"; //$NON-NLS-1$
 	private static final Pattern DMESG_TIME_PATTERN = Pattern.compile( "\\d+\\.\\d+" ); //$NON-NLS-1$
 
+	private static final char[] CSV_SEARCH_CHARS = new char[]{
+			',', '"', '\r', '\n'
+	};
+	private static final char[] HTML_SEARCH_CHARS = new char[]{
+			'<', '>', '&', '\'', '"', '\n'
+	};
+
+	private static final String F_SCALE_FREQ = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq"; //$NON-NLS-1$
+	private static final String F_MEM_INFO = "/proc/meminfo"; //$NON-NLS-1$
+	private static final String F_CPU_INFO = "/proc/cpuinfo"; //$NON-NLS-1$
+	private static final String F_VERSION = "/proc/version"; //$NON-NLS-1$
+
+	private static final String HEADER_SPLIT = "========================================================================================\n"; //$NON-NLS-1$
+
+	private static final String openHeaderRow = "<tr align=\"left\" bgcolor=\"#E0E0FF\"><td><b>"; //$NON-NLS-1$
+	private static final String closeHeaderRow = "</b></td><td colspan=4/></tr>\n"; //$NON-NLS-1$
+	private static final String openRow = "<tr align=\"left\" valign=\"top\"><td nowrap><small>"; //$NON-NLS-1$
+	private static final String openTitleRow = "<tr bgcolor=\"#E0E0E0\" align=\"left\" valign=\"top\"><td><small>"; //$NON-NLS-1$
+	private static final String openFullRow = "<tr align=\"left\" valign=\"top\"><td colspan=5><small>"; //$NON-NLS-1$
+	private static final String closeRow = "</small></td></tr>\n"; //$NON-NLS-1$
+	private static final String nextColumn = "</small></td><td><small>"; //$NON-NLS-1$
+	private static final String nextColumn4 = "</small></td><td colspan=4><small>"; //$NON-NLS-1$
+	private static final String emptyRow = "<tr><td>&nbsp;</td></tr>\n"; //$NON-NLS-1$
+
 	private static final int DM_LVL_EMMERGENCY = 0;
 	private static final int DM_LVL_ALERT = 1;
 	private static final int DM_LVL_CRITICAL = 2;
@@ -111,12 +142,22 @@ public final class SysInfoManager extends PreferenceActivity
 	private static final int DM_LVL_INFORMATION = 6;
 	private static final int DM_LVL_DEBUG = 7;
 
-	private static final int DLG_ABOUT = 1;
-
 	private static final int MSG_INIT_OK = 1;
 	private static final int MSG_DISMISS_PROGRESS = 2;
 
+	private static final int PLAINTEXT = 0;
+	private static final int HTML = 1;
+	private static final int CSV = 2;
+
+	private static final int BASIC_INFO = 0;
+	private static final int APPLICATIONS = 1;
+	private static final int PROCESSES = 2;
+	private static final int NETSTATES = 3;
+	private static final int DMESG_LOG = 4;
+	private static final int LOGCAT_LOG = 5;
+
 	private Preference prefBatteryLevel;
+	private ProgressDialog progress;
 
 	private BroadcastReceiver mBatteryInfoReceiver = new BroadcastReceiver( ) {
 
@@ -133,6 +174,45 @@ public final class SysInfoManager extends PreferenceActivity
 						* 100
 						/ scale )
 						+ "%" ); //$NON-NLS-1$
+			}
+		}
+	};
+
+	private Handler handler = new Handler( ) {
+
+		public void handleMessage( android.os.Message msg )
+		{
+			switch ( msg.what )
+			{
+				case MSG_INIT_OK :
+
+					sendEmptyMessage( MSG_DISMISS_PROGRESS );
+
+					String content = (String) msg.obj;
+
+					if ( content == null )
+					{
+						Toast.makeText( SysInfoManager.this,
+								R.string.no_report,
+								Toast.LENGTH_SHORT ).show( );
+					}
+					else
+					{
+						sendContent( SysInfoManager.this,
+								"Android System Report - " + new Date( ).toLocaleString( ), //$NON-NLS-1$
+								content,
+								msg.arg2 == 1 );
+					}
+
+					break;
+				case MSG_DISMISS_PROGRESS :
+
+					if ( progress != null )
+					{
+						progress.dismiss( );
+						progress = null;
+					}
+					break;
 			}
 		}
 	};
@@ -171,45 +251,312 @@ public final class SysInfoManager extends PreferenceActivity
 	{
 		findPreference( "processor" ).setSummary( getCpuInfo( ) ); //$NON-NLS-1$
 
-		ActivityManager am = (ActivityManager) getSystemService( ACTIVITY_SERVICE );
+		String[] mi = getMemInfo( );
+		findPreference( "memory" ).setSummary( mi == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+				: getString( R.string.storage_summary, mi[0], mi[1] ) );
 
-		MemoryInfo mi = new MemoryInfo( );
-		am.getMemoryInfo( mi );
+		String[] ei = getExternalStorageInfo( );
+		findPreference( "sd_storage" ).setSummary( ei == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+				: getString( R.string.storage_summary, ei[0], ei[1] ) );
 
-		findPreference( "memory" ).setSummary( getString( R.string.storage_summary, //$NON-NLS-1$
-				getTotalMemInfo( ),
-				Formatter.formatFileSize( this, mi.availMem ) ) );
+		String[] ii = getInternalStorageInfo( );
+		findPreference( "internal_storage" ).setSummary( getString( R.string.storage_summary, //$NON-NLS-1$
+				ii[0],
+				ii[1] ) );
 
+		findPreference( "net_address" ).setSummary( getNetAddressInfo( ) ); //$NON-NLS-1$
+	}
+
+	private String[] getMemInfo( )
+	{
+		BufferedReader reader = null;
+
+		try
+		{
+			reader = new BufferedReader( new InputStreamReader( new FileInputStream( new File( F_MEM_INFO ) ) ),
+					1024 );
+
+			String line;
+			String totalMsg = null;
+			String freeMsg = null;
+
+			while ( ( line = reader.readLine( ) ) != null )
+			{
+				if ( line.startsWith( "MemTotal" ) ) //$NON-NLS-1$
+				{
+					totalMsg = line;
+				}
+				else if ( line.startsWith( "MemFree" ) ) //$NON-NLS-1$
+				{
+					freeMsg = line;
+				}
+
+				if ( totalMsg != null && freeMsg != null )
+				{
+					break;
+				}
+			}
+
+			String[] mem = new String[2];
+
+			mem[0] = extractMemCount( totalMsg );
+			mem[1] = extractMemCount( freeMsg );
+
+			return mem;
+		}
+		catch ( IOException e )
+		{
+			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
+		}
+		finally
+		{
+			if ( reader != null )
+			{
+				try
+				{
+					reader.close( );
+				}
+				catch ( IOException ie )
+				{
+					Log.e( SysInfoManager.class.getName( ),
+							ie.getLocalizedMessage( ),
+							ie );
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private String extractMemCount( String line )
+	{
+		if ( line != null )
+		{
+			int idx = line.indexOf( ':' );
+
+			if ( idx != -1 )
+			{
+				line = line.substring( idx + 1 ).trim( );
+
+				idx = line.lastIndexOf( ' ' );
+
+				if ( idx != -1 )
+				{
+					String unit = line.substring( idx + 1 );
+
+					try
+					{
+						long size = Long.parseLong( line.substring( 0, idx )
+								.trim( ) );
+
+						if ( "kb".equalsIgnoreCase( unit ) ) //$NON-NLS-1$
+						{
+							size *= 1024;
+						}
+						else if ( "mb".equalsIgnoreCase( unit ) ) //$NON-NLS-1$
+						{
+							size *= 1024 * 1024;
+						}
+						else if ( "gb".equalsIgnoreCase( unit ) ) //$NON-NLS-1$
+						{
+							size *= 1024 * 1024 * 1024;
+						}
+						else
+						{
+							Log.w( SysInfoManager.class.getName( ),
+									"Unexpected mem unit format: " + line ); //$NON-NLS-1$
+						}
+
+						return Formatter.formatFileSize( this, size );
+					}
+					catch ( Exception e )
+					{
+						Log.e( SysInfoManager.class.getName( ),
+								e.getLocalizedMessage( ),
+								e );
+					}
+				}
+				else
+				{
+					Log.e( SysInfoManager.class.getName( ),
+							"Unexpected mem value format: " + line ); //$NON-NLS-1$
+				}
+			}
+			else
+			{
+				Log.e( SysInfoManager.class.getName( ),
+						"Unexpected mem format: " + line ); //$NON-NLS-1$
+			}
+		}
+
+		return getResources( ).getString( R.string.info_not_available );
+	}
+
+	private String getCpuInfo( )
+	{
+		BufferedReader reader = null;
+
+		try
+		{
+			String line;
+			String processor = null;
+			String mips = null;
+
+			File f = new File( F_SCALE_FREQ );
+
+			if ( f.exists( ) )
+			{
+				try
+				{
+					reader = new BufferedReader( new InputStreamReader( new FileInputStream( f ) ),
+							32 );
+
+					line = reader.readLine( );
+
+					if ( line != null )
+					{
+						long freq = Long.parseLong( line.trim( ) );
+
+						mips = String.valueOf( freq / 1000f );
+					}
+				}
+				catch ( Exception e )
+				{
+					Log.e( SysInfoManager.class.getName( ),
+							e.getLocalizedMessage( ),
+							e );
+				}
+				finally
+				{
+					if ( reader != null )
+					{
+						try
+						{
+							reader.close( );
+							reader = null;
+						}
+						catch ( IOException ie )
+						{
+							Log.e( SysInfoManager.class.getName( ),
+									ie.getLocalizedMessage( ),
+									ie );
+						}
+					}
+				}
+			}
+			else
+			{
+				Log.d( SysInfoManager.class.getName( ),
+						"No scaling found, using BogoMips instead" ); //$NON-NLS-1$
+			}
+
+			reader = new BufferedReader( new InputStreamReader( new FileInputStream( new File( F_CPU_INFO ) ) ),
+					1024 );
+
+			while ( ( line = reader.readLine( ) ) != null )
+			{
+				if ( line.startsWith( "Processor" ) ) //$NON-NLS-1$
+				{
+					processor = line;
+				}
+				else if ( mips == null && line.startsWith( "BogoMIPS" ) ) //$NON-NLS-1$
+				{
+					mips = line;
+				}
+
+				if ( processor != null && mips != null )
+				{
+					break;
+				}
+			}
+
+			if ( processor != null && mips != null )
+			{
+				int idx = processor.indexOf( ':' );
+				if ( idx != -1 )
+				{
+					processor = processor.substring( idx + 1 ).trim( );
+
+					idx = mips.indexOf( ':' );
+
+					if ( idx != -1 )
+					{
+						mips = mips.substring( idx + 1 ).trim( );
+					}
+
+					return processor + "  " + mips + "MHz"; //$NON-NLS-1$ //$NON-NLS-2$
+				}
+				else
+				{
+					Log.e( SysInfoManager.class.getName( ),
+							"Unexpected processor format: " + processor ); //$NON-NLS-1$
+				}
+			}
+			else
+			{
+				Log.e( SysInfoManager.class.getName( ),
+						"Incompatible cpu format" ); //$NON-NLS-1$
+			}
+		}
+		catch ( IOException e )
+		{
+			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
+		}
+		finally
+		{
+			if ( reader != null )
+			{
+				try
+				{
+					reader.close( );
+				}
+				catch ( IOException ie )
+				{
+					Log.e( SysInfoManager.class.getName( ),
+							ie.getLocalizedMessage( ),
+							ie );
+				}
+			}
+		}
+
+		return getResources( ).getString( R.string.info_not_available );
+
+	}
+
+	private String[] getExternalStorageInfo( )
+	{
 		String state = Environment.getExternalStorageState( );
 
 		if ( Environment.MEDIA_MOUNTED_READ_ONLY.equals( state )
 				|| Environment.MEDIA_MOUNTED.equals( state ) )
 		{
-			File path = Environment.getExternalStorageDirectory( );
-			StatFs stat = new StatFs( path.getPath( ) );
-			long blockSize = stat.getBlockSize( );
-			long totalBlocks = stat.getBlockCount( );
-			long availableBlocks = stat.getAvailableBlocks( );
-
-			findPreference( "sd_storage" ).setSummary( getString( R.string.storage_summary, //$NON-NLS-1$
-					Formatter.formatFileSize( this, totalBlocks * blockSize ),
-					Formatter.formatFileSize( this, availableBlocks * blockSize ) ) );
-		}
-		else
-		{
-			findPreference( "sd_storage" ).setSummary( R.string.info_not_available ); //$NON-NLS-1$
+			return getStorageInfo( Environment.getExternalStorageDirectory( ) );
 		}
 
-		File path = Environment.getDataDirectory( );
+		return null;
+	}
+
+	private String[] getInternalStorageInfo( )
+	{
+		return getStorageInfo( Environment.getDataDirectory( ) );
+	}
+
+	private String[] getStorageInfo( File path )
+	{
 		StatFs stat = new StatFs( path.getPath( ) );
 		long blockSize = stat.getBlockSize( );
 
-		findPreference( "internal_storage" ).setSummary( getString( R.string.storage_summary, //$NON-NLS-1$
-				Formatter.formatFileSize( this, stat.getBlockCount( )
-						* blockSize ),
-				Formatter.formatFileSize( this, stat.getAvailableBlocks( )
-						* blockSize ) ) );
+		String[] info = new String[2];
+		info[0] = Formatter.formatFileSize( this, stat.getBlockCount( )
+				* blockSize );
+		info[1] = Formatter.formatFileSize( this, stat.getAvailableBlocks( )
+				* blockSize );
 
+		return info;
+	}
+
+	private String getNetAddressInfo( )
+	{
 		try
 		{
 			StringBuffer sb = new StringBuffer( );
@@ -241,177 +588,17 @@ public final class SysInfoManager extends PreferenceActivity
 
 			String netAddress = sb.toString( );
 
-			findPreference( "net_address" ).setSummary( !TextUtils.isEmpty( netAddress ) ? netAddress //$NON-NLS-1$
-					: getString( R.string.info_not_available ) );
+			if ( !TextUtils.isEmpty( netAddress ) )
+			{
+				return netAddress;
+			}
 		}
 		catch ( SocketException e )
 		{
 			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
 		}
 
-	}
-
-	private CharSequence getTotalMemInfo( )
-	{
-		BufferedReader reader = null;
-
-		try
-		{
-			reader = new BufferedReader( new InputStreamReader( new FileInputStream( new File( "/proc/meminfo" ) ) ), //$NON-NLS-1$
-					1024 );
-
-			String line;
-			String totalMsg = null;
-
-			while ( ( line = reader.readLine( ) ) != null )
-			{
-				if ( line.startsWith( "MemTotal" ) ) //$NON-NLS-1$
-				{
-					totalMsg = line;
-					break;
-				}
-			}
-
-			if ( totalMsg != null )
-			{
-				int idx = totalMsg.indexOf( ':' );
-
-				if ( idx != -1 )
-				{
-					totalMsg = totalMsg.substring( idx + 1 ).trim( );
-
-					idx = totalMsg.lastIndexOf( ' ' );
-
-					if ( idx != -1 )
-					{
-						String unit = totalMsg.substring( idx + 1 );
-
-						try
-						{
-							long size = Long.parseLong( totalMsg.substring( 0,
-									idx ).trim( ) );
-
-							if ( "kb".equalsIgnoreCase( unit ) ) //$NON-NLS-1$
-							{
-								size *= 1024;
-							}
-							else if ( "mb".equalsIgnoreCase( unit ) ) //$NON-NLS-1$
-							{
-								size *= 1024 * 1024;
-							}
-							else if ( "gb".equalsIgnoreCase( unit ) ) //$NON-NLS-1$
-							{
-								size *= 1024 * 1024 * 1024;
-							}
-
-							totalMsg = Formatter.formatFileSize( this, size );
-						}
-						catch ( Exception e )
-						{
-							Log.e( SysInfoManager.class.getName( ),
-									e.getLocalizedMessage( ),
-									e );
-						}
-					}
-
-					return totalMsg;
-				}
-			}
-		}
-		catch ( IOException e )
-		{
-			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
-		}
-		finally
-		{
-			if ( reader != null )
-			{
-				try
-				{
-					reader.close( );
-				}
-				catch ( IOException ie )
-				{
-					Log.e( SysInfoManager.class.getName( ),
-							ie.getLocalizedMessage( ),
-							ie );
-				}
-			}
-		}
-
-		return getResources( ).getString( R.string.info_not_available );
-	}
-
-	private CharSequence getCpuInfo( )
-	{
-		BufferedReader reader = null;
-
-		try
-		{
-			reader = new BufferedReader( new InputStreamReader( new FileInputStream( new File( "/proc/cpuinfo" ) ) ), //$NON-NLS-1$
-					1024 );
-
-			String line;
-			String processor = null;
-			String mips = null;
-
-			while ( ( line = reader.readLine( ) ) != null )
-			{
-				if ( line.startsWith( "Processor" ) ) //$NON-NLS-1$
-				{
-					processor = line;
-				}
-				else if ( line.startsWith( "BogoMIPS" ) ) //$NON-NLS-1$
-				{
-					mips = line;
-				}
-
-				if ( processor != null && mips != null )
-				{
-					break;
-				}
-			}
-
-			if ( processor != null && mips != null )
-			{
-				int idx = processor.indexOf( ':' );
-				if ( idx != -1 )
-				{
-					processor = processor.substring( idx + 1 ).trim( );
-
-					idx = mips.indexOf( ':' );
-					if ( idx != -1 )
-					{
-						mips = mips.substring( idx + 1 ).trim( );
-
-						return processor + "  " + mips + "MHz"; //$NON-NLS-1$ //$NON-NLS-2$
-					}
-				}
-			}
-		}
-		catch ( IOException e )
-		{
-			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
-		}
-		finally
-		{
-			if ( reader != null )
-			{
-				try
-				{
-					reader.close( );
-				}
-				catch ( IOException ie )
-				{
-					Log.e( SysInfoManager.class.getName( ),
-							ie.getLocalizedMessage( ),
-							ie );
-				}
-			}
-		}
-
-		return getResources( ).getString( R.string.info_not_available );
-
+		return getString( R.string.info_not_available );
 	}
 
 	@Override
@@ -450,6 +637,88 @@ public final class SysInfoManager extends PreferenceActivity
 					.show( );
 			return true;
 		}
+		else if ( "send_report".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		{
+			final boolean[] items = new boolean[]{
+					true, true, true, true, true, true
+			};
+
+			OnMultiChoiceClickListener selListener = new OnMultiChoiceClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which,
+						boolean isChecked )
+				{
+					items[which] = isChecked;
+				}
+			};
+
+			OnClickListener sendListener = new OnClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which )
+				{
+					boolean hasContent = false;
+
+					for ( boolean b : items )
+					{
+						if ( b )
+						{
+							hasContent = true;
+							break;
+						}
+					}
+
+					if ( !hasContent )
+					{
+						Toast.makeText( SysInfoManager.this,
+								R.string.no_report_item,
+								Toast.LENGTH_SHORT ).show( );
+
+						return;
+					}
+
+					final FormatArrayAdapter adapter = new FormatArrayAdapter( SysInfoManager.this,
+							R.layout.send_item,
+							new FormatItem[]{
+									new FormatItem( getString( R.string.plain_text ) ),
+									new FormatItem( getString( R.string.html ) ),
+							} );
+
+					OnClickListener listener = new OnClickListener( ) {
+
+						public void onClick( DialogInterface dialog, int which )
+						{
+							FormatItem fi = adapter.getItem( which );
+
+							sendReport( items, which, fi.compressed );
+						}
+					};
+
+					new AlertDialog.Builder( SysInfoManager.this ).setTitle( R.string.send_report )
+							.setAdapter( adapter, listener )
+							.setInverseBackgroundForced( true )
+							.create( )
+							.show( );
+				}
+			};
+
+			new AlertDialog.Builder( this ).setTitle( R.string.send_report )
+					.setMultiChoiceItems( new CharSequence[]{
+							getString( R.string.tab_info ),
+							getString( R.string.tab_apps ),
+							getString( R.string.tab_procs ),
+							getString( R.string.tab_netstat ),
+							"Dmesg " + getString( R.string.log ), //$NON-NLS-1$
+							"Logcat " + getString( R.string.log ) //$NON-NLS-1$
+					},
+							items,
+							selListener )
+					.setPositiveButton( android.R.string.ok, sendListener )
+					.setNegativeButton( android.R.string.cancel, null )
+					.create( )
+					.show( );
+
+			return true;
+		}
 		else if ( "more_info".equals( preference.getKey( ) ) ) //$NON-NLS-1$
 		{
 			Intent intent = new Intent( Intent.ACTION_VIEW );
@@ -460,31 +729,6 @@ public final class SysInfoManager extends PreferenceActivity
 		}
 
 		return false;
-	}
-
-	@Override
-	protected Dialog onCreateDialog( int id )
-	{
-		if ( id == DLG_ABOUT )
-		{
-			AlertDialog.Builder builder = new AlertDialog.Builder( this );
-			builder.setTitle( R.string.app_name );
-			builder.setIcon( R.drawable.icon );
-
-			TextView txt = new TextView( this );
-			txt.setGravity( Gravity.CENTER_HORIZONTAL );
-			txt.setTextAppearance( this, android.R.style.TextAppearance_Medium );
-			txt.setAutoLinkMask( Linkify.EMAIL_ADDRESSES );
-
-			txt.setText( getString( R.string.about_msg,
-					getVersionName( getPackageManager( ), getPackageName( ) ) ) );
-
-			builder.setView( txt );
-			builder.setNegativeButton( R.string.close, null );
-
-			return builder.create( );
-		}
-		return super.onCreateDialog( id );
 	}
 
 	@Override
@@ -500,7 +744,24 @@ public final class SysInfoManager extends PreferenceActivity
 	{
 		if ( item.getItemId( ) == R.id.mi_about )
 		{
-			showDialog( DLG_ABOUT );
+			TextView txt = new TextView( this );
+			txt.setGravity( Gravity.CENTER_HORIZONTAL );
+			txt.setTextAppearance( this, android.R.style.TextAppearance_Medium );
+
+			String href = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=qauck%2eaa%40gmail%2ecom&lc=US&item_name=Support%20Quick%20System%20Info&item_number=qsysinfo&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted"; //$NON-NLS-1$
+
+			txt.setText( Html.fromHtml( getString( R.string.about_msg,
+					getVersionName( getPackageManager( ), getPackageName( ) ),
+					href ) ) );
+			txt.setMovementMethod( LinkMovementMethod.getInstance( ) );
+
+			new AlertDialog.Builder( this ).setTitle( R.string.app_name )
+					.setIcon( R.drawable.icon )
+					.setView( txt )
+					.setNegativeButton( R.string.close, null )
+					.create( )
+					.show( );
+
 			return true;
 		}
 
@@ -514,6 +775,760 @@ public final class SysInfoManager extends PreferenceActivity
 		it.putExtra( DMESG_MODE, dmesg );
 
 		startActivityForResult( it, 1 );
+	}
+
+	private void sendReport( final boolean[] items, final int format,
+			final boolean compressed )
+	{
+		if ( progress == null )
+		{
+			progress = new ProgressDialog( this );
+		}
+		progress.setMessage( getResources( ).getText( R.string.loading ) );
+		progress.setIndeterminate( true );
+		progress.show( );
+
+		new Thread( new Runnable( ) {
+
+			public void run( )
+			{
+				String content = null;
+
+				switch ( format )
+				{
+					case PLAINTEXT :
+						content = generateTextReport( items );
+						break;
+					case HTML :
+						content = generateHtmlReport( items );
+						break;
+				}
+
+				if ( content != null && compressed )
+				{
+					content = createCompressedContent( SysInfoManager.this,
+							content,
+							format,
+							"android_report" ); //$NON-NLS-1$
+				}
+
+				handler.sendMessage( handler.obtainMessage( MSG_INIT_OK,
+						format,
+						compressed ? 1 : 0,
+						content ) );
+			}
+		} ).start( );
+	}
+
+	private String generateTextReport( boolean[] items )
+	{
+		StringBuffer sb = new StringBuffer( );
+
+		LogViewer.createTextHeader( this, sb, "Android System Report - " //$NON-NLS-1$
+				+ new Date( ).toLocaleString( ) );
+
+		if ( items[BASIC_INFO] )
+		{
+			sb.append( getString( R.string.tab_info ) ).append( '\n' );
+			sb.append( HEADER_SPLIT );
+
+			sb.append( "* " ) //$NON-NLS-1$
+					.append( getString( R.string.sd_storage ) )
+					.append( "\n\t" ); //$NON-NLS-1$
+
+			String[] info = getExternalStorageInfo( );
+			if ( info == null )
+			{
+				sb.append( getString( R.string.info_not_available ) );
+			}
+			else
+			{
+				sb.append( getString( R.string.storage_summary,
+						info[0],
+						info[1] ) );
+			}
+			sb.append( "\n\n" ); //$NON-NLS-1$
+
+			sb.append( "* " ) //$NON-NLS-1$
+					.append( getString( R.string.internal_storage ) )
+					.append( "\n\t" ); //$NON-NLS-1$
+
+			info = getInternalStorageInfo( );
+			if ( info == null )
+			{
+				sb.append( getString( R.string.info_not_available ) );
+			}
+			else
+			{
+				sb.append( getString( R.string.storage_summary,
+						info[0],
+						info[1] ) );
+			}
+			sb.append( "\n\n" ); //$NON-NLS-1$
+
+			sb.append( "* " ) //$NON-NLS-1$
+					.append( getString( R.string.memory ) )
+					.append( "\n\t" ); //$NON-NLS-1$
+
+			info = getMemInfo( );
+			if ( info == null )
+			{
+				sb.append( getString( R.string.info_not_available ) );
+			}
+			else
+			{
+				sb.append( getString( R.string.storage_summary,
+						info[0],
+						info[1] ) );
+			}
+			sb.append( "\n\n" ); //$NON-NLS-1$
+
+			sb.append( "* " ) //$NON-NLS-1$
+					.append( getString( R.string.processor ) )
+					.append( "\n\t" ) //$NON-NLS-1$
+					.append( getCpuInfo( ) )
+					.append( "\n\n" ); //$NON-NLS-1$
+
+			sb.append( "* " ) //$NON-NLS-1$
+					.append( getString( R.string.net_address ) )
+					.append( "\n\t" ) //$NON-NLS-1$
+					.append( getNetAddressInfo( ) )
+					.append( "\n\n" ); //$NON-NLS-1$
+
+			sb.append( '\n' );
+
+			try
+			{
+				File f = new File( F_SCALE_FREQ );
+				if ( f.exists( ) )
+				{
+					sb.append( getString( R.string.sc_freq ) );
+
+					readRawText( sb, new FileInputStream( f ) );
+				}
+				else
+				{
+					sb.append( getString( R.string.no_sc_freq_info ) )
+							.append( '\n' );
+				}
+
+				sb.append( '\n' );
+
+				f = new File( F_CPU_INFO );
+				if ( f.exists( ) )
+				{
+					readRawText( sb, new FileInputStream( f ) );
+				}
+				else
+				{
+					sb.append( getString( R.string.no_cpu_info ) )
+							.append( '\n' );
+				}
+
+				sb.append( '\n' );
+
+				f = new File( F_MEM_INFO );
+				if ( f.exists( ) )
+				{
+					readRawText( sb, new FileInputStream( f ) );
+				}
+				else
+				{
+					sb.append( getString( R.string.no_mem_info ) )
+							.append( '\n' );
+				}
+
+				sb.append( '\n' );
+			}
+			catch ( Exception e )
+			{
+				Log.e( SysInfoManager.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+		}
+
+		if ( items[APPLICATIONS] )
+		{
+			sb.append( getString( R.string.tab_apps ) ).append( '\n' );
+			sb.append( HEADER_SPLIT );
+
+			PackageManager pm = getPackageManager( );
+			List<PackageInfo> pkgs = pm.getInstalledPackages( 0 );
+
+			if ( pkgs != null )
+			{
+				for ( PackageInfo pkg : pkgs )
+				{
+					sb.append( pkg.packageName ).append( " <" ) //$NON-NLS-1$
+							.append( pkg.versionName )
+							.append( " (" ) //$NON-NLS-1$
+							.append( pkg.versionCode )
+							.append( ")>" ); //$NON-NLS-1$
+
+					if ( pkg.applicationInfo != null )
+					{
+						sb.append( "\t: " ) //$NON-NLS-1$
+								.append( pkg.applicationInfo.loadLabel( pm ) )
+								.append( " | " ) //$NON-NLS-1$
+								.append( pkg.applicationInfo.flags )
+								.append( " | " ) //$NON-NLS-1$
+								.append( pkg.applicationInfo.sourceDir );
+					}
+
+					sb.append( '\n' );
+				}
+			}
+
+			sb.append( '\n' );
+		}
+
+		if ( items[PROCESSES] )
+		{
+			sb.append( getString( R.string.tab_procs ) ).append( '\n' );
+			sb.append( HEADER_SPLIT );
+
+			ActivityManager am = (ActivityManager) this.getSystemService( ACTIVITY_SERVICE );
+			List<RunningAppProcessInfo> procs = am.getRunningAppProcesses( );
+
+			if ( procs != null )
+			{
+				PackageManager pm = getPackageManager( );
+
+				for ( RunningAppProcessInfo proc : procs )
+				{
+					sb.append( '<' )
+							.append( getImportance( proc ) )
+							.append( "> [" ) //$NON-NLS-1$
+							.append( proc.pid )
+							.append( "]\t:\t" ); //$NON-NLS-1$
+
+					sb.append( proc.processName );
+
+					try
+					{
+						ApplicationInfo ai = pm.getApplicationInfo( proc.processName,
+								0 );
+
+						if ( ai != null )
+						{
+							CharSequence label = pm.getApplicationLabel( ai );
+
+							if ( label != null
+									&& !label.equals( proc.processName ) )
+							{
+								sb.append( " ( " ) //$NON-NLS-1$
+										.append( label )
+										.append( " )" ); //$NON-NLS-1$
+							}
+						}
+					}
+					catch ( NameNotFoundException e )
+					{
+						// ignore this error
+					}
+
+					sb.append( '\n' );
+				}
+			}
+
+			sb.append( '\n' );
+		}
+
+		if ( items[NETSTATES] )
+		{
+			sb.append( getString( R.string.tab_netstat ) ).append( '\n' );
+			sb.append( HEADER_SPLIT );
+
+			try
+			{
+				Process proc = Runtime.getRuntime( ).exec( "netstat" ); //$NON-NLS-1$
+
+				readRawText( sb, proc.getInputStream( ) );
+			}
+			catch ( Exception e )
+			{
+				Log.e( SysInfoManager.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+
+			sb.append( '\n' );
+		}
+
+		if ( items[DMESG_LOG] )
+		{
+			sb.append( "Dmesg " + getString( R.string.log ) ).append( '\n' ); //$NON-NLS-1$
+			sb.append( HEADER_SPLIT );
+
+			try
+			{
+				Process proc = Runtime.getRuntime( ).exec( "dmesg" ); //$NON-NLS-1$
+
+				readRawText( sb, proc.getInputStream( ) );
+			}
+			catch ( Exception e )
+			{
+				Log.e( SysInfoManager.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+
+			sb.append( '\n' );
+		}
+
+		if ( items[LOGCAT_LOG] )
+		{
+			sb.append( "Logcat " + getString( R.string.log ) ).append( '\n' ); //$NON-NLS-1$
+			sb.append( HEADER_SPLIT );
+
+			try
+			{
+				Process proc = Runtime.getRuntime( )
+						.exec( "logcat -d -v time *:V" ); //$NON-NLS-1$
+
+				readRawText( sb, proc.getInputStream( ) );
+			}
+			catch ( Exception e )
+			{
+				Log.e( SysInfoManager.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+
+			sb.append( '\n' );
+		}
+
+		return sb.toString( );
+	}
+
+	private String generateHtmlReport( boolean[] items )
+	{
+		StringBuffer sb = new StringBuffer( );
+
+		LogViewer.createHtmlHeader( this,
+				sb,
+				escapeHtml( "Android System Report - " + new Date( ).toLocaleString( ) ) ); //$NON-NLS-1$
+
+		if ( items[BASIC_INFO] )
+		{
+			sb.append( openHeaderRow )
+					.append( getString( R.string.tab_info ) )
+					.append( closeHeaderRow );
+
+			sb.append( openRow )
+					.append( getString( R.string.sd_storage ) )
+					.append( nextColumn4 );
+
+			String[] info = getExternalStorageInfo( );
+			if ( info == null )
+			{
+				sb.append( getString( R.string.info_not_available ) );
+			}
+			else
+			{
+				sb.append( getString( R.string.storage_summary,
+						info[0],
+						info[1] ) );
+			}
+			sb.append( closeRow );
+
+			sb.append( openRow )
+					.append( getString( R.string.internal_storage ) )
+					.append( nextColumn4 );
+
+			info = getInternalStorageInfo( );
+			if ( info == null )
+			{
+				sb.append( getString( R.string.info_not_available ) );
+			}
+			else
+			{
+				sb.append( getString( R.string.storage_summary,
+						info[0],
+						info[1] ) );
+			}
+			sb.append( closeRow );
+
+			sb.append( openRow )
+					.append( getString( R.string.memory ) )
+					.append( nextColumn4 );
+
+			info = getMemInfo( );
+			if ( info == null )
+			{
+				sb.append( getString( R.string.info_not_available ) );
+			}
+			else
+			{
+				sb.append( getString( R.string.storage_summary,
+						info[0],
+						info[1] ) );
+			}
+			sb.append( closeRow );
+
+			sb.append( openRow )
+					.append( getString( R.string.processor ) )
+					.append( nextColumn4 )
+					.append( escapeHtml( getCpuInfo( ) ) )
+					.append( closeRow );
+
+			sb.append( openRow )
+					.append( getString( R.string.net_address ) )
+					.append( nextColumn4 )
+					.append( getNetAddressInfo( ) )
+					.append( closeRow );
+
+			sb.append( emptyRow );
+
+			try
+			{
+				File f = new File( F_SCALE_FREQ );
+				if ( f.exists( ) )
+				{
+					sb.append( openFullRow )
+							.append( getString( R.string.sc_freq ) );
+
+					readRawText( sb, new FileInputStream( f ) );
+
+					sb.append( closeRow );
+				}
+				else
+				{
+					sb.append( openFullRow )
+							.append( getString( R.string.no_sc_freq_info ) )
+							.append( closeRow );
+				}
+
+				sb.append( emptyRow );
+
+				f = new File( F_CPU_INFO );
+				if ( f.exists( ) )
+				{
+					readRawHTML( sb, new FileInputStream( f ) );
+				}
+				else
+				{
+					sb.append( openFullRow )
+							.append( getString( R.string.no_cpu_info ) )
+							.append( closeRow );
+				}
+
+				sb.append( emptyRow );
+
+				f = new File( F_MEM_INFO );
+				if ( f.exists( ) )
+				{
+					readRawHTML( sb, new FileInputStream( f ) );
+				}
+				else
+				{
+					sb.append( openFullRow )
+							.append( getString( R.string.no_mem_info ) )
+							.append( closeRow );
+				}
+
+				sb.append( emptyRow );
+			}
+			catch ( Exception e )
+			{
+				Log.e( SysInfoManager.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+		}
+
+		if ( items[APPLICATIONS] )
+		{
+			sb.append( openHeaderRow )
+					.append( getString( R.string.tab_apps ) )
+					.append( closeHeaderRow );
+
+			sb.append( openTitleRow ).append( "<b>" ) //$NON-NLS-1$
+					.append( getString( R.string.pkg_name ) )
+					.append( "</b>" ) //$NON-NLS-1$
+					.append( nextColumn )
+					.append( "<b>" ) //$NON-NLS-1$
+					.append( getString( R.string.version ) )
+					.append( "</b>" ) //$NON-NLS-1$
+					.append( nextColumn )
+					.append( "<b>" ) //$NON-NLS-1$
+					.append( getString( R.string.app_label ) )
+					.append( "</b>" ) //$NON-NLS-1$
+					.append( nextColumn )
+					.append( "<b>" ) //$NON-NLS-1$
+					.append( getString( R.string.flags ) )
+					.append( "</b>" ) //$NON-NLS-1$
+					.append( nextColumn )
+					.append( "<b>" ) //$NON-NLS-1$
+					.append( getString( R.string.source ) )
+					.append( "</b>" ) //$NON-NLS-1$
+					.append( closeRow );
+
+			PackageManager pm = getPackageManager( );
+			List<PackageInfo> pkgs = pm.getInstalledPackages( 0 );
+
+			if ( pkgs != null )
+			{
+				for ( PackageInfo pkg : pkgs )
+				{
+					sb.append( openRow )
+							.append( escapeHtml( pkg.packageName ) )
+							.append( nextColumn )
+							.append( escapeHtml( pkg.versionName ) )
+							.append( " (" ) //$NON-NLS-1$
+							.append( pkg.versionCode )
+							.append( ')' );
+
+					if ( pkg.applicationInfo != null )
+					{
+						sb.append( nextColumn )
+								.append( escapeHtml( pkg.applicationInfo.loadLabel( pm )
+										.toString( ) ) )
+								.append( nextColumn )
+								.append( pkg.applicationInfo.flags )
+								.append( nextColumn )
+								.append( escapeHtml( pkg.applicationInfo.sourceDir ) );
+					}
+
+					sb.append( closeRow );
+				}
+			}
+
+			sb.append( emptyRow );
+		}
+
+		if ( items[PROCESSES] )
+		{
+			sb.append( openHeaderRow )
+					.append( getString( R.string.tab_procs ) )
+					.append( closeHeaderRow );
+
+			sb.append( openTitleRow ).append( "<b>" ) //$NON-NLS-1$
+					.append( getString( R.string.importance ) )
+					.append( "</b>" ) //$NON-NLS-1$
+					.append( nextColumn )
+					.append( "<b>" ) //$NON-NLS-1$
+					.append( getString( R.string.pid ) )
+					.append( "</b>" ) //$NON-NLS-1$
+					.append( nextColumn )
+					.append( "<b>" ) //$NON-NLS-1$
+					.append( getString( R.string.proc_name ) )
+					.append( "</b>" ) //$NON-NLS-1$
+					.append( nextColumn )
+					.append( "<b>" ) //$NON-NLS-1$
+					.append( getString( R.string.app_label ) )
+					.append( "</b>" ) //$NON-NLS-1$
+					.append( closeRow );
+
+			ActivityManager am = (ActivityManager) this.getSystemService( ACTIVITY_SERVICE );
+			List<RunningAppProcessInfo> procs = am.getRunningAppProcesses( );
+
+			if ( procs != null )
+			{
+				PackageManager pm = getPackageManager( );
+
+				for ( RunningAppProcessInfo proc : procs )
+				{
+					sb.append( openRow )
+							.append( getImportance( proc ) )
+							.append( nextColumn )
+							.append( proc.pid )
+							.append( nextColumn )
+							.append( escapeHtml( proc.processName ) );
+
+					try
+					{
+						ApplicationInfo ai = pm.getApplicationInfo( proc.processName,
+								0 );
+
+						if ( ai != null )
+						{
+							CharSequence label = pm.getApplicationLabel( ai );
+
+							if ( label != null
+									&& !label.equals( proc.processName ) )
+							{
+								sb.append( nextColumn )
+										.append( escapeHtml( label.toString( ) ) );
+							}
+						}
+					}
+					catch ( NameNotFoundException e )
+					{
+						// ignore this error
+					}
+
+					sb.append( closeRow );
+				}
+			}
+
+			sb.append( emptyRow );
+		}
+
+		if ( items[NETSTATES] )
+		{
+			sb.append( openHeaderRow )
+					.append( getString( R.string.tab_netstat ) )
+					.append( closeHeaderRow );
+
+			try
+			{
+				Process proc = Runtime.getRuntime( ).exec( "netstat" ); //$NON-NLS-1$
+
+				readRawHTML( sb, proc.getInputStream( ) );
+			}
+			catch ( Exception e )
+			{
+				Log.e( SysInfoManager.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+
+			sb.append( emptyRow );
+		}
+
+		if ( items[DMESG_LOG] )
+		{
+			sb.append( openHeaderRow ).append( "Dmesg " //$NON-NLS-1$
+					+ getString( R.string.log ) ).append( closeHeaderRow );
+
+			try
+			{
+				Process proc = Runtime.getRuntime( ).exec( "dmesg" ); //$NON-NLS-1$
+
+				readRawHTML( sb, proc.getInputStream( ) );
+			}
+			catch ( Exception e )
+			{
+				Log.e( SysInfoManager.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+
+			sb.append( emptyRow );
+		}
+
+		if ( items[LOGCAT_LOG] )
+		{
+			sb.append( openHeaderRow ).append( "Logcat " //$NON-NLS-1$
+					+ getString( R.string.log ) ).append( closeHeaderRow );
+
+			try
+			{
+				Process proc = Runtime.getRuntime( )
+						.exec( "logcat -d -v time *:V" ); //$NON-NLS-1$
+
+				readRawHTML( sb, proc.getInputStream( ) );
+			}
+			catch ( Exception e )
+			{
+				Log.e( SysInfoManager.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+
+			sb.append( emptyRow );
+		}
+
+		sb.append( "</table></font></body></html>" ); //$NON-NLS-1$
+
+		return sb.toString( );
+	}
+
+	private String getImportance( RunningAppProcessInfo proc )
+	{
+		String impt = "Empty"; //$NON-NLS-1$
+
+		switch ( proc.importance )
+		{
+			case RunningAppProcessInfo.IMPORTANCE_BACKGROUND :
+				impt = "Background"; //$NON-NLS-1$
+				break;
+			case RunningAppProcessInfo.IMPORTANCE_FOREGROUND :
+				impt = "Foreground"; //$NON-NLS-1$
+				break;
+			case RunningAppProcessInfo.IMPORTANCE_SERVICE :
+				impt = "Service"; //$NON-NLS-1$
+				break;
+			case RunningAppProcessInfo.IMPORTANCE_VISIBLE :
+				impt = "Visible"; //$NON-NLS-1$
+				break;
+		}
+
+		return impt;
+	}
+
+	private static void readRawText( StringBuffer sb, InputStream input )
+	{
+		BufferedReader reader = null;
+		try
+		{
+			reader = new BufferedReader( new InputStreamReader( input ), 8192 );
+
+			String line;
+			while ( ( line = reader.readLine( ) ) != null )
+			{
+				sb.append( line ).append( '\n' );
+			}
+		}
+		catch ( Exception e )
+		{
+			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
+		}
+		finally
+		{
+			if ( reader != null )
+			{
+				try
+				{
+					reader.close( );
+				}
+				catch ( IOException e )
+				{
+					Log.e( SysInfoManager.class.getName( ),
+							e.getLocalizedMessage( ),
+							e );
+				}
+			}
+		}
+	}
+
+	private static void readRawHTML( StringBuffer sb, InputStream input )
+	{
+		BufferedReader reader = null;
+		try
+		{
+			reader = new BufferedReader( new InputStreamReader( input ), 8192 );
+
+			String line;
+			while ( ( line = reader.readLine( ) ) != null )
+			{
+				sb.append( openFullRow )
+						.append( escapeHtml( line ) )
+						.append( closeRow );
+			}
+		}
+		catch ( Exception e )
+		{
+			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
+		}
+		finally
+		{
+			if ( reader != null )
+			{
+				try
+				{
+					reader.close( );
+				}
+				catch ( IOException e )
+				{
+					Log.e( SysInfoManager.class.getName( ),
+							e.getLocalizedMessage( ),
+							e );
+				}
+			}
+		}
 	}
 
 	private static String getVersionName( PackageManager pm, String pkgName )
@@ -535,6 +1550,193 @@ public final class SysInfoManager extends PreferenceActivity
 		}
 
 		return ver;
+	}
+
+	private static String createCompressedContent( Activity context,
+			String content, int format, String filePrefix )
+	{
+		String state = Environment.getExternalStorageState( );
+
+		if ( Environment.MEDIA_MOUNTED.equals( state ) )
+		{
+			File path = Environment.getExternalStorageDirectory( );
+
+			File tf = new File( path, "logs" ); //$NON-NLS-1$
+
+			if ( !tf.exists( ) )
+			{
+				if ( !tf.mkdirs( ) )
+				{
+					Toast.makeText( context,
+							context.getString( R.string.error_create_folder,
+									tf.getAbsolutePath( ) ),
+							Toast.LENGTH_SHORT ).show( );
+
+					return null;
+				}
+			}
+
+			File zf = new File( tf, filePrefix
+					+ Math.abs( System.currentTimeMillis( ) )
+					+ ".zip" ); //$NON-NLS-1$
+
+			ZipOutputStream zos = null;
+			try
+			{
+				zos = new ZipOutputStream( new BufferedOutputStream( new FileOutputStream( zf ) ) );
+
+				String ext = ".txt"; //$NON-NLS-1$
+
+				switch ( format )
+				{
+					case HTML :
+						ext = ".html"; //$NON-NLS-1$
+						break;
+					case CSV :
+						ext = ".csv"; //$NON-NLS-1$
+						break;
+				}
+
+				zos.putNextEntry( new ZipEntry( filePrefix + ext ) );
+
+				zos.write( content.getBytes( ) );
+
+				zos.closeEntry( );
+
+				return zf.getAbsolutePath( );
+			}
+			catch ( IOException e )
+			{
+				Log.e( SysInfoManager.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+			finally
+			{
+				if ( zos != null )
+				{
+					try
+					{
+						zos.close( );
+					}
+					catch ( IOException e )
+					{
+						Log.e( SysInfoManager.class.getName( ),
+								e.getLocalizedMessage( ),
+								e );
+					}
+				}
+			}
+		}
+		else
+		{
+			Toast.makeText( context, R.string.error_sdcard, Toast.LENGTH_SHORT )
+					.show( );
+		}
+
+		return null;
+	}
+
+	private static void sendContent( Activity context, String subject,
+			String content, boolean compressed )
+	{
+		Intent it = new Intent( Intent.ACTION_SEND );
+
+		it.putExtra( Intent.EXTRA_SUBJECT, subject );
+
+		if ( compressed )
+		{
+			it.putExtra( Intent.EXTRA_STREAM,
+					Uri.fromFile( new File( content ) ) );
+			it.putExtra( Intent.EXTRA_TEXT, subject );
+			it.setType( "application/zip" ); //$NON-NLS-1$
+		}
+		else
+		{
+			it.putExtra( Intent.EXTRA_TEXT, content );
+			it.setType( "text/plain" ); //$NON-NLS-1$
+		}
+
+		it = Intent.createChooser( it, null );
+
+		context.startActivity( it );
+	}
+
+	private static String escapeCsv( String str )
+	{
+		if ( TextUtils.isEmpty( str ) || containsNone( str, CSV_SEARCH_CHARS ) )
+		{
+			return str;
+		}
+
+		StringBuffer sb = new StringBuffer( );
+
+		sb.append( '"' );
+		for ( int i = 0; i < str.length( ); i++ )
+		{
+			char c = str.charAt( i );
+			if ( c == '"' )
+			{
+				sb.append( '"' ); // escape double quote
+			}
+			sb.append( c );
+		}
+		sb.append( '"' );
+
+		return sb.toString( );
+	}
+
+	private static String escapeHtml( String str )
+	{
+		if ( TextUtils.isEmpty( str ) || containsNone( str, HTML_SEARCH_CHARS ) )
+		{
+			return str;
+		}
+
+		str = TextUtils.htmlEncode( str );
+
+		if ( str.indexOf( '\n' ) == -1 )
+		{
+			return str;
+		}
+
+		StringBuffer sb = new StringBuffer( );
+		char c;
+		for ( int i = 0; i < str.length( ); i++ )
+		{
+			c = str.charAt( i );
+
+			if ( c == '\n' )
+			{
+				sb.append( "<br>" ); //$NON-NLS-1$
+			}
+			else
+			{
+				sb.append( c );
+			}
+		}
+
+		return sb.toString( );
+	}
+
+	private static boolean containsNone( String str, char[] invalidChars )
+	{
+		int strSize = str.length( );
+		int validSize = invalidChars.length;
+
+		for ( int i = 0; i < strSize; i++ )
+		{
+			char ch = str.charAt( i );
+			for ( int j = 0; j < validSize; j++ )
+			{
+				if ( invalidChars[j] == ch )
+				{
+					return false;
+				}
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -761,33 +1963,41 @@ public final class SysInfoManager extends PreferenceActivity
 
 				return true;
 			}
-			else if ( item.getItemId( ) == R.id.mi_plain_text )
+			else if ( item.getItemId( ) == R.id.mi_send_log )
 			{
-				sendLog( false, true );
-				return true;
-			}
-			else if ( item.getItemId( ) == R.id.mi_csv )
-			{
-				sendLog( false, false );
-				return true;
-			}
-			else if ( item.getItemId( ) == R.id.mi_text_compressed )
-			{
-				sendLog( true, true );
-				return true;
-			}
-			else if ( item.getItemId( ) == R.id.mi_csv_compressed )
-			{
-				sendLog( true, false );
+				final FormatArrayAdapter adapter = new FormatArrayAdapter( this,
+						R.layout.send_item,
+						new FormatItem[]{
+								new FormatItem( getString( R.string.plain_text ) ),
+								new FormatItem( getString( R.string.html ) ),
+								new FormatItem( getString( R.string.csv ) ),
+						} );
+
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						FormatItem fi = adapter.getItem( which );
+
+						sendLog( fi.compressed, which );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.send_log )
+						.setAdapter( adapter, listener )
+						.setInverseBackgroundForced( true )
+						.create( )
+						.show( );
+
 				return true;
 			}
 
 			return false;
 		}
 
-		private void sendLog( boolean compressed, boolean plainText )
+		private void sendLog( boolean compressed, int format )
 		{
-			String content = collectLogContent( compressed, plainText );
+			String content = collectLogContent( compressed, format );
 
 			if ( content == null )
 			{
@@ -796,28 +2006,10 @@ public final class SysInfoManager extends PreferenceActivity
 			}
 			else
 			{
-				Intent it = new Intent( Intent.ACTION_SEND );
-
-				it.putExtra( Intent.EXTRA_SUBJECT, "Android Device Log - " //$NON-NLS-1$
-						+ new Date( ).toLocaleString( ) );
-
-				if ( compressed )
-				{
-					it.putExtra( Intent.EXTRA_STREAM,
-							Uri.fromFile( new File( content ) ) );
-					it.putExtra( Intent.EXTRA_TEXT, "Android Device Log - " //$NON-NLS-1$
-							+ new Date( ).toLocaleString( ) );
-					it.setType( "application/zip" ); //$NON-NLS-1$
-				}
-				else
-				{
-					it.putExtra( Intent.EXTRA_TEXT, content );
-					it.setType( "text/plain" ); //$NON-NLS-1$
-				}
-
-				it = Intent.createChooser( it, null );
-
-				startActivity( it );
+				sendContent( this,
+						"Android Device Log - " + new Date( ).toLocaleString( ), //$NON-NLS-1$
+						content,
+						compressed );
 			}
 		}
 
@@ -865,137 +2057,40 @@ public final class SysInfoManager extends PreferenceActivity
 			}
 		}
 
-		private String collectLogContent( boolean compressed, boolean plainText )
+		private String collectLogContent( boolean compressed, int format )
 		{
-			String textContent = plainText ? collectTextLogContent( )
-					: collectCSVLogContent( );
+			String textContent = null;
 
-			if ( !compressed )
+			switch ( format )
+			{
+				case PLAINTEXT :
+					textContent = collectTextLogContent( );
+					break;
+				case HTML :
+					textContent = collectHtmlLogContent( );
+					break;
+				case CSV :
+					textContent = collectCSVLogContent( );
+					break;
+			}
+
+			if ( textContent == null || !compressed )
 			{
 				return textContent;
 			}
 
-			String state = Environment.getExternalStorageState( );
-
-			if ( Environment.MEDIA_MOUNTED.equals( state ) )
-			{
-				File path = Environment.getExternalStorageDirectory( );
-
-				File tf = new File( path, "logs" ); //$NON-NLS-1$
-
-				if ( !tf.exists( ) )
-				{
-					if ( !tf.mkdirs( ) )
-					{
-						Toast.makeText( this,
-								getString( R.string.error_create_folder,
-										tf.getAbsolutePath( ) ),
-								Toast.LENGTH_SHORT ).show( );
-
-						return null;
-					}
-				}
-
-				File zf = new File( tf, "android_log" //$NON-NLS-1$
-						+ Math.abs( System.currentTimeMillis( ) )
-						+ ".zip" ); //$NON-NLS-1$
-
-				ZipOutputStream zos = null;
-				try
-				{
-					zos = new ZipOutputStream( new BufferedOutputStream( new FileOutputStream( zf ) ) );
-
-					zos.putNextEntry( new ZipEntry( plainText ? "log.txt" //$NON-NLS-1$
-							: "log.csv" ) ); //$NON-NLS-1$
-
-					zos.write( textContent.getBytes( ) );
-
-					zos.closeEntry( );
-
-					return zf.getAbsolutePath( );
-				}
-				catch ( IOException e )
-				{
-					Log.e( LogViewer.class.getName( ),
-							e.getLocalizedMessage( ),
-							e );
-				}
-				finally
-				{
-					if ( zos != null )
-					{
-						try
-						{
-							zos.close( );
-						}
-						catch ( IOException e )
-						{
-							Log.e( LogViewer.class.getName( ),
-									e.getLocalizedMessage( ),
-									e );
-						}
-					}
-				}
-			}
-			else
-			{
-				Toast.makeText( this, R.string.error_sdcard, Toast.LENGTH_SHORT )
-						.show( );
-			}
-
-			return null;
+			return createCompressedContent( this,
+					textContent,
+					format,
+					"android_log" ); //$NON-NLS-1$
 		}
 
 		private String collectTextLogContent( )
 		{
 			StringBuffer sb = new StringBuffer( );
 
-			sb.append( getString( R.string.collector_head,
-					getString( R.string.app_name ),
-					getVersionName( getPackageManager( ), getPackageName( ) ) ) );
-
-			sb.append( getString( R.string.log_head,
-					Build.DEVICE,
-					Build.MODEL,
-					Build.PRODUCT,
-					Build.BRAND,
-					Build.VERSION.RELEASE,
-					Build.DISPLAY ) );
-
-			BufferedReader reader = null;
-			try
-			{
-				reader = new BufferedReader( new InputStreamReader( new FileInputStream( "/proc/version" ) ), //$NON-NLS-1$
-						1024 );
-
-				String line;
-				while ( ( line = reader.readLine( ) ) != null )
-				{
-					sb.append( line ).append( '\n' );
-				}
-			}
-			catch ( IOException e )
-			{
-				Log.e( LogViewer.class.getName( ), e.getLocalizedMessage( ), e );
-			}
-			finally
-			{
-				if ( reader != null )
-				{
-					try
-					{
-						reader.close( );
-					}
-					catch ( IOException e )
-					{
-						Log.e( LogViewer.class.getName( ),
-								e.getLocalizedMessage( ),
-								e );
-					}
-				}
-			}
-
-			sb.append( '\n' );
+			createTextHeader( this, sb, "Android Device Log - " //$NON-NLS-1$
+					+ new Date( ).toLocaleString( ) );
 
 			ListAdapter adapter = getListView( ).getAdapter( );
 			int cnt = adapter.getCount( );
@@ -1069,11 +2164,11 @@ public final class SysInfoManager extends PreferenceActivity
 
 						if ( log.time != null )
 						{
-							sb.append( log.time.replaceAll( ",", "." ) ); //$NON-NLS-1$ //$NON-NLS-2$
+							sb.append( escapeCsv( log.time ) );
 						}
 
 						sb.append( ',' )
-								.append( log.msg.replaceAll( ",", "." ) ) //$NON-NLS-1$ //$NON-NLS-2$
+								.append( escapeCsv( log.msg ) )
 								.append( '\n' );
 					}
 					else
@@ -1084,10 +2179,11 @@ public final class SysInfoManager extends PreferenceActivity
 
 							if ( log.time != null )
 							{
-								sb.append( log.time.replaceAll( ",", "." ) ); //$NON-NLS-1$ //$NON-NLS-2$
+								sb.append( escapeCsv( log.time ) );
 							}
 
-							sb.append( ',' ).append( s.replaceAll( ",", "." ) ) //$NON-NLS-1$ //$NON-NLS-2$
+							sb.append( ',' )
+									.append( escapeCsv( s ) )
 									.append( '\n' );
 						}
 					}
@@ -1103,35 +2199,126 @@ public final class SysInfoManager extends PreferenceActivity
 
 					if ( log.msgList == null )
 					{
-						sb.append( log.time.replaceAll( ",", "." ) ) //$NON-NLS-1$ //$NON-NLS-2$
+						sb.append( escapeCsv( log.time ) )
 								.append( ',' )
 								.append( log.level )
 								.append( ',' )
-								.append( log.tag.replaceAll( ",", "." ) ) //$NON-NLS-1$ //$NON-NLS-2$
+								.append( escapeCsv( log.tag ) )
 								.append( ',' )
 								.append( log.pid )
 								.append( ',' )
-								.append( log.msg.replaceAll( ",", "." ) ) //$NON-NLS-1$ //$NON-NLS-2$
+								.append( escapeCsv( log.msg ) )
 								.append( '\n' );
 					}
 					else
 					{
 						for ( String s : log.msgList )
 						{
-							sb.append( log.time.replaceAll( ",", "." ) ) //$NON-NLS-1$ //$NON-NLS-2$
+							sb.append( escapeCsv( log.time ) )
 									.append( ',' )
 									.append( log.level )
 									.append( ',' )
-									.append( log.tag.replaceAll( ",", "." ) ) //$NON-NLS-1$ //$NON-NLS-2$
+									.append( escapeCsv( log.tag ) )
 									.append( ',' )
 									.append( log.pid )
 									.append( ',' )
-									.append( s.replaceAll( ",", "." ) ) //$NON-NLS-1$ //$NON-NLS-2$
+									.append( escapeCsv( s ) )
 									.append( '\n' );
 						}
 					}
 				}
 			}
+
+			return sb.toString( );
+		}
+
+		private String collectHtmlLogContent( )
+		{
+			StringBuffer sb = new StringBuffer( );
+
+			createHtmlHeader( this,
+					sb,
+					escapeHtml( "Android Device Log - " + new Date( ).toLocaleString( ) ) ); //$NON-NLS-1$
+
+			ListAdapter adapter = getListView( ).getAdapter( );
+			int cnt = adapter.getCount( );
+
+			if ( dmesgMode )
+			{
+				sb.append( openHeaderRow ).append( "Dmesg " //$NON-NLS-1$
+						+ getString( R.string.log ) ).append( closeHeaderRow );
+
+				sb.append( openTitleRow ).append( "<b>" ) //$NON-NLS-1$
+						.append( getString( R.string.log_level ) )
+						.append( "</b>" ) //$NON-NLS-1$
+						.append( nextColumn )
+						.append( "<b>" ) //$NON-NLS-1$
+						.append( getString( R.string.time ) )
+						.append( "</b>" ) //$NON-NLS-1$
+						.append( nextColumn )
+						.append( "<b>" ) //$NON-NLS-1$
+						.append( getString( R.string.message ) )
+						.append( "</b>" ) //$NON-NLS-1$
+						.append( closeRow );
+
+				for ( int i = 0; i < cnt; i++ )
+				{
+					LogItem log = (LogItem) adapter.getItem( i );
+
+					sb.append( openRow ).append( "<" + log.level + ">" ) //$NON-NLS-1$ //$NON-NLS-2$
+							.append( nextColumn );
+
+					sb.append( log.time == null ? "&nbsp;" //$NON-NLS-1$
+							: escapeHtml( log.time ) ).append( nextColumn );
+
+					sb.append( escapeHtml( log.getMsg( ) ) ).append( closeRow );
+				}
+			}
+			else
+			{
+				sb.append( openHeaderRow ).append( "Logcat " //$NON-NLS-1$
+						+ getString( R.string.log ) ).append( closeHeaderRow );
+
+				sb.append( openTitleRow ).append( "<b>" ) //$NON-NLS-1$
+						.append( getString( R.string.time ) )
+						.append( "</b>" ) //$NON-NLS-1$
+						.append( nextColumn )
+						.append( "<b>" ) //$NON-NLS-1$
+						.append( getString( R.string.log_level ) )
+						.append( "</b>" ) //$NON-NLS-1$
+						.append( nextColumn )
+						.append( "<b>" ) //$NON-NLS-1$
+						.append( getString( R.string.tag ) )
+						.append( "</b>" ) //$NON-NLS-1$
+						.append( nextColumn )
+						.append( "<b>" ) //$NON-NLS-1$
+						.append( getString( R.string.pid ) )
+						.append( "</b>" ) //$NON-NLS-1$
+						.append( nextColumn )
+						.append( "<b>" ) //$NON-NLS-1$
+						.append( getString( R.string.message ) )
+						.append( "</b>" ) //$NON-NLS-1$
+						.append( closeRow );
+
+				for ( int i = 0; i < cnt; i++ )
+				{
+					LogItem log = (LogItem) adapter.getItem( i );
+
+					sb.append( openRow )
+							.append( escapeHtml( log.time ) )
+							.append( nextColumn );
+
+					sb.append( log.level ).append( nextColumn );
+					sb.append( escapeHtml( log.tag ) ).append( nextColumn );
+					sb.append( log.pid ).append( nextColumn );
+
+					sb.append( escapeHtml( log.getMsg( ) ) ).append( closeRow );
+				}
+			}
+
+			sb.append( emptyRow );
+
+			sb.append( "</table></font></body></html>" ); //$NON-NLS-1$
 
 			return sb.toString( );
 		}
@@ -1221,8 +2408,10 @@ public final class SysInfoManager extends PreferenceActivity
 
 				public void run( )
 				{
-					ArrayList<LogItem> logs = dmesgMode ? collectDLog( )
-							: collectCLog( );
+					ArrayList<LogItem> logs = dmesgMode ? collectDLog( getDLogLevel( ) )
+							: collectCLog( getCLogLevel( ),
+									getCTagFilter( ),
+									getPIDFilter( ) );
 
 					handler.sendMessage( handler.obtainMessage( MSG_INIT_OK,
 							logs ) );
@@ -1230,12 +2419,148 @@ public final class SysInfoManager extends PreferenceActivity
 			} ).start( );
 		}
 
-		private LogItem parseDLog( String line, char targetLevel )
+		private static void createTextHeader( Context context, StringBuffer sb,
+				String title )
+		{
+			sb.append( title ).append( "\n\n" ); //$NON-NLS-1$
+
+			sb.append( context.getString( R.string.collector_head,
+					context.getString( R.string.app_name ),
+					getVersionName( context.getPackageManager( ),
+							context.getPackageName( ) ) ) );
+
+			sb.append( context.getString( R.string.device ) ).append( ": " ) //$NON-NLS-1$
+					.append( Build.DEVICE )
+					.append( '\n' )
+					.append( context.getString( R.string.model ) )
+					.append( ": " ) //$NON-NLS-1$
+					.append( Build.MODEL )
+					.append( '\n' )
+					.append( context.getString( R.string.product ) )
+					.append( ": " ) //$NON-NLS-1$
+					.append( Build.PRODUCT )
+					.append( '\n' )
+					.append( context.getString( R.string.brand ) )
+					.append( ": " ) //$NON-NLS-1$
+					.append( Build.BRAND )
+					.append( '\n' )
+					.append( context.getString( R.string.release ) )
+					.append( ": " ) //$NON-NLS-1$
+					.append( Build.VERSION.RELEASE )
+					.append( '\n' )
+					.append( context.getString( R.string.build ) )
+					.append( ": " ) //$NON-NLS-1$
+					.append( Build.DISPLAY )
+					.append( '\n' )
+					.append( context.getString( R.string.locale ) )
+					.append( ": " ) //$NON-NLS-1$
+					.append( Locale.getDefault( ).toString( ) )
+					.append( "\n\n" ); //$NON-NLS-1$
+
+			try
+			{
+				readRawText( sb, new FileInputStream( F_VERSION ) );
+
+				sb.append( '\n' );
+			}
+			catch ( Exception e )
+			{
+				Log.e( LogViewer.class.getName( ), e.getLocalizedMessage( ), e );
+			}
+		}
+
+		private static void createHtmlHeader( Context context, StringBuffer sb,
+				String title )
+		{
+			sb.append( "<html><head><title>" ) //$NON-NLS-1$
+					.append( title )
+					.append( "</title><meta http-equiv=\"Content-type\" content=\"text/html;charset=UTF-8\"/></head>\n" ) //$NON-NLS-1$
+					.append( "<body bgcolor=FFFFFF><font face=\"Verdana\" color=\"#000000\">\n" ) //$NON-NLS-1$
+					.append( "<table border=0 width=\"100%\" cellspacing=\"2\" cellpadding=\"2\">\n" ) //$NON-NLS-1$
+					.append( "<tr align=\"left\">" ) //$NON-NLS-1$
+					.append( "<td colspan=5>" ) //$NON-NLS-1$
+					.append( "<table border=0 width=\"100%\" cellspacing=\"2\" cellpadding=\"2\">" ) //$NON-NLS-1$
+					.append( "<tr><td width=60>" ) //$NON-NLS-1$
+					.append( "<a href=\"http://code.google.com/p/qsysinfo/\">" ) //$NON-NLS-1$
+					.append( "<img src=\"http://code.google.com/p/qsysinfo/logo?logo_id=1261652286\" border=0></a>" ) //$NON-NLS-1$
+					.append( "</td><td valign=\"bottom\">" ) //$NON-NLS-1$
+					.append( "<h3>" ) //$NON-NLS-1$
+					.append( title )
+					.append( "</h3></td></tr></table></td></tr>\n" ); //$NON-NLS-1$
+
+			sb.append( "<tr align=\"left\"><td colspan=5><font color=\"#a0a0a0\"><small>" ); //$NON-NLS-1$
+			sb.append( escapeHtml( context.getString( R.string.collector_head,
+					context.getString( R.string.app_name ),
+					getVersionName( context.getPackageManager( ),
+							context.getPackageName( ) ) ) ) );
+			sb.append( "</small></font></td></tr>\n" ); //$NON-NLS-1$
+
+			sb.append( openHeaderRow )
+					.append( context.getString( R.string.device_info ) )
+					.append( closeHeaderRow );
+			sb.append( openRow )
+					.append( context.getString( R.string.device ) )
+					.append( nextColumn4 )
+					.append( escapeHtml( Build.DEVICE ) )
+					.append( closeRow );
+			sb.append( openRow )
+					.append( context.getString( R.string.model ) )
+					.append( nextColumn4 )
+					.append( escapeHtml( Build.MODEL ) )
+					.append( closeRow );
+			sb.append( openRow )
+					.append( context.getString( R.string.product ) )
+					.append( nextColumn4 )
+					.append( escapeHtml( Build.PRODUCT ) )
+					.append( closeRow );
+			sb.append( openRow )
+					.append( context.getString( R.string.brand ) )
+					.append( nextColumn4 )
+					.append( escapeHtml( Build.BRAND ) )
+					.append( closeRow );
+			sb.append( openRow )
+					.append( context.getString( R.string.release ) )
+					.append( nextColumn4 )
+					.append( escapeHtml( Build.VERSION.RELEASE ) )
+					.append( closeRow );
+			sb.append( openRow )
+					.append( context.getString( R.string.build ) )
+					.append( nextColumn4 )
+					.append( escapeHtml( Build.DISPLAY ) )
+					.append( closeRow );
+			sb.append( openRow )
+					.append( context.getString( R.string.locale ) )
+					.append( nextColumn4 )
+					.append( escapeHtml( Locale.getDefault( ).toString( ) ) )
+					.append( closeRow );
+
+			sb.append( emptyRow );
+
+			sb.append( openHeaderRow )
+					.append( context.getString( R.string.sys_version ) )
+					.append( closeHeaderRow );
+
+			try
+			{
+				readRawHTML( sb, new FileInputStream( F_VERSION ) );
+
+				sb.append( emptyRow );
+			}
+			catch ( Exception e )
+			{
+				Log.e( LogViewer.class.getName( ), e.getLocalizedMessage( ), e );
+			}
+		}
+
+		private static LogItem parseDLog( String line, char targetLevel )
 		{
 			int levelOffset = line.indexOf( '>' );
 
 			if ( levelOffset < 1 )
 			{
+				Log.d( LogViewer.class.getName( ),
+						"Unexpected dmesg line: " + line ); //$NON-NLS-1$
+
 				return null;
 			}
 
@@ -1264,6 +2589,16 @@ public final class SysInfoManager extends PreferenceActivity
 					{
 						log.time = timeRaw;
 					}
+					else
+					{
+						Log.d( LogViewer.class.getName( ),
+								"Unexpected dmesg time value: " + line ); //$NON-NLS-1$
+					}
+				}
+				else
+				{
+					Log.d( LogViewer.class.getName( ),
+							"Unexpected dmesg time format: " + line ); //$NON-NLS-1$
 				}
 			}
 
@@ -1273,7 +2608,8 @@ public final class SysInfoManager extends PreferenceActivity
 			return log;
 		}
 
-		private LogItem parseCLog( String line, String tagFilter, int pidFilter )
+		private static LogItem parseCLog( String line, String tagFilter,
+				int pidFilter )
 		{
 			int dayOffset = line.indexOf( ' ' );
 			int timeOffset = line.indexOf( ' ', dayOffset + 1 );
@@ -1314,13 +2650,13 @@ public final class SysInfoManager extends PreferenceActivity
 			return log;
 		}
 
-		private String formatDLog( LogItem log )
+		private static String formatDLog( LogItem log )
 		{
 			return "<" + log.level + "> " //$NON-NLS-1$ //$NON-NLS-2$
 					+ ( log.time == null ? "" : ( "[" + log.time + "] " ) ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 
-		private String formatCLog( LogItem log )
+		private static String formatCLog( LogItem log )
 		{
 			return log.time
 					+ ' '
@@ -1332,10 +2668,9 @@ public final class SysInfoManager extends PreferenceActivity
 					+ ')';
 		}
 
-		private ArrayList<LogItem> collectDLog( )
+		private static ArrayList<LogItem> collectDLog( int logLevel )
 		{
-			int level = getDLogLevel( );
-			char dl = (char) ( level + 0x30 );
+			char dl = (char) ( logLevel + 0x30 );
 
 			BufferedReader reader = null;
 			try
@@ -1392,12 +2727,12 @@ public final class SysInfoManager extends PreferenceActivity
 			return null;
 		}
 
-		private ArrayList<LogItem> collectCLog( )
+		private static ArrayList<LogItem> collectCLog( int logLevel,
+				String tagFilter, int pidFilter )
 		{
-			int level = getCLogLevel( );
 			char cl = 'V';
 
-			switch ( level )
+			switch ( logLevel )
 			{
 				case Log.DEBUG :
 					cl = 'D';
@@ -1415,9 +2750,6 @@ public final class SysInfoManager extends PreferenceActivity
 					cl = 'F';
 					break;
 			}
-
-			String tagFilter = getCTagFilter( );
-			int pidFilter = getPIDFilter( );
 
 			BufferedReader reader = null;
 			try
@@ -1632,7 +2964,7 @@ public final class SysInfoManager extends PreferenceActivity
 
 				if ( dmesgMode )
 				{
-					new AlertDialog.Builder( this ).setTitle( R.string.level_filter )
+					new AlertDialog.Builder( this ).setTitle( R.string.log_level )
 							.setNeutralButton( R.string.close, null )
 							.setSingleChoiceItems( new CharSequence[]{
 									getString( R.string.emmergency ),
@@ -1652,7 +2984,7 @@ public final class SysInfoManager extends PreferenceActivity
 				}
 				else
 				{
-					new AlertDialog.Builder( this ).setTitle( R.string.level_filter )
+					new AlertDialog.Builder( this ).setTitle( R.string.log_level )
 							.setNeutralButton( R.string.close, null )
 							.setSingleChoiceItems( new CharSequence[]{
 									getString( R.string.verbose ),
@@ -1830,6 +3162,82 @@ public final class SysInfoManager extends PreferenceActivity
 			}
 
 			return TextUtils.equals( this.time, that.time );
+		}
+	}
+
+	/**
+	 * FormatItem
+	 */
+	private static final class FormatItem
+	{
+
+		String format;
+		boolean compressed;
+
+		FormatItem( String format )
+		{
+			this.format = format;
+			this.compressed = false;
+		}
+	}
+
+	/**
+	 * FormatArrayAdapter
+	 */
+	private static final class FormatArrayAdapter extends
+			ArrayAdapter<FormatItem>
+	{
+
+		private Activity context;
+
+		FormatArrayAdapter( Activity context, int textViewResourceId,
+				FormatItem[] objects )
+		{
+			super( context, textViewResourceId, objects );
+
+			this.context = context;
+		}
+
+		@Override
+		public View getView( int position, View convertView, ViewGroup parent )
+		{
+			View view;
+
+			if ( convertView == null )
+			{
+				view = context.getLayoutInflater( )
+						.inflate( R.layout.send_item, parent, false );
+			}
+			else
+			{
+				view = convertView;
+			}
+
+			final FormatItem fi = getItem( position );
+
+			TextView txt_format = (TextView) view.findViewById( R.id.txt_format );
+			txt_format.setText( fi.format );
+
+			final TextView txt_hint = (TextView) view.findViewById( R.id.txt_hint );
+			txt_hint.setTextColor( context.getResources( )
+					.getColor( fi.compressed ? android.R.color.secondary_text_light
+							: android.R.color.secondary_text_dark ) );
+
+			View hintArea = view.findViewById( R.id.ll_compress );
+
+			hintArea.setOnClickListener( new View.OnClickListener( ) {
+
+				public void onClick( View v )
+				{
+					fi.compressed = !fi.compressed;
+
+					txt_hint.setTextColor( context.getResources( )
+							.getColor( fi.compressed ? android.R.color.secondary_text_light
+									: android.R.color.secondary_text_dark ) );
+				}
+			} );
+
+			return view;
 		}
 	}
 }
