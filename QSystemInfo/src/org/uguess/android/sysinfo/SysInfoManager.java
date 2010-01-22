@@ -144,6 +144,8 @@ public final class SysInfoManager extends PreferenceActivity
 
 	private static final int MSG_INIT_OK = 1;
 	private static final int MSG_DISMISS_PROGRESS = 2;
+	private static final int MSG_CONTENT_READY = 3;
+	private static final int MSG_CHECK_FORCE_COMPRESSION = 4;
 
 	private static final int PLAINTEXT = 0;
 	private static final int HTML = 1;
@@ -184,7 +186,7 @@ public final class SysInfoManager extends PreferenceActivity
 		{
 			switch ( msg.what )
 			{
-				case MSG_INIT_OK :
+				case MSG_CONTENT_READY :
 
 					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
@@ -203,6 +205,17 @@ public final class SysInfoManager extends PreferenceActivity
 								content,
 								msg.arg2 == 1 );
 					}
+
+					break;
+				case MSG_CHECK_FORCE_COMPRESSION :
+
+					sendEmptyMessage( MSG_DISMISS_PROGRESS );
+
+					checkForceCompression( this,
+							SysInfoManager.this,
+							(String) msg.obj,
+							msg.arg1,
+							"android_report" ); //$NON-NLS-1$
 
 					break;
 				case MSG_DISMISS_PROGRESS :
@@ -812,10 +825,20 @@ public final class SysInfoManager extends PreferenceActivity
 							"android_report" ); //$NON-NLS-1$
 				}
 
-				handler.sendMessage( handler.obtainMessage( MSG_INIT_OK,
-						format,
-						compressed ? 1 : 0,
-						content ) );
+				if ( content != null && !compressed )
+				{
+					handler.sendMessage( handler.obtainMessage( MSG_CHECK_FORCE_COMPRESSION,
+							format,
+							compressed ? 1 : 0,
+							content ) );
+				}
+				else
+				{
+					handler.sendMessage( handler.obtainMessage( MSG_CONTENT_READY,
+							format,
+							compressed ? 1 : 0,
+							content ) );
+				}
 			}
 		} ).start( );
 	}
@@ -1637,6 +1660,50 @@ public final class SysInfoManager extends PreferenceActivity
 		return null;
 	}
 
+	private static void checkForceCompression( final Handler handler,
+			final Activity context, final String content, final int format,
+			final String title )
+	{
+		Log.d( SysInfoManager.class.getName( ), "VM Max size: " //$NON-NLS-1$
+				+ Runtime.getRuntime( ).maxMemory( ) );
+
+		Log.d( SysInfoManager.class.getName( ), "Sending content size: " //$NON-NLS-1$
+				+ content.length( ) );
+
+		if ( content != null && content.length( ) > 250 * 1024 )
+		{
+			OnClickListener listener = new OnClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which )
+				{
+					String sendContent = createCompressedContent( context,
+							content,
+							format,
+							title );
+
+					handler.sendMessage( handler.obtainMessage( MSG_CONTENT_READY,
+							format,
+							1,
+							sendContent ) );
+				}
+			};
+
+			new AlertDialog.Builder( context ).setTitle( R.string.warning )
+					.setMessage( R.string.size_warning )
+					.setPositiveButton( android.R.string.ok, listener )
+					.setNegativeButton( android.R.string.cancel, null )
+					.create( )
+					.show( );
+		}
+		else
+		{
+			handler.sendMessage( handler.obtainMessage( MSG_CONTENT_READY,
+					format,
+					0,
+					content ) );
+		}
+	}
+
 	private static void sendContent( Activity context, String subject,
 			String content, boolean compressed )
 	{
@@ -1786,6 +1853,38 @@ public final class SysInfoManager extends PreferenceActivity
 						{
 							getListView( ).setSelection( adapter.getCount( ) - 1 );
 						}
+
+						break;
+					case MSG_CONTENT_READY :
+
+						sendEmptyMessage( MSG_DISMISS_PROGRESS );
+
+						String content = (String) msg.obj;
+
+						if ( content == null )
+						{
+							Toast.makeText( LogViewer.this,
+									R.string.no_log_info,
+									Toast.LENGTH_SHORT ).show( );
+						}
+						else
+						{
+							sendContent( LogViewer.this,
+									"Android Device Log - " + new Date( ).toLocaleString( ), //$NON-NLS-1$
+									content,
+									msg.arg2 == 1 );
+						}
+
+						break;
+					case MSG_CHECK_FORCE_COMPRESSION :
+
+						sendEmptyMessage( MSG_DISMISS_PROGRESS );
+
+						checkForceCompression( this,
+								LogViewer.this,
+								(String) msg.obj,
+								msg.arg1,
+								"android_log" ); //$NON-NLS-1$
 
 						break;
 					case MSG_DISMISS_PROGRESS :
@@ -1995,22 +2094,59 @@ public final class SysInfoManager extends PreferenceActivity
 			return false;
 		}
 
-		private void sendLog( boolean compressed, int format )
+		private void sendLog( final boolean compressed, final int format )
 		{
-			String content = collectLogContent( compressed, format );
+			if ( progress == null )
+			{
+				progress = new ProgressDialog( this );
+			}
+			progress.setMessage( getResources( ).getText( R.string.loading ) );
+			progress.setIndeterminate( true );
+			progress.show( );
 
-			if ( content == null )
-			{
-				Toast.makeText( this, R.string.no_log_info, Toast.LENGTH_SHORT )
-						.show( );
-			}
-			else
-			{
-				sendContent( this,
-						"Android Device Log - " + new Date( ).toLocaleString( ), //$NON-NLS-1$
-						content,
-						compressed );
-			}
+			new Thread( new Runnable( ) {
+
+				public void run( )
+				{
+					String content = null;
+
+					switch ( format )
+					{
+						case PLAINTEXT :
+							content = collectTextLogContent( );
+							break;
+						case HTML :
+							content = collectHtmlLogContent( );
+							break;
+						case CSV :
+							content = collectCSVLogContent( );
+							break;
+					}
+
+					if ( content != null && compressed )
+					{
+						content = createCompressedContent( LogViewer.this,
+								content,
+								format,
+								"android_log" ); //$NON-NLS-1$
+					}
+
+					if ( content != null && !compressed )
+					{
+						handler.sendMessage( handler.obtainMessage( MSG_CHECK_FORCE_COMPRESSION,
+								format,
+								compressed ? 1 : 0,
+								content ) );
+					}
+					else
+					{
+						handler.sendMessage( handler.obtainMessage( MSG_CONTENT_READY,
+								format,
+								compressed ? 1 : 0,
+								content ) );
+					}
+				}
+			} ).start( );
 		}
 
 		@Override
@@ -2055,34 +2191,6 @@ public final class SysInfoManager extends PreferenceActivity
 					refreshLogs( );
 				}
 			}
-		}
-
-		private String collectLogContent( boolean compressed, int format )
-		{
-			String textContent = null;
-
-			switch ( format )
-			{
-				case PLAINTEXT :
-					textContent = collectTextLogContent( );
-					break;
-				case HTML :
-					textContent = collectHtmlLogContent( );
-					break;
-				case CSV :
-					textContent = collectCSVLogContent( );
-					break;
-			}
-
-			if ( textContent == null || !compressed )
-			{
-				return textContent;
-			}
-
-			return createCompressedContent( this,
-					textContent,
-					format,
-					"android_log" ); //$NON-NLS-1$
 		}
 
 		private String collectTextLogContent( )

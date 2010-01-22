@@ -123,5 +123,6 @@
 	<string name="no_mem_info">沒有找到 MEM 資訊.</string>
 	<string name="no_sc_freq_info">沒有找到目標 CPU 頻率資訊.</string>
 	<string name="sc_freq">目標 CPU 頻率: </string>
+	<string name="size_warning">您正在發送超長文本內容, 建議選擇壓縮檔方式發送以避免記憶體問題.\n\n您想要以壓縮檔方式發送內容么?</string>
 
 </resources>
