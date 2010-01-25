@@ -139,7 +139,7 @@ public final class NetStateManager extends ListActivity
 								.setNegativeButton( R.string.close, null )
 								.setMessage( Html.fromHtml( getString( R.string.location_info,
 										info.ip,
-										info.host,
+										info.host == null ? "" : info.host, //$NON-NLS-1$
 										info.country,
 										info.region,
 										info.city ) ) )

@@ -46,6 +46,7 @@ import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.app.ActivityManager.MemoryInfo;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -266,7 +267,8 @@ public final class SysInfoManager extends PreferenceActivity
 
 		String[] mi = getMemInfo( );
 		findPreference( "memory" ).setSummary( mi == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
-				: getString( R.string.storage_summary, mi[0], mi[1] ) );
+				: ( getString( R.string.storage_summary, mi[0], mi[2] ) + getString( R.string.idle_info,
+						mi[1] ) ) );
 
 		String[] ei = getExternalStorageInfo( );
 		findPreference( "sd_storage" ).setSummary( ei == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
@@ -310,10 +312,15 @@ public final class SysInfoManager extends PreferenceActivity
 				}
 			}
 
-			String[] mem = new String[2];
+			String[] mem = new String[3];
 
 			mem[0] = extractMemCount( totalMsg );
 			mem[1] = extractMemCount( freeMsg );
+
+			ActivityManager am = (ActivityManager) getSystemService( Context.ACTIVITY_SERVICE );
+			MemoryInfo mi = new MemoryInfo( );
+			am.getMemoryInfo( mi );
+			mem[2] = Formatter.formatFileSize( this, mi.availMem );
 
 			return mem;
 		}
@@ -902,7 +909,8 @@ public final class SysInfoManager extends PreferenceActivity
 			{
 				sb.append( getString( R.string.storage_summary,
 						info[0],
-						info[1] ) );
+						info[2] )
+						+ getString( R.string.idle_info, info[1] ) );
 			}
 			sb.append( "\n\n" ); //$NON-NLS-1$
 
@@ -1186,7 +1194,8 @@ public final class SysInfoManager extends PreferenceActivity
 			{
 				sb.append( getString( R.string.storage_summary,
 						info[0],
-						info[1] ) );
+						info[2] )
+						+ getString( R.string.idle_info, info[1] ) );
 			}
 			sb.append( closeRow );
 

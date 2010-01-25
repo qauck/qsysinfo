@@ -131,6 +131,7 @@
 	<string name="no_mem_info">MEM info not found.</string>
 	<string name="no_sc_freq_info">Scaling CPU frequency state not found.</string>
 	<string name="sc_freq">Scaling CPU frequency: </string>
-	<string name="size_warning">You are sending very large size content. It is better to send it as compressed to avoid memory issue.\n\nDo you want to send it as compressed?</string>
+	<string name="size_warning">You are sending very large size content. To avoid potential memory issue, it is recommended to send as compressed.\n\nDo you want to send the content as compressed?</string>
+	<string name="idle_info">, Idle: %s</string>
 
 </resources>

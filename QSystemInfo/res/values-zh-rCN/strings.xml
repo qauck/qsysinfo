@@ -124,5 +124,6 @@
 	<string name="no_sc_freq_info">没有找到目标 CPU 频率信息.</string>
 	<string name="sc_freq">目标 CPU 频率: </string>
 	<string name="size_warning">您正在发送超长文本内容, 建议选择压缩包方式发送以避免内存问题.\n\n您想要以压缩包方式发送内容么?</string>
+	<string name="idle_info">, 空闲: %s</string>
 
 </resources>
