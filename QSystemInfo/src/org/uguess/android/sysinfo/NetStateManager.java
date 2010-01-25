@@ -57,6 +57,7 @@ import android.preference.PreferenceScreen;
 import android.text.ClipboardManager;
 import android.text.Html;
 import android.text.TextUtils;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -134,15 +135,26 @@ public final class NetStateManager extends ListActivity
 							}
 						};
 
+						TextView txt = new TextView( NetStateManager.this );
+						txt.setPadding( 15, 0, 15, 0 );
+						txt.setTextAppearance( NetStateManager.this,
+								android.R.style.TextAppearance_Medium );
+
+						txt.setText( Html.fromHtml( getString( R.string.location_info,
+								info.ip,
+								info.host == null ? "" : ( "<a href=\"http://" //$NON-NLS-1$ //$NON-NLS-2$
+										+ info.host
+										+ "\">" //$NON-NLS-1$
+										+ info.host + "</a>" ), //$NON-NLS-1$
+								info.country,
+								info.region,
+								info.city ) ) );
+						txt.setMovementMethod( LinkMovementMethod.getInstance( ) );
+
 						new AlertDialog.Builder( NetStateManager.this ).setTitle( R.string.ip_location )
 								.setPositiveButton( R.string.view_map, listener )
 								.setNegativeButton( R.string.close, null )
-								.setMessage( Html.fromHtml( getString( R.string.location_info,
-										info.ip,
-										info.host == null ? "" : info.host, //$NON-NLS-1$
-										info.country,
-										info.region,
-										info.city ) ) )
+								.setView( txt )
 								.create( )
 								.show( );
 					}
