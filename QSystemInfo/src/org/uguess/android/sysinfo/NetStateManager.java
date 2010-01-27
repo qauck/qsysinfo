@@ -22,6 +22,7 @@
 package org.uguess.android.sysinfo;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -92,6 +93,20 @@ public final class NetStateManager extends ListActivity
 
 	private static final int MSG_IP_READY = 1;
 	private static final int MSG_DISMISS_PROGRESS = 2;
+
+	private static final String[] SOCKET_STATES = new String[]{
+			"ESTABLISHED", //$NON-NLS-1$
+			"SYN_SENT", //$NON-NLS-1$
+			"SYN_RECV", //$NON-NLS-1$
+			"FIN_WAIT1", //$NON-NLS-1$
+			"FIN_WAIT2", //$NON-NLS-1$
+			"TIME_WAIT", //$NON-NLS-1$
+			"CLOSE", //$NON-NLS-1$
+			"CLOSE_WAIT", //$NON-NLS-1$
+			"LAST_ACK", //$NON-NLS-1$
+			"LISTEN", //$NON-NLS-1$
+			"CLOSING" //$NON-NLS-1$
+	};
 
 	private ConnectionItem dummyInfo;
 
@@ -585,7 +600,7 @@ public final class NetStateManager extends ListActivity
 
 		data.add( dummyInfo );
 
-		ArrayList<ConnectionItem> items = readStates( );
+		ArrayList<ConnectionItem> items = readStatesRaw( );
 
 		if ( items != null )
 		{
@@ -621,45 +636,55 @@ public final class NetStateManager extends ListActivity
 		}
 	}
 
-	private ArrayList<ConnectionItem> readStates( )
+	private ArrayList<ConnectionItem> readStatesRaw( )
+	{
+		ArrayList<ConnectionItem> tcp = parseRawData( "TCP", "/proc/net/tcp", false ); //$NON-NLS-1$ //$NON-NLS-2$
+		ArrayList<ConnectionItem> udp = parseRawData( "UDP", "/proc/net/udp", true ); //$NON-NLS-1$ //$NON-NLS-2$
+
+		if ( tcp == null )
+		{
+			return udp;
+		}
+		else if ( udp != null )
+		{
+			tcp.addAll( udp );
+		}
+
+		return tcp;
+	}
+
+	private ArrayList<ConnectionItem> parseRawData( String proto,
+			String source, boolean ignoreState )
 	{
 		BufferedReader reader = null;
 		try
 		{
-			Process proc = Runtime.getRuntime( ).exec( "netstat" ); //$NON-NLS-1$
-
-			reader = new BufferedReader( new InputStreamReader( proc.getInputStream( ) ),
-					8192 );
+			reader = new BufferedReader( new InputStreamReader( new FileInputStream( source ) ),
+					4096 );
 
 			ArrayList<ConnectionItem> itms = new ArrayList<ConnectionItem>( );
 			boolean first = true;
-			int protoOffset = -1, localOffset = -1, foreignOffset = -1, stateOffset = -1;
+			int localOffset = -1, remOffset = -1, stateOffset = -1, stateEndOffset = -1;
 			String line;
 
 			while ( ( line = reader.readLine( ) ) != null )
 			{
 				if ( first )
 				{
-					if ( !line.startsWith( "Proto" ) ) //$NON-NLS-1$
+					localOffset = line.indexOf( "local_address" ); //$NON-NLS-1$
+					remOffset = line.indexOf( "rem_address" ); //$NON-NLS-1$
+					stateOffset = line.indexOf( "st", remOffset ); //$NON-NLS-1$
+					stateEndOffset = line.indexOf( ' ', stateOffset );
+
+					if ( localOffset == -1
+							|| remOffset == -1
+							|| stateOffset == -1
+							|| stateEndOffset == -1 )
 					{
-						Log.e( NetStateManager.class.getName( ),
-								"Unexpected header format: " + line ); //$NON-NLS-1$
-
-						break;
-					}
-
-					protoOffset = line.indexOf( "Recv-Q" ); //$NON-NLS-1$
-					localOffset = line.indexOf( "Local Address" ); //$NON-NLS-1$
-					foreignOffset = line.indexOf( "Foreign Address" ); //$NON-NLS-1$
-					stateOffset = line.indexOf( "State" ); //$NON-NLS-1$
-
-					if ( protoOffset == -1
-							|| localOffset == -1
-							|| foreignOffset == -1
-							|| stateOffset == -1 )
-					{
-						Log.e( NetStateManager.class.getName( ),
-								"Unexpected header format: " + line ); //$NON-NLS-1$
+						Log.e( NetStateManager.class.getName( ), "Unexpected " //$NON-NLS-1$
+								+ proto
+								+ " header format: " //$NON-NLS-1$
+								+ line );
 
 						break;
 					}
@@ -670,25 +695,28 @@ public final class NetStateManager extends ListActivity
 				{
 					ConnectionItem ci = new ConnectionItem( );
 
-					ci.proto = line.substring( 0, protoOffset )
-							.trim( )
-							.toUpperCase( );
+					ci.proto = proto;
 
-					if ( stateOffset < line.length( ) )
-					{
-						ci.state = line.substring( stateOffset ).trim( );
-						ci.remote = line.substring( foreignOffset, stateOffset )
-								.trim( );
-					}
-					else
-					{
-						ci.remote = line.substring( foreignOffset ).trim( );
-					}
+					String local = parseRawIP( line.substring( localOffset,
+							remOffset ).trim( ) );
 
-					String local = line.substring( localOffset, foreignOffset )
-							.trim( );
+					ci.remote = parseRawIP( line.substring( remOffset,
+							stateOffset ).trim( ) );
 
 					ci.ip = local + '\n' + ci.remote;
+
+					if ( !ignoreState )
+					{
+						int st = Integer.parseInt( line.substring( stateOffset,
+								stateEndOffset ).trim( ), 16 );
+
+						ci.state = "Unknown"; //$NON-NLS-1$
+
+						if ( st > 0 && st <= SOCKET_STATES.length )
+						{
+							ci.state = SOCKET_STATES[st - 1];
+						}
+					}
 
 					itms.add( ci );
 				}
@@ -720,6 +748,71 @@ public final class NetStateManager extends ListActivity
 		}
 
 		return null;
+	}
+
+	private String parseRawIP( String raw )
+	{
+		if ( !TextUtils.isEmpty( raw ) )
+		{
+			int idx = raw.lastIndexOf( ':' );
+
+			if ( idx != -1 )
+			{
+				String port = raw.substring( idx + 1 ).trim( );
+				String ip = raw.substring( 0, idx ).trim( );
+
+				try
+				{
+					int pt = Integer.parseInt( port, 16 );
+
+					if ( pt == 0 )
+					{
+						port = "*"; //$NON-NLS-1$
+					}
+					else
+					{
+						port = String.valueOf( pt );
+					}
+				}
+				catch ( Exception e )
+				{
+					port = "?"; //$NON-NLS-1$
+
+					Log.e( NetStateManager.class.getName( ),
+							"Parsing raw port fail : " + raw ); //$NON-NLS-1$
+				}
+
+				if ( ip.length( ) != 8 )
+				{
+					Log.e( NetStateManager.class.getName( ),
+							"Parsing raw ip fail : " + raw ); //$NON-NLS-1$
+				}
+				else
+				{
+					try
+					{
+						int n1 = Integer.parseInt( ip.substring( 6 ), 16 );
+						int n2 = Integer.parseInt( ip.substring( 4, 6 ), 16 );
+						int n3 = Integer.parseInt( ip.substring( 2, 4 ), 16 );
+						int n4 = Integer.parseInt( ip.substring( 0, 2 ), 16 );
+
+						ip = n1 + "." + n2 + "." + n3 + "." + n4; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					}
+					catch ( Exception e )
+					{
+						ip = "?"; //$NON-NLS-1$
+
+						Log.e( NetStateManager.class.getName( ),
+								"Parsing raw ip fail : " + raw ); //$NON-NLS-1$
+					}
+
+				}
+
+				return ip + ':' + port;
+			}
+		}
+
+		return raw;
 	}
 
 	private int getRefreshInterval( )

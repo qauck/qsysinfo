@@ -1073,9 +1073,11 @@ public final class SysInfoManager extends PreferenceActivity
 
 			try
 			{
-				Process proc = Runtime.getRuntime( ).exec( "netstat" ); //$NON-NLS-1$
+				readRawText( sb, new FileInputStream( "/proc/net/tcp" ) ); //$NON-NLS-1$
 
-				readRawText( sb, proc.getInputStream( ) );
+				sb.append( '\n' );
+
+				readRawText( sb, new FileInputStream( "/proc/net/udp" ) ); //$NON-NLS-1$
 			}
 			catch ( Exception e )
 			{
@@ -1406,9 +1408,11 @@ public final class SysInfoManager extends PreferenceActivity
 
 			try
 			{
-				Process proc = Runtime.getRuntime( ).exec( "netstat" ); //$NON-NLS-1$
+				readRawHTML( sb, new FileInputStream( "/proc/net/tcp" ) ); //$NON-NLS-1$
 
-				readRawHTML( sb, proc.getInputStream( ) );
+				sb.append( emptyRow );
+
+				readRawHTML( sb, new FileInputStream( "/proc/net/udp" ) ); //$NON-NLS-1$
 			}
 			catch ( Exception e )
 			{
