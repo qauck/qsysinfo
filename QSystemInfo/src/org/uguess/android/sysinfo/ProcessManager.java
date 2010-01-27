@@ -128,23 +128,13 @@ public final class ProcessManager extends ListActivity
 
 				if ( itm == dummyInfo )
 				{
-					if ( txt_name.getTypeface( ) == null
-							|| txt_name.getTypeface( ).getStyle( ) != Typeface.ITALIC )
-					{
-						txt_name.setTypeface( Typeface.DEFAULT, Typeface.ITALIC );
-					}
-
+					txt_name.setTypeface( Typeface.DEFAULT, Typeface.ITALIC );
 					txt_name.setTextColor( Color.WHITE );
-
 					img_type.setImageDrawable( null );
 				}
 				else
 				{
-					if ( txt_name.getTypeface( ) == null
-							|| txt_name.getTypeface( ).getStyle( ) != Typeface.NORMAL )
-					{
-						txt_name.setTypeface( Typeface.DEFAULT, Typeface.NORMAL );
-					}
+					txt_name.setTypeface( Typeface.DEFAULT, Typeface.NORMAL );
 
 					switch ( itm.importance )
 					{
@@ -160,6 +150,8 @@ public final class ProcessManager extends ListActivity
 
 					try
 					{
+						img_type.setImageDrawable( null );
+						
 						ApplicationInfo ai = pm.getApplicationInfo( itm.processName,
 								0 );
 
