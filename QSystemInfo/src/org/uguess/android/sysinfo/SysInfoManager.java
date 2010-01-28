@@ -147,6 +147,7 @@ public final class SysInfoManager extends PreferenceActivity
 	private static final int MSG_DISMISS_PROGRESS = 2;
 	private static final int MSG_CONTENT_READY = 3;
 	private static final int MSG_CHECK_FORCE_COMPRESSION = 4;
+	private static final int MSG_TOAST = 5;
 
 	private static final int PLAINTEXT = 0;
 	private static final int HTML = 1;
@@ -226,6 +227,12 @@ public final class SysInfoManager extends PreferenceActivity
 						progress.dismiss( );
 						progress = null;
 					}
+					break;
+				case MSG_TOAST :
+
+					Toast.makeText( SysInfoManager.this,
+							(String) msg.obj,
+							Toast.LENGTH_SHORT ).show( );
 					break;
 			}
 		}
@@ -826,7 +833,8 @@ public final class SysInfoManager extends PreferenceActivity
 
 				if ( content != null && compressed )
 				{
-					content = createCompressedContent( SysInfoManager.this,
+					content = createCompressedContent( handler,
+							SysInfoManager.this,
 							content,
 							format,
 							"android_report" ); //$NON-NLS-1$
@@ -1588,8 +1596,8 @@ public final class SysInfoManager extends PreferenceActivity
 		return ver;
 	}
 
-	private static String createCompressedContent( Activity context,
-			String content, int format, String filePrefix )
+	private static String createCompressedContent( Handler handler,
+			Activity context, String content, int format, String filePrefix )
 	{
 		String state = Environment.getExternalStorageState( );
 
@@ -1603,10 +1611,20 @@ public final class SysInfoManager extends PreferenceActivity
 			{
 				if ( !tf.mkdirs( ) )
 				{
-					Toast.makeText( context,
-							context.getString( R.string.error_create_folder,
-									tf.getAbsolutePath( ) ),
-							Toast.LENGTH_SHORT ).show( );
+					if ( handler == null )
+					{
+						Toast.makeText( context,
+								context.getString( R.string.error_create_folder,
+										tf.getAbsolutePath( ) ),
+								Toast.LENGTH_SHORT )
+								.show( );
+					}
+					else
+					{
+						handler.sendMessage( handler.obtainMessage( MSG_TOAST,
+								context.getString( R.string.error_create_folder,
+										tf.getAbsolutePath( ) ) ) );
+					}
 
 					return null;
 				}
@@ -1666,8 +1684,17 @@ public final class SysInfoManager extends PreferenceActivity
 		}
 		else
 		{
-			Toast.makeText( context, R.string.error_sdcard, Toast.LENGTH_SHORT )
-					.show( );
+			if ( handler == null )
+			{
+				Toast.makeText( context,
+						R.string.error_sdcard,
+						Toast.LENGTH_SHORT ).show( );
+			}
+			else
+			{
+				handler.sendMessage( handler.obtainMessage( MSG_TOAST,
+						context.getString( R.string.error_sdcard ) ) );
+			}
 		}
 
 		return null;
@@ -1689,7 +1716,8 @@ public final class SysInfoManager extends PreferenceActivity
 
 				public void onClick( DialogInterface dialog, int which )
 				{
-					String sendContent = createCompressedContent( context,
+					String sendContent = createCompressedContent( null,
+							context,
 							content,
 							format,
 							title );
@@ -1907,6 +1935,12 @@ public final class SysInfoManager extends PreferenceActivity
 							progress.dismiss( );
 							progress = null;
 						}
+						break;
+					case MSG_TOAST :
+
+						Toast.makeText( LogViewer.this,
+								(String) msg.obj,
+								Toast.LENGTH_SHORT ).show( );
 						break;
 				}
 			};
@@ -2138,7 +2172,8 @@ public final class SysInfoManager extends PreferenceActivity
 
 					if ( content != null && compressed )
 					{
-						content = createCompressedContent( LogViewer.this,
+						content = createCompressedContent( handler,
+								LogViewer.this,
 								content,
 								format,
 								"android_log" ); //$NON-NLS-1$
