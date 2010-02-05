@@ -68,12 +68,13 @@ import android.preference.PreferenceScreen;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -170,6 +171,9 @@ public final class ApplicationManager extends ListActivity
 							adapter.add( info );
 						}
 					}
+
+					// should always no selection at this stage
+					hideButtons( );
 
 					adapter.notifyDataSetChanged( );
 
@@ -310,6 +314,23 @@ public final class ApplicationManager extends ListActivity
 				boolean isChecked )
 		{
 			( (AppInfoHolder) lstApps.getItemAtPosition( (Integer) buttonView.getTag( ) ) ).checked = isChecked;
+
+			View v = findViewById( R.id.app_footer );
+
+			if ( isChecked )
+			{
+				if ( v.getVisibility( ) != View.VISIBLE )
+				{
+					v.setVisibility( View.VISIBLE );
+
+					v.startAnimation( AnimationUtils.loadAnimation( ApplicationManager.this,
+							R.anim.footer_appear ) );
+				}
+			}
+			else if ( getSelectedCount( ) == 0 )
+			{
+				hideButtons( );
+			}
 		}
 	};
 
@@ -321,6 +342,32 @@ public final class ApplicationManager extends ListActivity
 		defaultIcon = getResources( ).getDrawable( R.drawable.icon );
 
 		versionPrefix = getResources( ).getString( R.string.version );
+
+		setContentView( R.layout.app_view );
+
+		( (Button) findViewById( R.id.btn_export ) ).setOnClickListener( new View.OnClickListener( ) {
+
+			public void onClick( View v )
+			{
+				doExport( );
+			}
+		} );
+
+		( (Button) findViewById( R.id.btn_sel_all ) ).setOnClickListener( new View.OnClickListener( ) {
+
+			public void onClick( View v )
+			{
+				toggleAllSelection( true );
+			}
+		} );
+
+		( (Button) findViewById( R.id.btn_desel_all ) ).setOnClickListener( new View.OnClickListener( ) {
+
+			public void onClick( View v )
+			{
+				toggleAllSelection( false );
+			}
+		} );
 
 		lstApps = getListView( );
 
@@ -667,6 +714,25 @@ public final class ApplicationManager extends ListActivity
 		return apps;
 	}
 
+	private int getSelectedCount( )
+	{
+		int count = lstApps.getCount( );
+
+		int s = 0;
+
+		for ( int i = 0; i < count; i++ )
+		{
+			AppInfoHolder holder = (AppInfoHolder) lstApps.getItemAtPosition( i );
+
+			if ( holder.checked )
+			{
+				s++;
+			}
+		}
+
+		return s;
+	}
+
 	private void export( final List<ApplicationInfo> apps )
 	{
 		if ( apps == null || apps.isEmpty( ) )
@@ -863,65 +929,19 @@ public final class ApplicationManager extends ListActivity
 	@Override
 	public boolean onCreateOptionsMenu( Menu menu )
 	{
-		MenuInflater inflater = getMenuInflater( );
-		inflater.inflate( R.menu.apps_options, menu );
+		MenuItem mi = menu.add( Menu.NONE,
+				R.id.mi_preference,
+				Menu.NONE,
+				R.string.preference );
+		mi.setIcon( android.R.drawable.ic_menu_preferences );
+
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected( MenuItem item )
 	{
-		if ( item.getItemId( ) == R.id.mi_export )
-		{
-			final List<ApplicationInfo> sels = getSelected( );
-
-			if ( sels == null || sels.size( ) == 0 )
-			{
-				Toast.makeText( this,
-						R.string.no_app_selected,
-						Toast.LENGTH_SHORT ).show( );
-			}
-			else if ( !ensureSDCard( ) )
-			{
-				Toast.makeText( this, R.string.error_sdcard, Toast.LENGTH_SHORT )
-						.show( );
-			}
-			else
-			{
-				OnClickListener listener = new OnClickListener( ) {
-
-					public void onClick( DialogInterface dialog, int which )
-					{
-						if ( which == Dialog.BUTTON_POSITIVE )
-						{
-							export( sels );
-						}
-					}
-				};
-
-				new AlertDialog.Builder( this ).setTitle( R.string.warning )
-						.setMessage( getString( R.string.warning_msg,
-								getAppExportDir( ) ) )
-						.setPositiveButton( R.string.cont, listener )
-						.setNegativeButton( android.R.string.cancel, listener )
-						.create( )
-						.show( );
-			}
-			return true;
-		}
-		else if ( item.getItemId( ) == R.id.mi_select_all )
-		{
-			toggleAllSelection( true );
-
-			return true;
-		}
-		else if ( item.getItemId( ) == R.id.mi_deselect_all )
-		{
-			toggleAllSelection( false );
-
-			return true;
-		}
-		else if ( item.getItemId( ) == R.id.mi_preference )
+		if ( item.getItemId( ) == R.id.mi_preference )
 		{
 			Intent intent = new Intent( Intent.ACTION_VIEW );
 
@@ -938,6 +958,43 @@ public final class ApplicationManager extends ListActivity
 		return false;
 	}
 
+	private void doExport( )
+	{
+		final List<ApplicationInfo> sels = getSelected( );
+
+		if ( sels == null || sels.size( ) == 0 )
+		{
+			Toast.makeText( this, R.string.no_app_selected, Toast.LENGTH_SHORT )
+					.show( );
+		}
+		else if ( !ensureSDCard( ) )
+		{
+			Toast.makeText( this, R.string.error_sdcard, Toast.LENGTH_SHORT )
+					.show( );
+		}
+		else
+		{
+			OnClickListener listener = new OnClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which )
+				{
+					if ( which == Dialog.BUTTON_POSITIVE )
+					{
+						export( sels );
+					}
+				}
+			};
+
+			new AlertDialog.Builder( this ).setTitle( R.string.warning )
+					.setMessage( getString( R.string.warning_msg,
+							getAppExportDir( ) ) )
+					.setPositiveButton( R.string.cont, listener )
+					.setNegativeButton( android.R.string.cancel, listener )
+					.create( )
+					.show( );
+		}
+	}
+
 	private void toggleAllSelection( boolean selected )
 	{
 		// reset hidden item states
@@ -949,7 +1006,25 @@ public final class ApplicationManager extends ListActivity
 			holder.checked = selected;
 		}
 
+		if ( !selected )
+		{
+			hideButtons( );
+		}
+
 		( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
+	}
+
+	private void hideButtons( )
+	{
+		View v = findViewById( R.id.app_footer );
+
+		if ( v.getVisibility( ) != View.GONE )
+		{
+			v.setVisibility( View.GONE );
+
+			v.startAnimation( AnimationUtils.loadAnimation( ApplicationManager.this,
+					R.anim.footer_disappear ) );
+		}
 	}
 
 	/**

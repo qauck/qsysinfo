@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_height="fill_parent" android:layout_width="fill_parent"
+	android:orientation="vertical">
+	<ListView android:layout_width="fill_parent" android:id="@android:id/list"
+		android:layout_weight="1" android:layout_height="0dip"></ListView>
+
+	<LinearLayout android:layout_height="wrap_content"
+		android:layout_width="fill_parent" android:paddingLeft="4dip"
+		android:paddingRight="4dip" android:paddingBottom="1dip"
+		android:paddingTop="5dip" android:background="@android:drawable/bottom_bar"
+		android:visibility="gone" android:id="@+id/app_footer">
+		<Button android:layout_weight="1" android:id="@+id/btn_export"
+			android:layout_width="0dip" android:layout_height="fill_parent"
+			android:text="@string/export"></Button>
+		<Button android:layout_weight="1" android:id="@+id/btn_sel_all"
+			android:layout_width="0dip" android:layout_height="fill_parent"
+			android:text="@string/select_all"></Button>
+		<Button android:layout_weight="1" android:id="@+id/btn_desel_all"
+			android:layout_width="0dip" android:layout_height="fill_parent"
+			android:text="@string/deselect_all"></Button>
+	</LinearLayout>
+</LinearLayout>

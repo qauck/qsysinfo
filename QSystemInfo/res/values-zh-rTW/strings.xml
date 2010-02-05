@@ -17,8 +17,8 @@
 	<string name="no_app_show">當前過濾條件下沒有應用程式可以顯示.</string>
 	<string name="refresh">重新整理</string>
 	<string name="export">匯出</string>
-	<string name="select_all">全部選取</string>
-	<string name="deselect_all">取消全部選取</string>
+	<string name="select_all">全部選中</string>
+	<string name="deselect_all">取消選中</string>
 	<string name="no_app_selected">沒有選取的應用程式可以匯出.</string>
 	<string name="warning">警示</string>
 	<string name="warning_msg">應用程式將被匯出至 ''%s'', 任何已存在的檔案會被覆蓋，請確認是否繼續?</string>
