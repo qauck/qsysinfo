@@ -9,17 +9,23 @@
 		android:key="internal_storage" android:title="@string/internal_storage" />
 
 	<Preference style="?android:preferenceInformationStyle"
+		android:key="cache_storage" android:title="@string/cache_storage" />
+
+	<Preference style="?android:preferenceInformationStyle"
 		android:key="memory" android:title="@string/memory"></Preference>
 
 	<Preference style="?android:preferenceInformationStyle"
 		android:key="processor" android:title="@string/processor"></Preference>
 
-	<Preference android:key="net_address"
-		style="?android:preferenceInformationStyle" android:title="@string/net_address" />
+	<Preference style="?android:preferenceInformationStyle"
+		android:key="net_address" android:title="@string/net_address" />
 
-	<Preference android:key="battery_level"
-		style="?android:preferenceInformationStyle" android:title="@string/battery_level"
+	<Preference android:key="battery_level" android:title="@string/battery_level"
 		android:summary="@string/retrieving" />
+
+	<Preference android:key="sensors" android:title="@string/sensors" />
+
+	<!-- Preference android:key="gps" android:title="@string/gps" / -->
 
 	<PreferenceCategory android:title="@string/actions">
 		<Preference android:key="refresh_status" android:title="@string/refresh" />

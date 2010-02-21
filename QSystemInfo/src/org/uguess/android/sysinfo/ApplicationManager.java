@@ -1,5 +1,5 @@
 /********************************************************************************
- * (C) Copyright 2000-2009, by Shawn Qualia.
+ * (C) Copyright 2000-2010, by Shawn Qualia.
  *
  * This library is free software; you can redistribute it and/or modify it 
  * under the terms of the GNU Lesser General Public License as published by 
@@ -30,10 +30,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -42,11 +46,9 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
 import android.content.SharedPreferences.Editor;
@@ -104,10 +106,21 @@ public final class ApplicationManager extends ListActivity
 	private static final int APP_TYPE_SYS = 1;
 	private static final int APP_TYPE_USER = 2;
 
+	private static final int ORDER_TYPE_NAME = 0;
+	private static final int ORDER_TYPE_CODE_SIZE = 1;
+	private static final int ORDER_TYPE_DATA_SIZE = 2;
+	private static final int ORDER_TYPE_CACHE_SIZE = 3;
+	private static final int ORDER_TYPE_TOTAL_SIZE = 4;
+
+	private static final int ORDER_ASC = 1;
+	private static final int ORDER_DESC = -1;
+
 	private static final int REQUEST_SETTINGS = 1;
 
 	private static final String PREF_KEY_FILTER_APP_TYPE = "filter_app_type"; //$NON-NLS-1$
 	private static final String PREF_KEY_APP_EXPORT_DIR = "app_export_dir"; //$NON-NLS-1$
+	private static final String PREF_KEY_SORT_ORDER_TYPE = "sort_order_type"; //$NON-NLS-1$
+	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
 
 	private static final String DEFAULT_EXPORT_FOLDER = "/sdcard/backups/"; //$NON-NLS-1$
 
@@ -135,41 +148,34 @@ public final class ApplicationManager extends ListActivity
 
 	private ListView lstApps;
 
-	private PackageEventReceiver pkgEventReceiver = new PackageEventReceiver( );
-
 	private ProgressDialog progress;
 
 	private Drawable defaultIcon;
 
 	private String versionPrefix;
 
-	private boolean needReload;
+	private AppCache appCache;
 
 	private Handler handler = new Handler( ) {
 
 		@Override
 		public void handleMessage( Message msg )
 		{
-			AppInfoHolder holder;
+			ArrayAdapter<AppInfoHolder> adapter;
 
 			switch ( msg.what )
 			{
 				case MSG_INIT_OK :
 
-					ArrayAdapter<AppInfoHolder> adapter = (ArrayAdapter<AppInfoHolder>) getListView( ).getAdapter( );
+					adapter = (ArrayAdapter<AppInfoHolder>) lstApps.getAdapter( );
 
 					adapter.setNotifyOnChange( false );
 
 					adapter.clear( );
 
-					ArrayList<AppInfoHolder> data = (ArrayList<AppInfoHolder>) msg.obj;
-
-					if ( data != null )
+					for ( AppInfoHolder info : appCache.appList )
 					{
-						for ( AppInfoHolder info : data )
-						{
-							adapter.add( info );
-						}
+						adapter.add( info );
 					}
 
 					// should always no selection at this stage
@@ -255,56 +261,45 @@ public final class ApplicationManager extends ListActivity
 					break;
 				case MSG_REFRESH_PKG_SIZE :
 
-					// to ignore some outdated requests
-					if ( msg.arg1 < lstApps.getCount( ) )
-					{
-						PackageStats ps = (PackageStats) msg.obj;
-						holder = (AppInfoHolder) lstApps.getItemAtPosition( msg.arg1 );
-						holder.size = Formatter.formatFileSize( ApplicationManager.this,
-								ps.codeSize )
-								+ " + " //$NON-NLS-1$
-								+ Formatter.formatFileSize( ApplicationManager.this,
-										ps.dataSize );
+					adapter = (ArrayAdapter<AppInfoHolder>) lstApps.getAdapter( );
 
-						this.removeCallbacks( refreshTask );
-						this.postDelayed( refreshTask, 500 );
+					if ( msg.arg1 == 1 )
+					{
+						adapter.setNotifyOnChange( false );
+
+						adapter.clear( );
+
+						for ( AppInfoHolder info : appCache.appList )
+						{
+							adapter.add( info );
+						}
 					}
+
+					adapter.notifyDataSetChanged( );
 					break;
 				case MSG_REFRESH_PKG_LABEL :
 
-					ArrayList<CharSequence> labels = (ArrayList<CharSequence>) msg.obj;
+					adapter = (ArrayAdapter<AppInfoHolder>) lstApps.getAdapter( );
 
-					for ( int i = 0; i < labels.size( ); i++ )
+					if ( msg.arg1 == 1 )
 					{
-						holder = (AppInfoHolder) lstApps.getItemAtPosition( i );
+						adapter.setNotifyOnChange( false );
 
-						holder.label = labels.get( i );
+						adapter.clear( );
+
+						for ( AppInfoHolder info : appCache.appList )
+						{
+							adapter.add( info );
+						}
 					}
 
-					( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
+					adapter.notifyDataSetChanged( );
 					break;
 				case MSG_REFRESH_PKG_ICON :
-
-					ArrayList<Drawable> icons = (ArrayList<Drawable>) msg.obj;
-
-					for ( int i = 0; i < icons.size( ); i++ )
-					{
-						holder = (AppInfoHolder) lstApps.getItemAtPosition( i );
-
-						holder.icon = icons.get( i );
-					}
 
 					( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
 					break;
 			}
-		}
-	};
-
-	private Runnable refreshTask = new Runnable( ) {
-
-		public void run( )
-		{
-			( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
 		}
 	};
 
@@ -342,6 +337,8 @@ public final class ApplicationManager extends ListActivity
 		defaultIcon = getResources( ).getDrawable( R.drawable.icon );
 
 		versionPrefix = getResources( ).getString( R.string.version );
+
+		appCache = new AppCache( );
 
 		setContentView( R.layout.app_view );
 
@@ -464,33 +461,32 @@ public final class ApplicationManager extends ListActivity
 		};
 
 		lstApps.setAdapter( adapter );
-
-		pkgEventReceiver.registerReceiver( );
-
-		needReload = true;
 	}
 
 	@Override
 	protected void onDestroy( )
 	{
-		( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).cancel( MSG_COPING_FINISHED );
-
-		unregisterReceiver( pkgEventReceiver );
+		appCache.appList.clear( );
+		appCache.appLookup.clear( );
+		appCache = null;
 
 		super.onDestroy( );
 	}
 
 	@Override
-	protected void onResume( )
+	protected void onStart( )
 	{
-		super.onResume( );
+		super.onStart( );
 
-		if ( needReload )
-		{
-			needReload = false;
+		loadApps( );
+	}
 
-			loadApps( );
-		}
+	@Override
+	protected void onStop( )
+	{
+		( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).cancel( MSG_COPING_FINISHED );
+
+		super.onStop( );
 	}
 
 	private String getAppExportDir( )
@@ -532,6 +528,38 @@ public final class ApplicationManager extends ListActivity
 		et.commit( );
 	}
 
+	private int getSortOrderType( )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		return sp.getInt( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME );
+	}
+
+	private void setSortOrderType( int type )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		et.putInt( PREF_KEY_SORT_ORDER_TYPE, type );
+		et.commit( );
+	}
+
+	private int getSortDirection( )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		return sp.getInt( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
+	}
+
+	private void setSortDirection( int type )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		et.putInt( PREF_KEY_SORT_DIRECTION, type );
+		et.commit( );
+	}
+
 	private void loadApps( )
 	{
 		if ( progress == null )
@@ -550,9 +578,6 @@ public final class ApplicationManager extends ListActivity
 				List<ApplicationInfo> allApps = pm.getInstalledApplications( 0 );
 
 				final List<ApplicationInfo> filteredApps = filterApps( allApps );
-
-				Collections.sort( filteredApps,
-						new ApplicationInfo.DisplayNameComparator( pm ) );
 
 				ArrayList<AppInfoHolder> dataList = new ArrayList<AppInfoHolder>( );
 
@@ -579,20 +604,72 @@ public final class ApplicationManager extends ListActivity
 					dataList.add( holder );
 				}
 
-				handler.sendMessage( handler.obtainMessage( MSG_INIT_OK,
-						dataList ) );
+				appCache.udpate( dataList );
+
+				appCache.reOrder( getSortOrderType( ), getSortDirection( ) );
+
+				handler.sendEmptyMessage( MSG_INIT_OK );
 
 				new Thread( new Runnable( ) {
 
 					public void run( )
 					{
-						for ( int i = 0; i < filteredApps.size( ); i++ )
+						int totalSize = filteredApps.size( );
+						int secSize = 16;
+
+						int num = totalSize / secSize;
+						if ( num * secSize < totalSize )
 						{
-							invokeGetPkgSize( i,
-									filteredApps.get( i ).packageName,
-									pm );
+							num++;
 						}
 
+						for ( int k = 0; k < num; k++ )
+						{
+							int secCount = ( k + 1 ) * secSize > totalSize ? ( totalSize - k
+									* secSize )
+									: secSize;
+
+							CountDownLatch count = new CountDownLatch( secCount );
+
+							PkgSizeObserver observer = new PkgSizeObserver( count );
+
+							for ( int i = 0; i < secCount; i++ )
+							{
+								observer.invokeGetPkgSize( filteredApps.get( k
+										* secSize
+										+ i ).packageName, pm );
+							}
+
+							try
+							{
+								count.await( );
+
+								if ( k == num - 1 )
+								{
+									int type = getSortOrderType( );
+
+									if ( type != ORDER_TYPE_NAME )
+									{
+										appCache.reOrder( type,
+												getSortDirection( ) );
+
+										handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_SIZE,
+												1,
+												0 ) );
+
+										return;
+									}
+								}
+
+								handler.sendEmptyMessage( MSG_REFRESH_PKG_SIZE );
+							}
+							catch ( InterruptedException e )
+							{
+								Log.e( ApplicationManager.class.getName( ),
+										e.getLocalizedMessage( ),
+										e );
+							}
+						}
 					}
 				} ).start( );
 
@@ -600,28 +677,55 @@ public final class ApplicationManager extends ListActivity
 
 					public void run( )
 					{
-						ArrayList<CharSequence> labels = new ArrayList<CharSequence>( );
+						ApplicationInfo ai;
+						AppInfoHolder holder;
+
 						for ( int i = 0; i < filteredApps.size( ); i++ )
 						{
-							CharSequence label = filteredApps.get( i )
-									.loadLabel( pm );
+							ai = filteredApps.get( i );
 
-							labels.add( label );
+							CharSequence label = ai.loadLabel( pm );
+
+							holder = appCache.appLookup.get( ai.packageName );
+
+							if ( holder != null )
+							{
+								holder.label = label;
+							}
 						}
 
-						handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_LABEL,
-								labels ) );
+						// reorder by new names
+						if ( getSortOrderType( ) == ORDER_TYPE_NAME )
+						{
+							appCache.reOrder( ORDER_TYPE_NAME,
+									getSortDirection( ) );
 
-						ArrayList<Drawable> icons = new ArrayList<Drawable>( );
+							handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_LABEL,
+									1,
+									0 ) );
+						}
+						else
+						{
+							handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_LABEL,
+									0,
+									0 ) );
+						}
+
 						for ( int i = 0; i < filteredApps.size( ); i++ )
 						{
-							Drawable icon = filteredApps.get( i ).loadIcon( pm );
+							ai = filteredApps.get( i );
 
-							icons.add( icon );
+							Drawable icon = ai.loadIcon( pm );
+
+							holder = appCache.appLookup.get( ai.packageName );
+
+							if ( holder != null )
+							{
+								holder.icon = icon;
+							}
 						}
 
-						handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_ICON,
-								icons ) );
+						handler.sendEmptyMessage( MSG_REFRESH_PKG_ICON );
 					}
 				} ).start( );
 			}
@@ -667,25 +771,6 @@ public final class ApplicationManager extends ListActivity
 		}
 
 		return apps;
-	}
-
-	private void invokeGetPkgSize( int idx, String pkgName, PackageManager pm )
-	{
-		if ( mdGetPackageSizeInfo != null )
-		{
-			try
-			{
-				mdGetPackageSizeInfo.invoke( pm,
-						pkgName,
-						new PkgSizeObserver( idx ) );
-			}
-			catch ( Exception e )
-			{
-				Log.e( ApplicationManager.class.getName( ),
-						e.getLocalizedMessage( ),
-						e );
-			}
-		}
 	}
 
 	private boolean ensureSDCard( )
@@ -834,7 +919,6 @@ public final class ApplicationManager extends ListActivity
 							try
 							{
 								copyFile( srcFile, destFile );
-								// Thread.sleep( 500 );
 							}
 							catch ( Exception e )
 							{
@@ -916,12 +1000,22 @@ public final class ApplicationManager extends ListActivity
 				setAppExportDir( nDir );
 			}
 
-			int nt = data.getIntExtra( PREF_KEY_FILTER_APP_TYPE, APP_TYPE_ALL );
-
-			if ( nt != getAppFilterType( ) )
+			int t = data.getIntExtra( PREF_KEY_FILTER_APP_TYPE, APP_TYPE_ALL );
+			if ( t != getAppFilterType( ) )
 			{
-				setAppFilterType( nt );
-				loadApps( );
+				setAppFilterType( t );
+			}
+
+			t = data.getIntExtra( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME );
+			if ( t != getSortOrderType( ) )
+			{
+				setSortOrderType( t );
+			}
+
+			t = data.getIntExtra( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
+			if ( t != getSortDirection( ) )
+			{
+				setSortDirection( t );
 			}
 		}
 	}
@@ -949,6 +1043,8 @@ public final class ApplicationManager extends ListActivity
 
 			intent.putExtra( PREF_KEY_FILTER_APP_TYPE, getAppFilterType( ) );
 			intent.putExtra( PREF_KEY_APP_EXPORT_DIR, getAppExportDir( ) );
+			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, getSortOrderType( ) );
+			intent.putExtra( PREF_KEY_SORT_DIRECTION, getSortDirection( ) );
 
 			startActivityForResult( intent, REQUEST_SETTINGS );
 
@@ -1033,45 +1129,55 @@ public final class ApplicationManager extends ListActivity
 	private final class PkgSizeObserver extends IPackageStatsObserver.Stub
 	{
 
-		int idx;
+		private CountDownLatch count;
 
-		PkgSizeObserver( int idx )
+		private PkgSizeObserver( CountDownLatch count )
 		{
-			this.idx = idx;
+			this.count = count;
+		}
+
+		private void invokeGetPkgSize( String pkgName, PackageManager pm )
+		{
+			if ( mdGetPackageSizeInfo != null )
+			{
+				try
+				{
+					mdGetPackageSizeInfo.invoke( pm, pkgName, this );
+				}
+				catch ( Exception e )
+				{
+					Log.e( ApplicationManager.class.getName( ),
+							e.getLocalizedMessage( ),
+							e );
+				}
+			}
 		}
 
 		public void onGetStatsCompleted( PackageStats pStats, boolean succeeded )
 				throws RemoteException
 		{
-			Message msg = handler.obtainMessage( MSG_REFRESH_PKG_SIZE );
-			msg.obj = pStats;
-			msg.arg1 = idx;
-			handler.sendMessage( msg );
+			AppInfoHolder holder = appCache.appLookup.get( pStats.packageName );
+
+			if ( holder != null )
+			{
+				holder.size = Formatter.formatFileSize( ApplicationManager.this,
+						pStats.codeSize )
+						+ " + " //$NON-NLS-1$
+						+ Formatter.formatFileSize( ApplicationManager.this,
+								pStats.dataSize )
+						+ " (" //$NON-NLS-1$
+						+ Formatter.formatFileSize( ApplicationManager.this,
+								pStats.cacheSize )
+						+ ')';
+
+				holder.codeSize = pStats.codeSize;
+				holder.dataSize = pStats.dataSize;
+				holder.cacheSize = pStats.cacheSize;
+			}
+
+			count.countDown( );
 		}
 
-	}
-
-	/**
-	 * PackageEventReceiver
-	 */
-	private final class PackageEventReceiver extends BroadcastReceiver
-	{
-
-		void registerReceiver( )
-		{
-			IntentFilter filter = new IntentFilter( Intent.ACTION_PACKAGE_ADDED );
-			filter.addAction( Intent.ACTION_PACKAGE_REMOVED );
-			filter.addAction( Intent.ACTION_PACKAGE_CHANGED );
-			filter.addDataScheme( "package" ); //$NON-NLS-1$
-
-			ApplicationManager.this.registerReceiver( this, filter );
-		}
-
-		@Override
-		public void onReceive( Context context, Intent intent )
-		{
-			ApplicationManager.this.needReload = true;
-		}
 	}
 
 	/**
@@ -1090,7 +1196,142 @@ public final class ApplicationManager extends ListActivity
 
 		String size;
 
+		long codeSize, dataSize, cacheSize;
+
 		boolean checked;
+
+		@Override
+		public boolean equals( Object o )
+		{
+			if ( !( o instanceof AppInfoHolder ) )
+			{
+				return false;
+			}
+
+			AppInfoHolder that = (AppInfoHolder) o;
+
+			return this.appInfo.packageName.equals( that.appInfo.packageName );
+		}
+	}
+
+	/**
+	 * NameComparator
+	 */
+	private static final class NameComparator implements
+			Comparator<AppInfoHolder>
+	{
+
+		Collator clt = Collator.getInstance( );
+		int direction;
+
+		NameComparator( int direction )
+		{
+			this.direction = direction;
+		}
+
+		public int compare( AppInfoHolder obj1, AppInfoHolder obj2 )
+		{
+			String s1 = obj1.label == null ? obj1.appInfo.packageName
+					: obj1.label.toString( );
+			String s2 = obj2.label == null ? obj2.appInfo.packageName
+					: obj2.label.toString( );
+
+			return clt.compare( s1, s2 ) * direction;
+
+		}
+	}
+
+	/**
+	 * SizeComparator
+	 */
+	private static final class SizeComparator implements
+			Comparator<AppInfoHolder>
+	{
+
+		int type;
+		int direction;
+
+		SizeComparator( int type, int direction )
+		{
+			this.type = type;
+			this.direction = direction;
+		}
+
+		public int compare( AppInfoHolder obj1, AppInfoHolder obj2 )
+		{
+			switch ( type )
+			{
+				case ORDER_TYPE_CODE_SIZE :
+					return (int) ( obj1.codeSize - obj2.codeSize ) * direction;
+				case ORDER_TYPE_DATA_SIZE :
+					return (int) ( obj1.dataSize - obj2.dataSize ) * direction;
+				case ORDER_TYPE_CACHE_SIZE :
+					return (int) ( obj1.cacheSize - obj2.cacheSize )
+							* direction;
+				case ORDER_TYPE_TOTAL_SIZE :
+					long s1 = obj1.codeSize + obj1.dataSize + obj1.cacheSize;
+					long s2 = obj2.codeSize + obj2.dataSize + obj2.cacheSize;
+					return (int) ( s1 - s2 ) * direction;
+			}
+
+			return 0;
+		}
+	}
+
+	/**
+	 * AppCache
+	 */
+	private static final class AppCache
+	{
+
+		ArrayList<AppInfoHolder> appList = new ArrayList<AppInfoHolder>( );
+
+		HashMap<String, AppInfoHolder> appLookup = new HashMap<String, AppInfoHolder>( );
+
+		synchronized void udpate( ArrayList<AppInfoHolder> apps )
+		{
+			appList.retainAll( apps );
+
+			for ( AppInfoHolder ai : apps )
+			{
+				AppInfoHolder oai = appLookup.get( ai.appInfo.packageName );
+
+				if ( oai == null )
+				{
+					oai = ai;
+
+					appLookup.put( ai.appInfo.packageName, ai );
+				}
+				else
+				{
+					oai.appInfo = ai.appInfo;
+					oai.version = ai.version;
+					oai.checked = ai.checked;
+				}
+
+				if ( !appList.contains( oai ) )
+				{
+					appList.add( oai );
+				}
+			}
+		}
+
+		synchronized void reOrder( int type, int direction )
+		{
+			switch ( type )
+			{
+				case ORDER_TYPE_NAME :
+					Collections.sort( appList, new NameComparator( direction ) );
+					break;
+				case ORDER_TYPE_CODE_SIZE :
+				case ORDER_TYPE_DATA_SIZE :
+				case ORDER_TYPE_CACHE_SIZE :
+				case ORDER_TYPE_TOTAL_SIZE :
+					Collections.sort( appList, new SizeComparator( type,
+							direction ) );
+					break;
+			}
+		}
 	}
 
 	/**
@@ -1110,6 +1351,8 @@ public final class ApplicationManager extends ListActivity
 
 			refreshBackupFolder( );
 			refreshAppType( );
+			refreshSortType( );
+			refreshSortDirection( );
 
 			setResult( RESULT_OK, getIntent( ) );
 		}
@@ -1135,6 +1378,45 @@ public final class ApplicationManager extends ListActivity
 			}
 
 			findPreference( "app_filter" ).setSummary( res ); //$NON-NLS-1$
+		}
+
+		private void refreshSortType( )
+		{
+			int type = getIntent( ).getIntExtra( PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_NAME );
+
+			String label = null;
+			switch ( type )
+			{
+				case ORDER_TYPE_NAME :
+					label = getString( R.string.name );
+					break;
+				case ORDER_TYPE_CODE_SIZE :
+					label = getString( R.string.code_size );
+					break;
+				case ORDER_TYPE_DATA_SIZE :
+					label = getString( R.string.data_size );
+					break;
+				case ORDER_TYPE_CACHE_SIZE :
+					label = getString( R.string.cache_size );
+					break;
+				case ORDER_TYPE_TOTAL_SIZE :
+					label = getString( R.string.total_size );
+					break;
+			}
+
+			findPreference( "sort_type" ).setSummary( label ); //$NON-NLS-1$
+		}
+
+		private void refreshSortDirection( )
+		{
+			int type = getIntent( ).getIntExtra( PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC );
+
+			String label = type == ORDER_ASC ? getString( R.string.ascending )
+					: getString( R.string.descending );
+
+			findPreference( "sort_direction" ).setSummary( label ); //$NON-NLS-1$
 		}
 
 		@Override
@@ -1209,6 +1491,66 @@ public final class ApplicationManager extends ListActivity
 						},
 								it.getIntExtra( PREF_KEY_FILTER_APP_TYPE,
 										APP_TYPE_ALL ),
+								listener )
+						.create( )
+						.show( );
+
+				return true;
+			}
+			else if ( "sort_type".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+			{
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						it.putExtra( PREF_KEY_SORT_ORDER_TYPE, which );
+
+						dialog.dismiss( );
+
+						refreshSortType( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.sort_type )
+						.setNeutralButton( R.string.close, null )
+						.setSingleChoiceItems( new String[]{
+								getString( R.string.name ),
+								getString( R.string.code_size ),
+								getString( R.string.data_size ),
+								getString( R.string.cache_size ),
+								getString( R.string.total_size ),
+						},
+								it.getIntExtra( PREF_KEY_SORT_ORDER_TYPE,
+										ORDER_TYPE_NAME ),
+								listener )
+						.create( )
+						.show( );
+
+				return true;
+			}
+			else if ( "sort_direction".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+			{
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						it.putExtra( PREF_KEY_SORT_DIRECTION,
+								which == 0 ? ORDER_ASC : ORDER_DESC );
+
+						dialog.dismiss( );
+
+						refreshSortDirection( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.sort_direction )
+						.setNeutralButton( R.string.close, null )
+						.setSingleChoiceItems( new String[]{
+								getString( R.string.ascending ),
+								getString( R.string.descending ),
+						},
+								it.getIntExtra( PREF_KEY_SORT_DIRECTION,
+										ORDER_ASC ) == ORDER_ASC ? 0 : 1,
 								listener )
 						.create( )
 						.show( );

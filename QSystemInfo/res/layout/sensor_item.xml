@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout android:layout_width="fill_parent"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_height="wrap_content" android:paddingLeft="15dip"
+	android:paddingRight="15dip" android:paddingTop="10dip"
+	android:orientation="vertical" android:paddingBottom="10dip">
+	<TextView android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:textAppearance="?android:attr/textAppearanceMedium"
+		android:id="@+id/txt_head"></TextView>
+	<TextView android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:id="@+id/txt_msg"></TextView>
+</LinearLayout>

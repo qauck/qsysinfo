@@ -34,6 +34,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
@@ -56,7 +57,13 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
+import android.location.GpsSatellite;
+import android.location.GpsStatus;
+import android.location.LocationManager;
 import android.net.Uri;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -65,17 +72,21 @@ import android.os.StatFs;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
+import android.provider.Settings;
 import android.text.Html;
 import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -141,10 +152,33 @@ public final class SysInfoManager extends PreferenceActivity
 				int level = intent.getIntExtra( "level", 0 ); //$NON-NLS-1$
 				int scale = intent.getIntExtra( "scale", 100 ); //$NON-NLS-1$
 
-				prefBatteryLevel.setSummary( String.valueOf( level
-						* 100
-						/ scale )
-						+ "%" ); //$NON-NLS-1$
+				String lStr = String.valueOf( level * 100 / scale ) + '%';
+
+				int health = intent.getIntExtra( "health", //$NON-NLS-1$
+						BatteryManager.BATTERY_HEALTH_UNKNOWN );
+
+				String hStr = getString( R.string.unknown );
+
+				switch ( health )
+				{
+					case BatteryManager.BATTERY_HEALTH_GOOD :
+						hStr = getString( R.string.good );
+						break;
+					case BatteryManager.BATTERY_HEALTH_OVERHEAT :
+						hStr = getString( R.string.over_heat );
+						break;
+					case BatteryManager.BATTERY_HEALTH_DEAD :
+						hStr = getString( R.string.dead );
+						break;
+					case BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE :
+						hStr = getString( R.string.over_voltage );
+						break;
+					case BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE :
+						hStr = getString( R.string.failure );
+						break;
+				}
+
+				prefBatteryLevel.setSummary( hStr + " (" + lStr + ")" ); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 	};
@@ -253,7 +287,20 @@ public final class SysInfoManager extends PreferenceActivity
 				ii[0],
 				ii[1] ) );
 
+		String[] cc = getCacheStorageInfo( );
+		findPreference( "cache_storage" ).setSummary( getString( R.string.storage_summary, //$NON-NLS-1$
+				cc[0],
+				cc[1] ) );
+
 		findPreference( "net_address" ).setSummary( getNetAddressInfo( ) ); //$NON-NLS-1$
+
+		int s = getSensorState( );
+		findPreference( "sensors" ).setSummary( getSensorInfo( s ) ); //$NON-NLS-1$
+		findPreference( "sensors" ).setEnabled( s > 0 ); //$NON-NLS-1$
+
+//		int[] gs = getGpsState( );
+//		findPreference( "gps" ).setSummary( getGpsInfo( gs ) ); //$NON-NLS-1$
+//		findPreference( "gps" ).setEnabled( gs != null ); //$NON-NLS-1$
 	}
 
 	private String[] getMemInfo( )
@@ -517,6 +564,120 @@ public final class SysInfoManager extends PreferenceActivity
 
 	}
 
+	private String getSensorInfo( int state )
+	{
+		if ( state == -1 )
+		{
+			return getString( R.string.info_not_available );
+		}
+
+		if ( state > 1 )
+		{
+			return getString( R.string.sensor_info2, state );
+		}
+		else
+		{
+			return getString( R.string.sensor_info, state );
+		}
+	}
+
+	private int getSensorState( )
+	{
+		SensorManager sm = (SensorManager) getSystemService( Context.SENSOR_SERVICE );
+
+		if ( sm != null )
+		{
+			List<Sensor> ss = sm.getSensorList( Sensor.TYPE_ALL );
+
+			int c = 0;
+
+			if ( ss != null )
+			{
+				c = ss.size( );
+			}
+
+			return c;
+		}
+
+		return -1;
+	}
+
+	private String getGpsInfo( int[] state )
+	{
+		if ( state == null )
+		{
+			return getString( R.string.info_not_available );
+		}
+
+		if ( state[1] == -1 )
+		{
+			return getString( R.string.disabled );
+		}
+
+		return getString( R.string.enabled ) + " (" //$NON-NLS-1$
+				+ state[0]
+				+ '/'
+				+ state[1]
+				+ ')';
+	}
+
+	private int[] getGpsState( )
+	{
+		LocationManager lm = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
+
+		if ( lm != null )
+		{
+			boolean gpsEnabled = false;
+
+			String allowedProviders = Settings.Secure.getString( getContentResolver( ),
+					Settings.Secure.LOCATION_PROVIDERS_ALLOWED );
+
+			if ( allowedProviders != null )
+			{
+				gpsEnabled = ( allowedProviders.equals( LocationManager.GPS_PROVIDER )
+						|| allowedProviders.contains( "," //$NON-NLS-1$
+								+ LocationManager.GPS_PROVIDER
+								+ "," ) //$NON-NLS-1$
+						|| allowedProviders.startsWith( LocationManager.GPS_PROVIDER
+								+ "," ) || allowedProviders.endsWith( "," //$NON-NLS-1$ //$NON-NLS-2$
+						+ LocationManager.GPS_PROVIDER ) );
+			}
+
+			if ( gpsEnabled )
+			{
+				GpsStatus gs = lm.getGpsStatus( null );
+
+				Iterable<GpsSatellite> sats = gs.getSatellites( );
+
+				int c = 0;
+
+				if ( sats != null )
+				{
+					Iterator<GpsSatellite> itr = sats.iterator( );
+
+					if ( itr != null )
+					{
+						while ( itr.hasNext( ) )
+						{
+							itr.next( );
+							c++;
+						}
+					}
+				}
+
+				return new int[]{
+						c, gs.getMaxSatellites( )
+				};
+			}
+
+			return new int[]{
+					0, -1
+			};
+		}
+
+		return null;
+	}
+
 	private String[] getExternalStorageInfo( )
 	{
 		String state = Environment.getExternalStorageState( );
@@ -533,6 +694,11 @@ public final class SysInfoManager extends PreferenceActivity
 	private String[] getInternalStorageInfo( )
 	{
 		return getStorageInfo( Environment.getDataDirectory( ) );
+	}
+
+	private String[] getCacheStorageInfo( )
+	{
+		return getStorageInfo( Environment.getDownloadCacheDirectory( ) );
 	}
 
 	private String[] getStorageInfo( File path )
@@ -599,7 +765,46 @@ public final class SysInfoManager extends PreferenceActivity
 	public boolean onPreferenceTreeClick( PreferenceScreen preferenceScreen,
 			Preference preference )
 	{
-		if ( "refresh_status".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		if ( "battery_level".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		{
+			Intent it = new Intent( Intent.ACTION_VIEW );
+			it.setClass( this, BatteryInfoActivity.class );
+
+			startActivityForResult( it, 1 );
+
+			return true;
+		}
+		else if ( "sensors".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		{
+			Intent it = new Intent( Intent.ACTION_VIEW );
+			it.setClass( this, SensorInfoActivity.class );
+
+			startActivityForResult( it, 1 );
+
+			return true;
+		}
+		else if ( "gps".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		{
+			int[] gs = getGpsState( );
+
+			if ( gs != null )
+			{
+				if ( gs[1] == -1 )
+				{
+					Intent it = new Intent( "android.settings.LOCATION_SOURCE_SETTINGS" ); //$NON-NLS-1$
+					startActivityForResult( it, 1 );
+				}
+				else
+				{
+					Intent it = new Intent( Intent.ACTION_VIEW );
+					it.setClass( this, GpsInfoActivity.class );
+					startActivityForResult( it, 1 );
+				}
+			}
+
+			return true;
+		}
+		else if ( "refresh_status".equals( preference.getKey( ) ) ) //$NON-NLS-1$
 		{
 			updateInfo( );
 			return true;
@@ -859,6 +1064,23 @@ public final class SysInfoManager extends PreferenceActivity
 					.append( "\n\t" ); //$NON-NLS-1$
 
 			info = getInternalStorageInfo( );
+			if ( info == null )
+			{
+				sb.append( getString( R.string.info_not_available ) );
+			}
+			else
+			{
+				sb.append( getString( R.string.storage_summary,
+						info[0],
+						info[1] ) );
+			}
+			sb.append( "\n\n" ); //$NON-NLS-1$
+
+			sb.append( "* " ) //$NON-NLS-1$
+					.append( getString( R.string.cache_storage ) )
+					.append( "\n\t" ); //$NON-NLS-1$
+
+			info = getCacheStorageInfo( );
 			if ( info == null )
 			{
 				sb.append( getString( R.string.info_not_available ) );
@@ -1146,6 +1368,23 @@ public final class SysInfoManager extends PreferenceActivity
 					.append( nextColumn4 );
 
 			info = getInternalStorageInfo( );
+			if ( info == null )
+			{
+				sb.append( getString( R.string.info_not_available ) );
+			}
+			else
+			{
+				sb.append( getString( R.string.storage_summary,
+						info[0],
+						info[1] ) );
+			}
+			sb.append( closeRow );
+
+			sb.append( openRow )
+					.append( getString( R.string.cache_storage ) )
+					.append( nextColumn4 );
+
+			info = getCacheStorageInfo( );
 			if ( info == null )
 			{
 				sb.append( getString( R.string.info_not_available ) );
@@ -2020,6 +2259,47 @@ public final class SysInfoManager extends PreferenceActivity
 			} );
 
 			return view;
+		}
+	}
+
+	/**
+	 * PopActivity
+	 */
+	static abstract class PopActivity extends Activity
+	{
+
+		private GestureDetector gestureDetector;
+
+		@Override
+		protected void onCreate( Bundle savedInstanceState )
+		{
+			super.onCreate( savedInstanceState );
+
+			requestWindowFeature( Window.FEATURE_NO_TITLE );
+
+			setContentView( R.layout.pop_view );
+
+			gestureDetector = new GestureDetector( this,
+					new GestureDetector.SimpleOnGestureListener( ) {
+
+						@Override
+						public boolean onSingleTapConfirmed( MotionEvent e )
+						{
+							finish( );
+							return true;
+						}
+					} );
+		}
+
+		@Override
+		public boolean dispatchTouchEvent( MotionEvent ev )
+		{
+			if ( gestureDetector.onTouchEvent( ev ) )
+			{
+				return true;
+			}
+
+			return super.dispatchTouchEvent( ev );
 		}
 	}
 }
