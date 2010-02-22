@@ -298,9 +298,9 @@ public final class SysInfoManager extends PreferenceActivity
 		findPreference( "sensors" ).setSummary( getSensorInfo( s ) ); //$NON-NLS-1$
 		findPreference( "sensors" ).setEnabled( s > 0 ); //$NON-NLS-1$
 
-//		int[] gs = getGpsState( );
-//		findPreference( "gps" ).setSummary( getGpsInfo( gs ) ); //$NON-NLS-1$
-//		findPreference( "gps" ).setEnabled( gs != null ); //$NON-NLS-1$
+		// int[] gs = getGpsState( );
+		//		findPreference( "gps" ).setSummary( getGpsInfo( gs ) ); //$NON-NLS-1$
+		//		findPreference( "gps" ).setEnabled( gs != null ); //$NON-NLS-1$
 	}
 
 	private String[] getMemInfo( )
@@ -442,6 +442,7 @@ public final class SysInfoManager extends PreferenceActivity
 			String line;
 			String processor = null;
 			String mips = null;
+			String model = null;
 
 			File f = new File( F_SCALE_FREQ );
 
@@ -496,7 +497,7 @@ public final class SysInfoManager extends PreferenceActivity
 
 			while ( ( line = reader.readLine( ) ) != null )
 			{
-				if ( line.startsWith( "Processor" ) ) //$NON-NLS-1$
+				if ( processor == null && line.startsWith( "Processor" ) ) //$NON-NLS-1$
 				{
 					processor = line;
 				}
@@ -504,14 +505,31 @@ public final class SysInfoManager extends PreferenceActivity
 				{
 					mips = line;
 				}
+				if ( model == null && line.startsWith( "model name" ) ) //$NON-NLS-1$
+				{
+					model = line;
+				}
 
-				if ( processor != null && mips != null )
+				if ( model != null || ( processor != null && mips != null ) )
 				{
 					break;
 				}
 			}
 
-			if ( processor != null && mips != null )
+			if ( model != null )
+			{
+				int idx = model.indexOf( ':' );
+				if ( idx != -1 )
+				{
+					return model.substring( idx + 1 ).trim( );
+				}
+				else
+				{
+					Log.e( SysInfoManager.class.getName( ),
+							"Unexpected processor format: " + model ); //$NON-NLS-1$
+				}
+			}
+			else if ( processor != null && mips != null )
 			{
 				int idx = processor.indexOf( ':' );
 				if ( idx != -1 )

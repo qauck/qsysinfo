@@ -29,6 +29,7 @@ import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -108,9 +109,11 @@ public final class SensorInfoActivity extends PopActivity
 				TextView t1 = (TextView) v.findViewById( R.id.txt_head );
 				TextView t2 = (TextView) v.findViewById( R.id.txt_msg );
 
-				t1.setText( item.getName( ) );
+				t1.setText( TextUtils.isEmpty( item.getName( ) ) ? getString( R.string.unknown )
+						: item.getName( ) );
 				t2.setText( getString( R.string.sensor_msg,
-						item.getVendor( ),
+						TextUtils.isEmpty( item.getVendor( ) ) ? getString( R.string.unknown )
+								: item.getVendor( ),
 						item.getVersion( ),
 						item.getPower( ),
 						item.getResolution( ),

@@ -803,16 +803,16 @@ public final class LogViewer extends ListActivity
 
 	private static LogItem parseDLog( String line, char targetLevel )
 	{
-		int levelOffset = line.indexOf( '>' );
+		char level = '6'; // default level as info
+		int levelOffset = -1;
 
-		if ( levelOffset < 1 )
+		if ( line.length( ) > 2
+				&& line.charAt( 0 ) == '<'
+				&& line.charAt( 2 ) == '>' )
 		{
-			Log.d( LogViewer.class.getName( ), "Unexpected dmesg line: " + line ); //$NON-NLS-1$
-
-			return null;
+			level = line.charAt( 1 );
+			levelOffset = 2;
 		}
-
-		char level = line.charAt( levelOffset - 1 );
 
 		if ( level > targetLevel )
 		{
