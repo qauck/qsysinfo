@@ -62,6 +62,8 @@ import android.hardware.SensorManager;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Build;
@@ -959,6 +961,29 @@ public final class SysInfoManager extends PreferenceActivity
 	@Override
 	public boolean onOptionsItemSelected( MenuItem item )
 	{
+		if ( item.getItemId( ) == R.id.mi_help )
+		{
+			Intent it = new Intent( Intent.ACTION_VIEW );
+
+			String target = "http://code.google.com/p/qsysinfo/wiki/FeaturesTextOnly#Introduction"; //$NON-NLS-1$
+
+			ConnectivityManager cm = (ConnectivityManager) getSystemService( Activity.CONNECTIVITY_SERVICE );
+
+			NetworkInfo info = cm.getNetworkInfo( ConnectivityManager.TYPE_WIFI );
+
+			if ( info != null && info.isConnected( ) )
+			{
+				target = "http://code.google.com/p/qsysinfo/wiki/Features#Introduction"; //$NON-NLS-1$
+			}
+
+			it.setData( Uri.parse( target ) );
+
+			it = Intent.createChooser( it, null );
+
+			startActivity( it );
+
+			return true;
+		}
 		if ( item.getItemId( ) == R.id.mi_about )
 		{
 			TextView txt = new TextView( this );

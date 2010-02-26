@@ -160,5 +160,6 @@
     <string name="data_size">数据大小</string>
     <string name="code_size">程序大小</string>
     <string name="name">名称</string>
+    <string name="help">在线帮助</string>
 
 </resources>

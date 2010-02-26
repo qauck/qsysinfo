@@ -168,5 +168,6 @@
     <string name="data_size">Data Size</string>
     <string name="code_size">Code Size</string>
     <string name="name">Name</string>
+    <string name="help">Online Help</string>
 
 </resources>

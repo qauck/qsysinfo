@@ -3,4 +3,7 @@
 	<item android:id="@+id/mi_about" android:title="@string/about"
 		android:icon="@android:drawable/ic_menu_info_details"></item>
 
+	<item android:id="@+id/mi_help" android:title="@string/help"
+		android:icon="@android:drawable/ic_menu_help"></item>
+		
 </menu>
