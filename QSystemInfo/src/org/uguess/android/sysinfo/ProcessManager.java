@@ -138,20 +138,26 @@ public final class ProcessManager extends ListActivity
 
 					switch ( itm.importance )
 					{
+						case RunningAppProcessInfo.IMPORTANCE_VISIBLE :
+							txt_name.setTextColor( Color.GREEN );
+							break;
 						case RunningAppProcessInfo.IMPORTANCE_SERVICE :
 							txt_name.setTextColor( Color.GRAY );
 							break;
 						case RunningAppProcessInfo.IMPORTANCE_BACKGROUND :
 							txt_name.setTextColor( Color.YELLOW );
 							break;
-						default :
+						case RunningAppProcessInfo.IMPORTANCE_EMPTY :
 							txt_name.setTextColor( Color.WHITE );
+							break;
+						default :
+							txt_name.setTextColor( Color.CYAN );
 					}
 
 					try
 					{
 						img_type.setImageDrawable( null );
-						
+
 						ApplicationInfo ai = pm.getApplicationInfo( itm.processName,
 								0 );
 

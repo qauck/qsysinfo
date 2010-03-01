@@ -425,7 +425,7 @@ public final class NetStateManager extends ListActivity
 				setRefreshInterval( interval );
 			}
 
-			int state = data.getIntExtra( PREF_KEY_REMOTE_QUERY, WIFI_ONLY );
+			int state = data.getIntExtra( PREF_KEY_REMOTE_QUERY, ENABLED );
 			if ( state != getRemoteQueryState( ) )
 			{
 				setRemoteQueryState( state );
@@ -835,7 +835,7 @@ public final class NetStateManager extends ListActivity
 	{
 		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
 
-		return sp.getInt( PREF_KEY_REMOTE_QUERY, WIFI_ONLY );
+		return sp.getInt( PREF_KEY_REMOTE_QUERY, ENABLED );
 	}
 
 	private void setRemoteQueryState( int state )
@@ -907,7 +907,7 @@ public final class NetStateManager extends ListActivity
 		private void refreshRemoteQuery( )
 		{
 			int state = getIntent( ).getIntExtra( PREF_KEY_REMOTE_QUERY,
-					WIFI_ONLY );
+					ENABLED );
 
 			CharSequence label = getString( R.string.wifi_only );
 			switch ( state )
@@ -980,8 +980,7 @@ public final class NetStateManager extends ListActivity
 								getString( R.string.disabled ),
 								getString( R.string.wifi_only ),
 						},
-								it.getIntExtra( PREF_KEY_REMOTE_QUERY,
-										WIFI_ONLY ),
+								it.getIntExtra( PREF_KEY_REMOTE_QUERY, ENABLED ),
 								listener )
 						.create( )
 						.show( );

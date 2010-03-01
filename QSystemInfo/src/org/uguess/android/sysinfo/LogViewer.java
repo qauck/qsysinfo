@@ -28,6 +28,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
 import android.text.ClipboardManager;
+import android.text.Html;
 import android.text.InputFilter;
 import android.text.TextUtils;
 import android.text.method.DigitsKeyListener;
@@ -212,10 +213,10 @@ public final class LogViewer extends ListActivity
 							txt_head.setTextColor( Color.MAGENTA );
 							break;
 						case '1' :
-							txt_head.setTextColor( Color.MAGENTA );
+							txt_head.setTextColor( 0xFFF183BD );
 							break;
 						case '2' :
-							txt_head.setTextColor( Color.RED );
+							txt_head.setTextColor( 0xFF8737CE );
 							break;
 						case '3' :
 							txt_head.setTextColor( Color.RED );
@@ -1207,14 +1208,24 @@ public final class LogViewer extends ListActivity
 					new AlertDialog.Builder( this ).setTitle( R.string.log_level )
 							.setNeutralButton( R.string.close, null )
 							.setSingleChoiceItems( new CharSequence[]{
-									getString( R.string.emmergency ),
-									getString( R.string.alert ),
-									getString( R.string.critical ),
-									getString( R.string.error ),
-									getString( R.string.warning ),
-									getString( R.string.notice ),
-									getString( R.string.info ),
-									getString( R.string.debug )
+
+									Html.fromHtml( "<font color=\"#ff00ff\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.emmergency ) ),
+									Html.fromHtml( "<font color=\"#F183BD\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.alert ) ),
+									Html.fromHtml( "<font color=\"#8737CE\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.critical ) ),
+									Html.fromHtml( "<font color=\"#ff0000\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.error ) ),
+									Html.fromHtml( "<font color=\"#ffff00\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.warning ) ),
+									Html.fromHtml( "<font color=\"#00ffff\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.notice ) ),
+									Html.fromHtml( "<font color=\"#00ff00\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.info ) ),
+									Html.fromHtml( "<font color=\"#888888\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.debug ) ),
+
 							},
 									it.getIntExtra( PREF_KEY_DLOG_LEVL,
 											DM_LVL_DEBUG ),
@@ -1227,12 +1238,20 @@ public final class LogViewer extends ListActivity
 					new AlertDialog.Builder( this ).setTitle( R.string.log_level )
 							.setNeutralButton( R.string.close, null )
 							.setSingleChoiceItems( new CharSequence[]{
-									getString( R.string.verbose ),
-									getString( R.string.debug ),
-									getString( R.string.info ),
-									getString( R.string.warning ),
-									getString( R.string.error ),
-									getString( R.string.asser_t )
+
+									Html.fromHtml( "<font color=\"#888888\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.verbose ) ),
+									Html.fromHtml( "<font color=\"#00ffff\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.debug ) ),
+									Html.fromHtml( "<font color=\"#00ff00\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.info ) ),
+									Html.fromHtml( "<font color=\"#ffff00\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.warning ) ),
+									Html.fromHtml( "<font color=\"#ff0000\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.error ) ),
+									Html.fromHtml( "<font color=\"#ff00ff\">● </font>" //$NON-NLS-1$
+											+ getString( R.string.asser_t ) ),
+
 							},
 									it.getIntExtra( PREF_KEY_CLOG_LEVL,
 											Log.VERBOSE ) - 2,
