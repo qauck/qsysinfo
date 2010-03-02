@@ -29,6 +29,6 @@
 	<CheckBox android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:id="@+id/ckb_app"
 		android:layout_gravity="center_vertical" android:focusable="false"
-		android:focusableInTouchMode="false"></CheckBox>
+		android:focusableInTouchMode="false" android:layout_marginRight="2dip"></CheckBox>
 
 </LinearLayout>

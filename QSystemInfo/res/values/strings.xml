@@ -169,5 +169,7 @@
     <string name="code_size">Code Size</string>
     <string name="name">Name</string>
     <string name="help">Online Help</string>
+    <string name="cpu_usage">CPU Usage</string>
+    <string name="memory_usage">Memory Usage</string>
 
 </resources>

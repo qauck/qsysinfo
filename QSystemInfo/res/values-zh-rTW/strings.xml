@@ -161,5 +161,7 @@
     <string name="code_size">程序大小</string>
     <string name="name">名稱</string>
     <string name="help">線上幫助</string>
+    <string name="cpu_usage">CPU佔用</string>
+    <string name="memory_usage">記憶體佔用</string>
 
 </resources>
