@@ -169,6 +169,8 @@ public final class ProcessManager extends ListActivity
 		dummyInfo = new ProcessItem( );
 		dummyInfo.label = ProcessManager.this.getString( R.string.end_proc_hint );
 
+		procCache = new ProcessCache( );
+
 		getListView( ).setOnItemClickListener( new OnItemClickListener( ) {
 
 			public void onItemClick( AdapterView<?> parent, View view,
@@ -289,8 +291,6 @@ public final class ProcessManager extends ListActivity
 	{
 		super.onResume( );
 
-		procCache = new ProcessCache( );
-
 		handler.post( task );
 	}
 
@@ -300,7 +300,6 @@ public final class ProcessManager extends ListActivity
 		handler.removeCallbacks( task );
 
 		procCache.procList.clear( );
-		procCache = null;
 
 		super.onPause( );
 	}

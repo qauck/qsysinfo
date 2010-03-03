@@ -468,7 +468,6 @@ public final class ApplicationManager extends ListActivity
 	{
 		appCache.appList.clear( );
 		appCache.appLookup.clear( );
-		appCache = null;
 
 		super.onDestroy( );
 	}
