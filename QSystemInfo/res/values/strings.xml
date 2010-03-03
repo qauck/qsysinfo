@@ -171,5 +171,14 @@
     <string name="help">Online Help</string>
     <string name="cpu_usage">CPU Usage</string>
     <string name="memory_usage">Memory Usage</string>
+    <string name="remove">Remove</string>
+    <string name="no_item_remove">No item selected to remove</string>
+    <string name="multi_ignored">%s processes ignored</string>
+    <string name="single_ignored">%s process ignored</string>
+    <string name="protect">Protected</string>
+    <string name="hidden">Hidden</string>
+    <string name="ignored_list">Ignored List</string>
+    <string name="ignored_as">Ignored as</string>
+    <string name="ignore">Ignore</string>
 
 </resources>

@@ -163,5 +163,14 @@
     <string name="help">線上幫助</string>
     <string name="cpu_usage">CPU佔用</string>
     <string name="memory_usage">記憶體佔用</string>
+    <string name="remove">移除</string>
+    <string name="no_item_remove">没有選取項可以移除</string>
+    <string name="multi_ignored">%s 個忽略項</string>
+    <string name="single_ignored">%s 個忽略項</string>
+    <string name="protect">保護</string>
+    <string name="hidden">隱藏</string>
+    <string name="ignored_list">忽略項列表</string>
+    <string name="ignored_as">忽略項為</string>
+    <string name="ignore">忽略</string>
 
 </resources>

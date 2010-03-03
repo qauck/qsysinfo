@@ -27,8 +27,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -41,6 +43,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
+import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -80,12 +83,15 @@ public final class ProcessManager extends ListActivity
 
 	private static final int MI_DISPLAY = 1;
 	private static final int MI_ENDTASK = 2;
+	private static final int MI_IGNORE = 3;
 
 	private static final int MSG_UPDATE = 1;
 
 	private static final String PREF_KEY_REFRESH_INTERVAL = "refresh_interval"; //$NON-NLS-1$
 	private static final String PREF_KEY_SORT_ORDER_TYPE = "sort_order_type"; //$NON-NLS-1$
 	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
+	private static final String PREF_KEY_IGNORE_ACTION = "ignore_action"; //$NON-NLS-1$
+	private static final String PREF_KEY_IGNORE_LIST = "ignore_list"; //$NON-NLS-1$
 
 	private static final int REFRESH_HIGH = 0;
 	private static final int REFRESH_NORMAL = 1;
@@ -97,6 +103,9 @@ public final class ProcessManager extends ListActivity
 	private static final int ORDER_TYPE_MEM = 2;
 	private static final int ORDER_TYPE_CPU = 3;
 
+	private static final int IGNORE_ACTION_HIDDEN = 0;
+	private static final int IGNORE_ACTION_PROTECTED = 1;
+
 	private static final int ORDER_ASC = 1;
 	private static final int ORDER_DESC = -1;
 
@@ -105,6 +114,8 @@ public final class ProcessManager extends ListActivity
 	private ProcessCache procCache;
 
 	private long totalLoad, totalDelta;
+
+	private LinkedHashSet<String> ignoreList;
 
 	private Handler handler = new Handler( ) {
 
@@ -171,6 +182,15 @@ public final class ProcessManager extends ListActivity
 
 		procCache = new ProcessCache( );
 
+		ignoreList = new LinkedHashSet<String>( );
+
+		ArrayList<String> list = getIgnoreList( );
+
+		if ( list != null )
+		{
+			ignoreList.addAll( list );
+		}
+
 		getListView( ).setOnItemClickListener( new OnItemClickListener( ) {
 
 			public void onItemClick( AdapterView<?> parent, View view,
@@ -182,14 +202,23 @@ public final class ProcessManager extends ListActivity
 				{
 					endAll( );
 				}
-				else
+				else if ( !ignoreList.contains( rap.procInfo.processName ) )
 				{
 					ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
 
-					endProcess( am, rap.procInfo.pkgList );
+					String self = getPackageName( );
 
-					handler.removeCallbacks( task );
-					handler.post( task );
+					if ( self.equals( rap.procInfo.processName ) )
+					{
+						am.restartPackage( self );
+					}
+					else
+					{
+						endProcess( am, rap.procInfo.pkgList );
+
+						handler.removeCallbacks( task );
+						handler.post( task );
+					}
 				}
 			}
 		} );
@@ -327,6 +356,23 @@ public final class ProcessManager extends ListActivity
 			{
 				setSortDirection( t );
 			}
+
+			t = data.getIntExtra( PREF_KEY_IGNORE_ACTION, IGNORE_ACTION_HIDDEN );
+			if ( t != getIgnoreAction( ) )
+			{
+				setIgnoreAction( t );
+			}
+
+			ArrayList<String> list = data.getStringArrayListExtra( PREF_KEY_IGNORE_LIST );
+
+			setIgnoreList( list );
+
+			ignoreList.clear( );
+
+			if ( list != null )
+			{
+				ignoreList.addAll( list );
+			}
 		}
 	}
 
@@ -354,6 +400,9 @@ public final class ProcessManager extends ListActivity
 			intent.putExtra( PREF_KEY_REFRESH_INTERVAL, getRefreshInterval( ) );
 			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, getSortOrderType( ) );
 			intent.putExtra( PREF_KEY_SORT_DIRECTION, getSortDirection( ) );
+			intent.putExtra( PREF_KEY_IGNORE_ACTION, getIgnoreAction( ) );
+			intent.putStringArrayListExtra( PREF_KEY_IGNORE_LIST,
+					getIgnoreList( ) );
 
 			startActivityForResult( intent, 1 );
 
@@ -376,7 +425,19 @@ public final class ProcessManager extends ListActivity
 		{
 			menu.setHeaderTitle( R.string.actions );
 			menu.add( Menu.NONE, MI_DISPLAY, MI_DISPLAY, R.string.switch_to );
-			menu.add( Menu.NONE, MI_ENDTASK, MI_ENDTASK, R.string.end_task );
+
+			if ( ignoreList.contains( rap.procInfo.processName ) )
+			{
+				menu.add( Menu.NONE, MI_ENDTASK, MI_ENDTASK, R.string.end_task )
+						.setEnabled( false );
+				menu.add( Menu.NONE, MI_IGNORE, MI_IGNORE, R.string.ignore )
+						.setEnabled( false );
+			}
+			else
+			{
+				menu.add( Menu.NONE, MI_ENDTASK, MI_ENDTASK, R.string.end_task );
+				menu.add( Menu.NONE, MI_IGNORE, MI_IGNORE, R.string.ignore );
+			}
 		}
 	}
 
@@ -437,15 +498,109 @@ public final class ProcessManager extends ListActivity
 
 			ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
 
-			endProcess( am, rap.procInfo.pkgList );
+			String self = getPackageName( );
 
-			handler.removeCallbacks( task );
-			handler.post( task );
+			if ( self.equals( rap.procInfo.processName ) )
+			{
+				am.restartPackage( self );
+			}
+			else
+			{
+				endProcess( am, rap.procInfo.pkgList );
+
+				handler.removeCallbacks( task );
+				handler.post( task );
+			}
+
+			return true;
+		}
+		else if ( item.getItemId( ) == MI_IGNORE )
+		{
+			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
+			ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
+
+			ignoreList.add( rap.procInfo.processName );
+
+			setIgnoreList( ignoreList );
+
+			if ( IGNORE_ACTION_HIDDEN == getIgnoreAction( ) )
+			{
+				handler.removeCallbacks( task );
+				handler.post( task );
+			}
 
 			return true;
 		}
 
 		return super.onContextItemSelected( item );
+	}
+
+	private int getIgnoreAction( )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		return sp.getInt( PREF_KEY_IGNORE_ACTION, IGNORE_ACTION_HIDDEN );
+	}
+
+	private void setIgnoreAction( int action )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		et.putInt( PREF_KEY_IGNORE_ACTION, action );
+		et.commit( );
+	}
+
+	private ArrayList<String> getIgnoreList( )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		String listVal = sp.getString( PREF_KEY_IGNORE_LIST, null );
+
+		if ( listVal == null || listVal.length( ) == 0 )
+		{
+			return null;
+		}
+
+		StringTokenizer tokenizer = new StringTokenizer( listVal );
+		ArrayList<String> list = new ArrayList<String>( );
+
+		while ( tokenizer.hasMoreTokens( ) )
+		{
+			list.add( tokenizer.nextToken( ) );
+		}
+
+		return list.size( ) == 0 ? null : list;
+	}
+
+	private void setIgnoreList( Collection<String> list )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		if ( list == null || list.isEmpty( ) )
+		{
+			et.remove( PREF_KEY_IGNORE_LIST );
+		}
+		else
+		{
+			StringBuffer sb = new StringBuffer( );
+
+			int i = 0;
+			for ( String s : list )
+			{
+				if ( i > 0 )
+				{
+					sb.append( ' ' );
+				}
+				sb.append( s );
+
+				i++;
+			}
+
+			et.putString( PREF_KEY_IGNORE_LIST, sb.toString( ) );
+		}
+		et.commit( );
 	}
 
 	private int getSortOrderType( )
@@ -523,13 +678,22 @@ public final class ProcessManager extends ListActivity
 		{
 			ProcessItem rap = (ProcessItem) lstProcs.getItemAtPosition( i );
 
-			if ( !self.equals( rap.procInfo.processName ) )
+			if ( !ignoreList.contains( rap.procInfo.processName )
+					&& !self.equals( rap.procInfo.processName ) )
 			{
 				endProcess( am, rap.procInfo.pkgList );
 			}
 		}
 
-		am.restartPackage( self );
+		if ( !ignoreList.contains( self ) )
+		{
+			am.restartPackage( self );
+		}
+		else
+		{
+			handler.removeCallbacks( task );
+			handler.post( task );
+		}
 	}
 
 	private void updateProcess( List<RunningAppProcessInfo> list )
@@ -548,6 +712,8 @@ public final class ProcessManager extends ListActivity
 			ArrayList<ProcessItem> nlist = new ArrayList<ProcessItem>( );
 			PackageManager pm = getPackageManager( );
 
+			int ignoreAction = getIgnoreAction( );
+
 			String name;
 			for ( RunningAppProcessInfo rap : list )
 			{
@@ -559,6 +725,12 @@ public final class ProcessManager extends ListActivity
 						|| name.startsWith( "system" ) //$NON-NLS-1$
 						|| name.startsWith( "com.android.inputmethod" ) //$NON-NLS-1$
 						|| name.startsWith( "com.android.alarmclock" ) ) //$NON-NLS-1$
+				{
+					continue;
+				}
+
+				if ( ignoreAction == IGNORE_ACTION_HIDDEN
+						&& ignoreList.contains( name ) )
 				{
 					continue;
 				}
@@ -835,9 +1007,25 @@ public final class ProcessManager extends ListActivity
 			perfSortDirection.setTitle( R.string.sort_direction );
 			pc.addPreference( perfSortDirection );
 
+			pc = new PreferenceCategory( this );
+			pc.setTitle( R.string.ignore );
+			getPreferenceScreen( ).addPreference( pc );
+
+			Preference perfIgnoreAction = new Preference( this );
+			perfIgnoreAction.setKey( PREF_KEY_IGNORE_ACTION );
+			perfIgnoreAction.setTitle( R.string.ignored_as );
+			pc.addPreference( perfIgnoreAction );
+
+			Preference perfIgnoreList = new Preference( this );
+			perfIgnoreList.setKey( PREF_KEY_IGNORE_LIST );
+			perfIgnoreList.setTitle( R.string.ignored_list );
+			pc.addPreference( perfIgnoreList );
+
 			refreshInterval( );
 			refreshSortType( );
 			refreshSortDirection( );
+			refreshIgnoreAction( );
+			refreshIgnoreList( );
 
 			setResult( RESULT_OK, getIntent( ) );
 		}
@@ -898,6 +1086,95 @@ public final class ProcessManager extends ListActivity
 					: getString( R.string.descending );
 
 			findPreference( PREF_KEY_SORT_DIRECTION ).setSummary( label );
+		}
+
+		private void refreshIgnoreAction( )
+		{
+			int action = getIntent( ).getIntExtra( PREF_KEY_IGNORE_ACTION,
+					IGNORE_ACTION_HIDDEN );
+
+			findPreference( PREF_KEY_IGNORE_ACTION ).setSummary( action == IGNORE_ACTION_HIDDEN ? R.string.hidden
+					: R.string.protect );
+		}
+
+		private void refreshIgnoreList( )
+		{
+			ArrayList<String> list = getIntent( ).getStringArrayListExtra( PREF_KEY_IGNORE_LIST );
+
+			Preference pref = findPreference( PREF_KEY_IGNORE_LIST );
+
+			if ( list == null || list.size( ) == 0 )
+			{
+				pref.setSummary( getString( R.string.single_ignored, 0 ) );
+				pref.setEnabled( false );
+			}
+			else
+			{
+				if ( list.size( ) == 1 )
+				{
+					pref.setSummary( getString( R.string.single_ignored, 1 ) );
+				}
+				else
+				{
+					pref.setSummary( getString( R.string.multi_ignored,
+							list.size( ) ) );
+				}
+
+				pref.setEnabled( true );
+			}
+		}
+
+		private String getProcessLabel( String name, PackageManager pm )
+		{
+			if ( pm != null )
+			{
+				try
+				{
+					ApplicationInfo ai = pm.getApplicationInfo( name, 0 );
+
+					if ( ai != null )
+					{
+						CharSequence label = pm.getApplicationLabel( ai );
+
+						if ( label != null )
+						{
+							name = label.toString( );
+						}
+					}
+				}
+				catch ( NameNotFoundException e )
+				{
+					int idx = name.indexOf( ':' );
+
+					if ( idx != -1 )
+					{
+						String prefix = name.substring( 0, idx );
+
+						try
+						{
+							ApplicationInfo ai = pm.getApplicationInfo( prefix,
+									0 );
+
+							if ( ai != null )
+							{
+								CharSequence label = pm.getApplicationLabel( ai );
+
+								if ( label != null )
+								{
+									name = label.toString( )
+											+ name.substring( idx );
+								}
+							}
+						}
+						catch ( NameNotFoundException e1 )
+						{
+							// ignore this exception
+						}
+					}
+				}
+			}
+
+			return name;
 		}
 
 		@Override
@@ -990,6 +1267,104 @@ public final class ProcessManager extends ListActivity
 								it.getIntExtra( PREF_KEY_SORT_DIRECTION,
 										ORDER_ASC ) == ORDER_ASC ? 0 : 1,
 								listener )
+						.create( )
+						.show( );
+
+				return true;
+			}
+			else if ( PREF_KEY_IGNORE_ACTION.equals( preference.getKey( ) ) )
+			{
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						it.putExtra( PREF_KEY_IGNORE_ACTION, which );
+
+						dialog.dismiss( );
+
+						refreshIgnoreAction( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.ignored_as )
+						.setNeutralButton( R.string.close, null )
+						.setSingleChoiceItems( new String[]{
+								getString( R.string.hidden ),
+								getString( R.string.protect ),
+						},
+								it.getIntExtra( PREF_KEY_IGNORE_ACTION,
+										IGNORE_ACTION_HIDDEN ),
+								listener )
+						.create( )
+						.show( );
+
+				return true;
+			}
+			else if ( PREF_KEY_IGNORE_LIST.equals( preference.getKey( ) ) )
+			{
+				final ArrayList<String> list = it.getStringArrayListExtra( PREF_KEY_IGNORE_LIST );
+				final boolean[] state = new boolean[list.size( )];
+
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						ArrayList<String> nlist = new ArrayList<String>( );
+
+						for ( int i = 0; i < list.size( ); i++ )
+						{
+							if ( !state[i] )
+							{
+								nlist.add( list.get( i ) );
+							}
+						}
+
+						if ( list.size( ) == nlist.size( ) )
+						{
+							Toast.makeText( ProcessSettings.this,
+									R.string.no_item_remove,
+									Toast.LENGTH_SHORT ).show( );
+						}
+						else
+						{
+							if ( nlist.size( ) == 0 )
+							{
+								it.removeExtra( PREF_KEY_IGNORE_LIST );
+							}
+							else
+							{
+								it.putStringArrayListExtra( PREF_KEY_IGNORE_LIST,
+										nlist );
+							}
+
+							dialog.dismiss( );
+
+							refreshIgnoreList( );
+						}
+					}
+				};
+
+				OnMultiChoiceClickListener multiListener = new OnMultiChoiceClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which,
+							boolean isChecked )
+					{
+						state[which] = isChecked;
+					}
+				};
+
+				final PackageManager pm = getPackageManager( );
+				final String[] labels = new String[list.size( )];
+
+				for ( int i = 0; i < list.size( ); i++ )
+				{
+					labels[i] = getProcessLabel( list.get( i ), pm );
+				}
+
+				new AlertDialog.Builder( this ).setTitle( R.string.ignored_list )
+						.setPositiveButton( R.string.remove, listener )
+						.setNegativeButton( R.string.close, null )
+						.setMultiChoiceItems( labels, state, multiListener )
 						.create( )
 						.show( );
 
