@@ -114,6 +114,8 @@ public final class NetStateManager extends ListActivity
 
 	private ProgressDialog progress;
 
+	private volatile boolean aborted;
+
 	private Handler handler = new Handler( ) {
 
 		public void handleMessage( android.os.Message msg )
@@ -122,7 +124,10 @@ public final class NetStateManager extends ListActivity
 			{
 				case MSG_IP_READY :
 
-					sendEmptyMessage( MSG_DISMISS_PROGRESS );
+					if ( aborted )
+					{
+						return;
+					}
 
 					final IpInfo info = (IpInfo) msg.obj;
 
@@ -161,9 +166,9 @@ public final class NetStateManager extends ListActivity
 										+ info.host
 										+ "\">" //$NON-NLS-1$
 										+ info.host + "</a>" ), //$NON-NLS-1$
-								info.country,
-								info.region,
-								info.city ) ) );
+								info.country == null ? "" : info.country, //$NON-NLS-1$
+								info.region == null ? "" : info.region, //$NON-NLS-1$
+								info.city == null ? "" : info.city ) ) ); //$NON-NLS-1$
 						txt.setMovementMethod( LinkMovementMethod.getInstance( ) );
 
 						new AlertDialog.Builder( NetStateManager.this ).setTitle( R.string.ip_location )
@@ -331,6 +336,8 @@ public final class NetStateManager extends ListActivity
 	@Override
 	protected void onResume( )
 	{
+		aborted = false;
+
 		super.onResume( );
 
 		handler.post( task );
@@ -339,7 +346,10 @@ public final class NetStateManager extends ListActivity
 	@Override
 	protected void onPause( )
 	{
+		aborted = true;
+
 		handler.removeCallbacks( task );
+		handler.removeMessages( MSG_IP_READY );
 
 		super.onPause( );
 	}
@@ -475,121 +485,16 @@ public final class NetStateManager extends ListActivity
 
 			public void run( )
 			{
-				InputStream input = null;
-				IpInfo info = null;
-				try
-				{
-					info = new IpInfo( );
+				IpInfo info = new IpInfo( );
+				info.ip = ip;
 
-					info.ip = ip;
+				info = getIpInfo( info );
 
-					try
-					{
-						String host = InetAddress.getByName( ip ).getHostName( );
+				queryCache.put( ip, info );
 
-						if ( !ip.equals( host ) )
-						{
-							info.host = host;
-						}
-					}
-					catch ( Exception e )
-					{
-						Log.e( NetStateManager.class.getName( ),
-								e.getLocalizedMessage( ),
-								e );
-					}
+				handler.sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
-					URL url = new URL( "http://ipinfodb.com/ip_query.php?ip=" //$NON-NLS-1$
-							+ ip );
-
-					XmlPullParser parser = XmlPullParserFactory.newInstance( )
-							.newPullParser( );
-
-					input = url.openStream( );
-
-					parser.setInput( input, null );
-
-					String name, value;
-					while ( parser.next( ) != XmlPullParser.END_DOCUMENT )
-					{
-						if ( parser.getEventType( ) == XmlPullParser.START_TAG )
-						{
-							name = parser.getName( );
-
-							if ( "Status".equals( name ) ) //$NON-NLS-1$
-							{
-								value = parser.nextText( );
-
-								if ( !"OK".equals( value ) ) //$NON-NLS-1$
-								{
-									Log.d( NetStateManager.class.getName( ),
-											"Invalid ip?: " + ip ); //$NON-NLS-1$
-
-									break;
-								}
-							}
-							else if ( "CountryName".equals( name ) ) //$NON-NLS-1$
-							{
-								value = parser.nextText( );
-
-								if ( "Reserved".equals( value ) ) //$NON-NLS-1$
-								{
-									Log.d( NetStateManager.class.getName( ),
-											"Reserved ip?: " + ip ); //$NON-NLS-1$
-
-									break;
-								}
-
-								info.country = value;
-							}
-							else if ( "RegionName".equals( name ) ) //$NON-NLS-1$
-							{
-								info.region = parser.nextText( );
-							}
-							else if ( "City".equals( name ) ) //$NON-NLS-1$
-							{
-								info.city = parser.nextText( );
-							}
-							else if ( "Latitude".equals( name ) ) //$NON-NLS-1$
-							{
-								info.latitude = parser.nextText( );
-							}
-							else if ( "Longitude".equals( name ) ) //$NON-NLS-1$
-							{
-								info.longitude = parser.nextText( );
-							}
-						}
-					}
-
-					queryCache.put( ip, info );
-
-				}
-				catch ( Exception e )
-				{
-					Log.e( NetStateManager.class.getName( ),
-							e.getLocalizedMessage( ),
-							e );
-				}
-				finally
-				{
-					if ( input != null )
-					{
-						try
-						{
-							input.close( );
-						}
-						catch ( IOException e )
-						{
-							Log.e( NetStateManager.class.getName( ),
-									e.getLocalizedMessage( ),
-									e );
-						}
-					}
-
-					handler.sendMessage( handler.obtainMessage( MSG_IP_READY,
-							info ) );
-				}
-
+				handler.sendMessage( handler.obtainMessage( MSG_IP_READY, info ) );
 			}
 		} ).start( );
 	}
@@ -847,6 +752,128 @@ public final class NetStateManager extends ListActivity
 		et.commit( );
 	}
 
+	static IpInfo getIpInfo( IpInfo info )
+	{
+		if ( info == null )
+		{
+			info = new IpInfo( );
+		}
+
+		InputStream input = null;
+
+		try
+		{
+			URL url;
+
+			if ( info.ip == null )
+			{
+				url = new URL( "http://ipinfodb.com/ip_query.php" ); //$NON-NLS-1$
+			}
+			else
+			{
+				url = new URL( "http://ipinfodb.com/ip_query.php?ip=" //$NON-NLS-1$
+						+ info.ip );
+			}
+
+			XmlPullParser parser = XmlPullParserFactory.newInstance( )
+					.newPullParser( );
+
+			input = url.openStream( );
+
+			parser.setInput( input, null );
+
+			String name, value;
+			while ( parser.next( ) != XmlPullParser.END_DOCUMENT )
+			{
+				if ( parser.getEventType( ) == XmlPullParser.START_TAG )
+				{
+					name = parser.getName( );
+
+					if ( info.ip == null && "Ip".equals( name ) ) //$NON-NLS-1$
+					{
+						info.ip = parser.nextText( );
+					}
+					else if ( "Status".equals( name ) ) //$NON-NLS-1$
+					{
+						value = parser.nextText( );
+
+						if ( !"OK".equals( value ) ) //$NON-NLS-1$
+						{
+							Log.d( NetStateManager.class.getName( ),
+									"Invalid ip?: " + info.ip ); //$NON-NLS-1$
+
+							break;
+						}
+					}
+					else if ( "CountryName".equals( name ) ) //$NON-NLS-1$
+					{
+						value = parser.nextText( );
+
+						if ( "Reserved".equals( value ) ) //$NON-NLS-1$
+						{
+							Log.d( NetStateManager.class.getName( ),
+									"Reserved ip?: " + info.ip ); //$NON-NLS-1$
+
+							break;
+						}
+
+						info.country = value;
+					}
+					else if ( "RegionName".equals( name ) ) //$NON-NLS-1$
+					{
+						info.region = parser.nextText( );
+					}
+					else if ( "City".equals( name ) ) //$NON-NLS-1$
+					{
+						info.city = parser.nextText( );
+					}
+					else if ( "Latitude".equals( name ) ) //$NON-NLS-1$
+					{
+						info.latitude = parser.nextText( );
+					}
+					else if ( "Longitude".equals( name ) ) //$NON-NLS-1$
+					{
+						info.longitude = parser.nextText( );
+					}
+				}
+			}
+
+			if ( info.ip != null )
+			{
+				String host = InetAddress.getByName( info.ip ).getHostName( );
+
+				if ( !info.ip.equals( host ) )
+				{
+					info.host = host;
+				}
+			}
+		}
+		catch ( Exception e )
+		{
+			Log.e( NetStateManager.class.getName( ),
+					e.getLocalizedMessage( ),
+					e );
+		}
+		finally
+		{
+			if ( input != null )
+			{
+				try
+				{
+					input.close( );
+				}
+				catch ( IOException e )
+				{
+					Log.e( NetStateManager.class.getName( ),
+							e.getLocalizedMessage( ),
+							e );
+				}
+			}
+		}
+
+		return info;
+	}
+
 	/**
 	 * NetStateSettings
 	 */
@@ -1008,7 +1035,7 @@ public final class NetStateManager extends ListActivity
 	/**
 	 * IpInfo
 	 */
-	private static final class IpInfo
+	static final class IpInfo
 	{
 
 		String country, region, city;

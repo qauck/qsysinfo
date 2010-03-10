@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -293,8 +294,10 @@ public final class ProcessManager extends ListActivity
 					txt_mem.setText( Formatter.formatFileSize( ProcessManager.this,
 							itm.rss * 4 * 1024 ) );
 
-					long cu = totalDelta == 0 ? 0
-							: ( itm.cpudelta * 100 / totalDelta );
+					long delta = itm.lastcputime == 0 ? 0
+							: ( itm.cputime - itm.lastcputime );
+
+					long cu = totalDelta == 0 ? 0 : ( delta * 100 / totalDelta );
 
 					if ( cu < 0 )
 					{
@@ -327,7 +330,9 @@ public final class ProcessManager extends ListActivity
 	protected void onPause( )
 	{
 		handler.removeCallbacks( task );
+		handler.removeMessages( MSG_UPDATE );
 
+		procCache.resCache.clear( );
 		procCache.procList.clear( );
 
 		super.onPause( );
@@ -707,9 +712,10 @@ public final class ProcessManager extends ListActivity
 
 		totalLoad = newload;
 
+		procCache.procList.clear( );
+
 		if ( list != null )
 		{
-			ArrayList<ProcessItem> nlist = new ArrayList<ProcessItem>( );
 			PackageManager pm = getPackageManager( );
 
 			int ignoreAction = getIgnoreAction( );
@@ -735,21 +741,29 @@ public final class ProcessManager extends ListActivity
 					continue;
 				}
 
-				ProcessItem pi = new ProcessItem( );
-				pi.procInfo = rap;
+				ProcessItem pi = procCache.resCache.get( name );
 
-				readProcessInfo( pi, pm );
+				if ( pi == null )
+				{
+					pi = new ProcessItem( );
+					pi.procInfo = rap;
 
-				nlist.add( pi );
+					readProcessInfo( pi, pm, true );
+
+					procCache.resCache.put( name, pi );
+				}
+				else
+				{
+					pi.procInfo = rap;
+					pi.lastcputime = pi.cputime;
+
+					readProcessInfo( pi, pm, false );
+				}
+
+				procCache.procList.add( pi );
 			}
 
-			procCache.update( nlist );
-
 			procCache.reOrder( getSortOrderType( ), getSortDirection( ) );
-		}
-		else
-		{
-			procCache.procList.clear( );
 		}
 	}
 
@@ -904,9 +918,10 @@ public final class ProcessManager extends ListActivity
 		}
 	}
 
-	private static void readProcessInfo( ProcessItem proc, PackageManager pm )
+	private void readProcessInfo( ProcessItem proc, PackageManager pm,
+			boolean isNew )
 	{
-		if ( pm != null )
+		if ( isNew && pm != null )
 		{
 			try
 			{
@@ -1391,7 +1406,7 @@ public final class ProcessManager extends ListActivity
 
 		long cputime;
 
-		long cpudelta;
+		long lastcputime;
 
 		@Override
 		public boolean equals( Object o )
@@ -1411,42 +1426,9 @@ public final class ProcessManager extends ListActivity
 	private static final class ProcessCache
 	{
 
+		HashMap<String, ProcessItem> resCache = new HashMap<String, ProcessItem>( );
+
 		ArrayList<ProcessItem> procList = new ArrayList<ProcessItem>( );
-
-		synchronized void update( ArrayList<ProcessItem> procs )
-		{
-			procList.retainAll( procs );
-
-			for ( ProcessItem pi : procs )
-			{
-				int oidx = procList.indexOf( pi );
-
-				if ( oidx == -1 )
-				{
-					procList.add( pi );
-				}
-				else
-				{
-					ProcessItem opi = procList.get( oidx );
-
-					opi.procInfo = pi.procInfo;
-					opi.label = pi.label;
-					opi.icon = pi.icon;
-					opi.rss = pi.rss;
-
-					if ( opi.cputime == 0 )
-					{
-						opi.cpudelta = 0;
-						opi.cputime = pi.cputime;
-					}
-					else
-					{
-						opi.cpudelta = pi.cputime - opi.cputime;
-						opi.cputime = pi.cputime;
-					}
-				}
-			}
-		}
 
 		synchronized void reOrder( int type, final int direction )
 		{
@@ -1495,7 +1477,9 @@ public final class ProcessManager extends ListActivity
 
 						public int compare( ProcessItem obj1, ProcessItem obj2 )
 						{
-							return (int) ( obj1.cpudelta - obj2.cpudelta )
+							return (int) ( ( obj1.lastcputime == 0 ? 0
+									: ( obj1.cputime - obj1.lastcputime ) ) - ( obj2.lastcputime == 0 ? 0
+									: ( obj2.cputime - obj2.lastcputime ) ) )
 									* direction;
 						}
 					} );
