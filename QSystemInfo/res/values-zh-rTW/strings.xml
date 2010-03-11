@@ -182,5 +182,8 @@
     <string name="local_address">本地位址</string>
     <string name="public_address">公共位址</string>
     <string name="details">詳細</string>
+    <string name="show_remote_msg">遠端資訊獲取后以主機名稱替代IP位址顯示</string>
+    <string name="display_remote_name">顯示遠端主機名稱</string>
+    <string name="remote_address">遠端位址</string>
 
 </resources>

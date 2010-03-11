@@ -190,5 +190,8 @@
     <string name="local_address">Local Address</string>
     <string name="public_address">Public Address</string>
     <string name="details">Details</string>
+    <string name="show_remote_msg">Show remote host name instead of IP address after the remote query</string>
+    <string name="display_remote_name">Display Remote Name</string>
+    <string name="remote_address">Remote Address</string>
 
 </resources>

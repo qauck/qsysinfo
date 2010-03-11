@@ -28,7 +28,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.URL;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -51,6 +54,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
@@ -81,11 +85,22 @@ public final class NetStateManager extends ListActivity
 
 	private static final String PREF_KEY_REFRESH_INTERVAL = "refresh_interval"; //$NON-NLS-1$
 	private static final String PREF_KEY_REMOTE_QUERY = "remote_query"; //$NON-NLS-1$
+	private static final String PREF_KEY_SHOW_REMOTE_NAME = "show_remote_name"; //$NON-NLS-1$
+	private static final String PREF_KEY_SORT_ORDER_TYPE = "sort_order_type"; //$NON-NLS-1$
+	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
 
 	private static final int REFRESH_HIGH = 0;
 	private static final int REFRESH_NORMAL = 1;
 	private static final int REFRESH_LOW = 2;
 	private static final int REFRESH_PAUSED = 3;
+
+	private static final int ORDER_TYPE_PROTO = 0;
+	private static final int ORDER_TYPE_LOCAL = 1;
+	private static final int ORDER_TYPE_REMOTE = 2;
+	private static final int ORDER_TYPE_STATE = 3;
+
+	private static final int ORDER_ASC = 1;
+	private static final int ORDER_DESC = -1;
 
 	private static final int ENABLED = 0;
 	private static final int DISABLED = 1;
@@ -130,6 +145,8 @@ public final class NetStateManager extends ListActivity
 					}
 
 					showIpInfo( (IpInfo) msg.obj, NetStateManager.this );
+
+					this.post( task );
 
 					break;
 				case MSG_DISMISS_PROGRESS :
@@ -176,7 +193,7 @@ public final class NetStateManager extends ListActivity
 
 		dummyInfo = new ConnectionItem( );
 		dummyInfo.proto = getString( R.string.protocol );
-		dummyInfo.ip = getString( R.string.local_remote_addr );
+		dummyInfo.local = getString( R.string.local_remote_addr );
 		dummyInfo.state = getString( R.string.state );
 
 		registerForContextMenu( getListView( ) );
@@ -250,11 +267,12 @@ public final class NetStateManager extends ListActivity
 				txt_state = (TextView) view.findViewById( R.id.txt_state );
 
 				txt_proto.setText( itm.proto );
-				txt_ip.setText( itm.ip );
 				txt_state.setText( itm.state );
 
 				if ( itm == dummyInfo )
 				{
+					txt_ip.setText( itm.local );
+
 					setFont( txt_proto, Typeface.BOLD );
 					setFont( txt_ip, Typeface.BOLD );
 					setFont( txt_state, Typeface.BOLD );
@@ -265,6 +283,11 @@ public final class NetStateManager extends ListActivity
 				}
 				else
 				{
+					txt_ip.setText( itm.local
+							+ '\n'
+							+ ( itm.remoteName == null ? itm.remote
+									: itm.remoteName ) );
+
 					txt_proto.setTextAppearance( NetStateManager.this,
 							android.R.style.TextAppearance_Small );
 					txt_ip.setTextAppearance( NetStateManager.this,
@@ -323,6 +346,9 @@ public final class NetStateManager extends ListActivity
 
 			it.putExtra( PREF_KEY_REFRESH_INTERVAL, getRefreshInterval( ) );
 			it.putExtra( PREF_KEY_REMOTE_QUERY, getRemoteQueryState( ) );
+			it.putExtra( PREF_KEY_SHOW_REMOTE_NAME, isShowRemoteName( ) );
+			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, getSortOrderType( ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION, getSortDirection( ) );
 
 			startActivityForResult( it, 1 );
 
@@ -353,13 +379,14 @@ public final class NetStateManager extends ListActivity
 		{
 			ConnectionItem itm = (ConnectionItem) getListView( ).getItemAtPosition( pos );
 
-			if ( itm != null && itm.remote != null )
+			if ( itm != null && !TextUtils.isEmpty( itm.remote ) )
 			{
 				ClipboardManager cm = (ClipboardManager) getSystemService( CLIPBOARD_SERVICE );
 
 				if ( cm != null )
 				{
-					cm.setText( itm.remote );
+					cm.setText( itm.remoteName == null ? itm.remote
+							: itm.remoteName );
 				}
 			}
 
@@ -375,17 +402,34 @@ public final class NetStateManager extends ListActivity
 	{
 		if ( requestCode == 1 )
 		{
-			int interval = data.getIntExtra( PREF_KEY_REFRESH_INTERVAL,
-					REFRESH_LOW );
-			if ( interval != getRefreshInterval( ) )
+			int t = data.getIntExtra( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW );
+			if ( t != getRefreshInterval( ) )
 			{
-				setRefreshInterval( interval );
+				setRefreshInterval( t );
 			}
 
-			int state = data.getIntExtra( PREF_KEY_REMOTE_QUERY, ENABLED );
-			if ( state != getRemoteQueryState( ) )
+			t = data.getIntExtra( PREF_KEY_REMOTE_QUERY, ENABLED );
+			if ( t != getRemoteQueryState( ) )
 			{
-				setRemoteQueryState( state );
+				setRemoteQueryState( t );
+			}
+
+			t = data.getIntExtra( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_PROTO );
+			if ( t != getSortOrderType( ) )
+			{
+				setSortOrderType( t );
+			}
+
+			t = data.getIntExtra( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
+			if ( t != getSortDirection( ) )
+			{
+				setSortDirection( t );
+			}
+
+			boolean b = data.getBooleanExtra( PREF_KEY_SHOW_REMOTE_NAME, true );
+			if ( b != isShowRemoteName( ) )
+			{
+				setShowRemoteName( b );
 			}
 		}
 	}
@@ -456,6 +500,62 @@ public final class NetStateManager extends ListActivity
 
 		if ( items != null )
 		{
+			final int type = getSortOrderType( );
+			final int direction = getSortDirection( );
+			final Collator clt = Collator.getInstance( );
+
+			switch ( type )
+			{
+				case ORDER_TYPE_PROTO :
+					Collections.sort( items, new Comparator<ConnectionItem>( ) {
+
+						public int compare( ConnectionItem obj1,
+								ConnectionItem obj2 )
+						{
+							return clt.compare( obj1.proto, obj2.proto )
+									* direction;
+						}
+					} );
+					break;
+				case ORDER_TYPE_LOCAL :
+					Collections.sort( items, new Comparator<ConnectionItem>( ) {
+
+						public int compare( ConnectionItem obj1,
+								ConnectionItem obj2 )
+						{
+							return clt.compare( obj1.local, obj2.local )
+									* direction;
+						}
+					} );
+					break;
+				case ORDER_TYPE_REMOTE :
+					Collections.sort( items, new Comparator<ConnectionItem>( ) {
+
+						public int compare( ConnectionItem obj1,
+								ConnectionItem obj2 )
+						{
+							return clt.compare( obj1.remoteName == null ? obj1.remote
+									: obj1.remoteName,
+									obj2.remoteName == null ? obj2.remote
+											: obj2.remoteName )
+									* direction;
+						}
+					} );
+					break;
+				case ORDER_TYPE_STATE :
+					Collections.sort( items, new Comparator<ConnectionItem>( ) {
+
+						public int compare( ConnectionItem obj1,
+								ConnectionItem obj2 )
+						{
+							return clt.compare( obj1.state == null ? "" //$NON-NLS-1$
+									: obj1.state, obj2.state == null ? "" //$NON-NLS-1$
+									: obj2.state ) * direction;
+						}
+					} );
+					break;
+			}
+
 			data.addAll( items );
 		}
 
@@ -519,6 +619,11 @@ public final class NetStateManager extends ListActivity
 			int localOffset = -1, remOffset = -1, stateOffset = -1, stateEndOffset = -1;
 			String line;
 
+			final boolean showRemoteName = isShowRemoteName( );
+			String remoteIp;
+			int portIdx;
+			IpInfo remoteInfo;
+
 			while ( ( line = reader.readLine( ) ) != null )
 			{
 				if ( first )
@@ -549,13 +654,37 @@ public final class NetStateManager extends ListActivity
 
 					ci.proto = proto;
 
-					String local = parseRawIP( line.substring( localOffset,
+					ci.local = parseRawIP( line.substring( localOffset,
 							remOffset ).trim( ) );
 
 					ci.remote = parseRawIP( line.substring( remOffset,
 							stateOffset ).trim( ) );
 
-					ci.ip = local + '\n' + ci.remote;
+					if ( showRemoteName )
+					{
+						remoteIp = getValidIP( ci.remote );
+
+						if ( remoteIp != null )
+						{
+							remoteInfo = queryCache.get( remoteIp );
+
+							if ( remoteInfo != null
+									&& !TextUtils.isEmpty( remoteInfo.host ) )
+							{
+								portIdx = ci.remote.lastIndexOf( ':' );
+
+								if ( portIdx != -1 )
+								{
+									ci.remoteName = remoteInfo.host
+											+ ci.remote.substring( portIdx );
+								}
+								else
+								{
+									ci.remoteName = remoteInfo.host;
+								}
+							}
+						}
+					}
 
 					if ( !ignoreState )
 					{
@@ -696,6 +825,54 @@ public final class NetStateManager extends ListActivity
 
 		Editor et = sp.edit( );
 		et.putInt( PREF_KEY_REMOTE_QUERY, state );
+		et.commit( );
+	}
+
+	private boolean isShowRemoteName( )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		return sp.getBoolean( PREF_KEY_SHOW_REMOTE_NAME, true );
+	}
+
+	private void setShowRemoteName( boolean val )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		et.putBoolean( PREF_KEY_SHOW_REMOTE_NAME, val );
+		et.commit( );
+	}
+
+	private int getSortOrderType( )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		return sp.getInt( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_PROTO );
+	}
+
+	private void setSortOrderType( int type )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		et.putInt( PREF_KEY_SORT_ORDER_TYPE, type );
+		et.commit( );
+	}
+
+	private int getSortDirection( )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		return sp.getInt( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
+	}
+
+	private void setSortDirection( int type )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		et.putInt( PREF_KEY_SORT_DIRECTION, type );
 		et.commit( );
 	}
 
@@ -905,8 +1082,31 @@ public final class NetStateManager extends ListActivity
 			perfRemote.setTitle( R.string.remote_query );
 			pc.addPreference( perfRemote );
 
+			CheckBoxPreference perfRemoteName = new CheckBoxPreference( this );
+			perfRemoteName.setKey( PREF_KEY_SHOW_REMOTE_NAME );
+			perfRemoteName.setTitle( R.string.display_remote_name );
+			perfRemoteName.setSummary( R.string.show_remote_msg );
+			pc.addPreference( perfRemoteName );
+
+			pc = new PreferenceCategory( this );
+			pc.setTitle( R.string.sort );
+			getPreferenceScreen( ).addPreference( pc );
+
+			Preference perfSortType = new Preference( this );
+			perfSortType.setKey( PREF_KEY_SORT_ORDER_TYPE );
+			perfSortType.setTitle( R.string.sort_type );
+			pc.addPreference( perfSortType );
+
+			Preference perfSortDirection = new Preference( this );
+			perfSortDirection.setKey( PREF_KEY_SORT_DIRECTION );
+			perfSortDirection.setTitle( R.string.sort_direction );
+			pc.addPreference( perfSortDirection );
+
 			refreshInterval( );
 			refreshRemoteQuery( );
+			refreshRemoteName( );
+			refreshSortType( );
+			refreshSortDirection( );
 
 			setResult( RESULT_OK, getIntent( ) );
 		}
@@ -950,6 +1150,50 @@ public final class NetStateManager extends ListActivity
 			}
 
 			findPreference( PREF_KEY_REMOTE_QUERY ).setSummary( label );
+		}
+
+		private void refreshRemoteName( )
+		{
+			boolean showName = getIntent( ).getBooleanExtra( PREF_KEY_SHOW_REMOTE_NAME,
+					true );
+
+			( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_REMOTE_NAME ) ).setChecked( showName );
+		}
+
+		private void refreshSortType( )
+		{
+			int type = getIntent( ).getIntExtra( PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_PROTO );
+
+			String label = null;
+			switch ( type )
+			{
+				case ORDER_TYPE_PROTO :
+					label = getString( R.string.protocol );
+					break;
+				case ORDER_TYPE_LOCAL :
+					label = getString( R.string.local_address );
+					break;
+				case ORDER_TYPE_REMOTE :
+					label = getString( R.string.remote_address );
+					break;
+				case ORDER_TYPE_STATE :
+					label = getString( R.string.state );
+					break;
+			}
+
+			findPreference( PREF_KEY_SORT_ORDER_TYPE ).setSummary( label );
+		}
+
+		private void refreshSortDirection( )
+		{
+			int type = getIntent( ).getIntExtra( PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC );
+
+			String label = type == ORDER_ASC ? getString( R.string.ascending )
+					: getString( R.string.descending );
+
+			findPreference( PREF_KEY_SORT_DIRECTION ).setSummary( label );
 		}
 
 		@Override
@@ -1016,6 +1260,72 @@ public final class NetStateManager extends ListActivity
 
 				return true;
 			}
+			else if ( PREF_KEY_SHOW_REMOTE_NAME.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_REMOTE_NAME,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_REMOTE_NAME ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_SORT_ORDER_TYPE.equals( preference.getKey( ) ) )
+			{
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						it.putExtra( PREF_KEY_SORT_ORDER_TYPE, which );
+
+						dialog.dismiss( );
+
+						refreshSortType( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.sort_type )
+						.setNeutralButton( R.string.close, null )
+						.setSingleChoiceItems( new String[]{
+								getString( R.string.protocol ),
+								getString( R.string.local_address ),
+								getString( R.string.remote_address ),
+								getString( R.string.state ),
+						},
+								it.getIntExtra( PREF_KEY_SORT_ORDER_TYPE,
+										ORDER_TYPE_PROTO ),
+								listener )
+						.create( )
+						.show( );
+
+				return true;
+			}
+			else if ( PREF_KEY_SORT_DIRECTION.equals( preference.getKey( ) ) )
+			{
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						it.putExtra( PREF_KEY_SORT_DIRECTION,
+								which == 0 ? ORDER_ASC : ORDER_DESC );
+
+						dialog.dismiss( );
+
+						refreshSortDirection( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.sort_direction )
+						.setNeutralButton( R.string.close, null )
+						.setSingleChoiceItems( new String[]{
+								getString( R.string.ascending ),
+								getString( R.string.descending ),
+						},
+								it.getIntExtra( PREF_KEY_SORT_DIRECTION,
+										ORDER_ASC ) == ORDER_ASC ? 0 : 1,
+								listener )
+						.create( )
+						.show( );
+
+				return true;
+			}
 
 			return false;
 		}
@@ -1028,8 +1338,9 @@ public final class NetStateManager extends ListActivity
 	{
 
 		String proto;
-		String ip;
+		String local;
 		String remote;
+		String remoteName;
 		String state;
 
 	}
