@@ -59,6 +59,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.text.Html;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -85,6 +86,7 @@ public final class ProcessManager extends ListActivity
 	private static final int MI_DISPLAY = 1;
 	private static final int MI_ENDTASK = 2;
 	private static final int MI_IGNORE = 3;
+	private static final int MI_DETAIL = 4;
 
 	private static final int MSG_UPDATE = 1;
 
@@ -443,6 +445,8 @@ public final class ProcessManager extends ListActivity
 				menu.add( Menu.NONE, MI_ENDTASK, MI_ENDTASK, R.string.end_task );
 				menu.add( Menu.NONE, MI_IGNORE, MI_IGNORE, R.string.ignore );
 			}
+
+			menu.add( Menu.NONE, MI_DETAIL, MI_DETAIL, R.string.details );
 		}
 	}
 
@@ -452,45 +456,49 @@ public final class ProcessManager extends ListActivity
 		if ( item.getItemId( ) == MI_DISPLAY )
 		{
 			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
-			ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
 
-			Intent it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
-			it.addCategory( Intent.CATEGORY_LAUNCHER );
-
-			List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
-					0 );
-
-			if ( acts != null )
+			if ( pos < getListView( ).getCount( ) )
 			{
-				String pkgName = rap.procInfo.processName;
-				String self = this.getPackageName( );
+				ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
 
-				boolean started = false;
+				Intent it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
+				it.addCategory( Intent.CATEGORY_LAUNCHER );
 
-				for ( ResolveInfo ri : acts )
+				List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
+						0 );
+
+				if ( acts != null )
 				{
-					if ( pkgName.equals( ri.activityInfo.packageName ) )
+					String pkgName = rap.procInfo.processName;
+					String self = this.getPackageName( );
+
+					boolean started = false;
+
+					for ( ResolveInfo ri : acts )
 					{
-						if ( !pkgName.equals( self ) )
+						if ( pkgName.equals( ri.activityInfo.packageName ) )
 						{
-							it.setClassName( ri.activityInfo.packageName,
-									ri.activityInfo.name );
+							if ( !pkgName.equals( self ) )
+							{
+								it.setClassName( ri.activityInfo.packageName,
+										ri.activityInfo.name );
 
-							it.addFlags( Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP );
+								it.addFlags( Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP );
 
-							startActivity( it );
+								startActivity( it );
+							}
+
+							started = true;
+							break;
 						}
-
-						started = true;
-						break;
 					}
-				}
 
-				if ( !started )
-				{
-					Toast.makeText( this,
-							R.string.error_switch_task,
-							Toast.LENGTH_SHORT ).show( );
+					if ( !started )
+					{
+						Toast.makeText( this,
+								R.string.error_switch_task,
+								Toast.LENGTH_SHORT ).show( );
+					}
 				}
 			}
 
@@ -499,22 +507,26 @@ public final class ProcessManager extends ListActivity
 		else if ( item.getItemId( ) == MI_ENDTASK )
 		{
 			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
-			ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
 
-			ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
-
-			String self = getPackageName( );
-
-			if ( self.equals( rap.procInfo.processName ) )
+			if ( pos < getListView( ).getCount( ) )
 			{
-				am.restartPackage( self );
-			}
-			else
-			{
-				endProcess( am, rap.procInfo.pkgList );
+				ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
 
-				handler.removeCallbacks( task );
-				handler.post( task );
+				ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
+
+				String self = getPackageName( );
+
+				if ( self.equals( rap.procInfo.processName ) )
+				{
+					am.restartPackage( self );
+				}
+				else
+				{
+					endProcess( am, rap.procInfo.pkgList );
+
+					handler.removeCallbacks( task );
+					handler.post( task );
+				}
 			}
 
 			return true;
@@ -522,16 +534,66 @@ public final class ProcessManager extends ListActivity
 		else if ( item.getItemId( ) == MI_IGNORE )
 		{
 			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
-			ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
 
-			ignoreList.add( rap.procInfo.processName );
-
-			setIgnoreList( ignoreList );
-
-			if ( IGNORE_ACTION_HIDDEN == getIgnoreAction( ) )
+			if ( pos < getListView( ).getCount( ) )
 			{
-				handler.removeCallbacks( task );
-				handler.post( task );
+				ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
+
+				ignoreList.add( rap.procInfo.processName );
+
+				setIgnoreList( ignoreList );
+
+				if ( IGNORE_ACTION_HIDDEN == getIgnoreAction( ) )
+				{
+					handler.removeCallbacks( task );
+					handler.post( task );
+				}
+			}
+
+			return true;
+		}
+		else if ( item.getItemId( ) == MI_DETAIL )
+		{
+			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
+
+			if ( pos < getListView( ).getCount( ) )
+			{
+				ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
+
+				StringBuffer sb = new StringBuffer( ).append( "<small>" ) //$NON-NLS-1$
+						.append( getString( R.string.pid ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( rap.procInfo.pid )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.importance ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( rap.procInfo.importance )
+						.append( "<br>LRU: " ) //$NON-NLS-1$
+						.append( rap.procInfo.lru )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.pkg_name ) )
+						.append( ":" ); //$NON-NLS-1$
+
+				if ( rap.procInfo.pkgList != null )
+				{
+					for ( String pkg : rap.procInfo.pkgList )
+					{
+						if ( pkg != null )
+						{
+							sb.append( "<br>&nbsp;&nbsp;" + pkg ); //$NON-NLS-1$
+						}
+					}
+				}
+
+				sb.append( "</small>" ); //$NON-NLS-1$
+
+				new AlertDialog.Builder( this ).setTitle( rap.label == null ? rap.procInfo.processName
+						: rap.label )
+						.setNeutralButton( R.string.close, null )
+						.setMessage( Html.fromHtml( sb.toString( ) ) )
+						.create( )
+						.show( );
+
 			}
 
 			return true;

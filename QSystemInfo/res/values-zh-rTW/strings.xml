@@ -181,5 +181,6 @@
     <string name="roaming_state">漫遊狀態</string>
     <string name="local_address">本地位址</string>
     <string name="public_address">公共位址</string>
+    <string name="details">詳細</string>
 
 </resources>

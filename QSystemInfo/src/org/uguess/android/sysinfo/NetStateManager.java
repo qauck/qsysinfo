@@ -349,7 +349,7 @@ public final class NetStateManager extends ListActivity
 	{
 		int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
 
-		if ( pos > 0 )
+		if ( pos > 0 && pos < getListView( ).getCount( ) )
 		{
 			ConnectionItem itm = (ConnectionItem) getListView( ).getItemAtPosition( pos );
 

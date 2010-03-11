@@ -189,5 +189,6 @@
     <string name="roaming_state">Roaming State</string>
     <string name="local_address">Local Address</string>
     <string name="public_address">Public Address</string>
+    <string name="details">Details</string>
 
 </resources>
