@@ -96,7 +96,7 @@
 	<string name="local_remote_addr">Local/Remote Address</string>
 	<string name="state">State</string>
 	<string name="copy_ip">Copy Remote Address</string>
-	<string name="location_info">&lt;b>%s&lt;/b>&lt;br>%s&lt;br>&lt;br>Country:
+	<string name="location_info">&lt;b>%s&lt;/b>&lt;br>%s&lt;br>Country:
 		%s&lt;br>Region: %s&lt;br>City: %s</string>
 	<string name="view_map">View in Map</string>
 	<string name="remote_query">Remote Information Query</string>
@@ -180,5 +180,14 @@
     <string name="ignored_list">Ignored List</string>
     <string name="ignored_as">Ignored as</string>
     <string name="ignore">Ignore</string>
+    <string name="a2sd_storage">A2SD Storage</string>
+    <string name="check">Click to Check</string>
+    <string name="network_type">Network Type</string>
+    <string name="extra_info">Extra Info</string>
+    <string name="not_roaming">Not roaming</string>
+    <string name="roaming">Roaming</string>
+    <string name="roaming_state">Roaming State</string>
+    <string name="local_address">Local Address</string>
+    <string name="public_address">Public Address</string>
 
 </resources>

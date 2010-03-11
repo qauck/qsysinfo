@@ -129,61 +129,8 @@ public final class NetStateManager extends ListActivity
 						return;
 					}
 
-					final IpInfo info = (IpInfo) msg.obj;
+					showIpInfo( (IpInfo) msg.obj, NetStateManager.this );
 
-					if ( info != null
-							&& !TextUtils.isEmpty( info.latitude )
-							&& !TextUtils.isEmpty( info.longitude ) )
-					{
-
-						OnClickListener listener = new OnClickListener( ) {
-
-							public void onClick( DialogInterface dialog,
-									int which )
-							{
-								Intent it = new Intent( Intent.ACTION_VIEW );
-
-								it.setData( Uri.parse( "geo:0,0?q=" //$NON-NLS-1$
-										+ info.latitude
-										+ "," //$NON-NLS-1$
-										+ info.longitude
-										+ "&z=8" ) ); //$NON-NLS-1$
-
-								it = Intent.createChooser( it, null );
-
-								startActivity( it );
-							}
-						};
-
-						TextView txt = new TextView( NetStateManager.this );
-						txt.setPadding( 15, 0, 15, 0 );
-						txt.setTextAppearance( NetStateManager.this,
-								android.R.style.TextAppearance_Medium );
-
-						txt.setText( Html.fromHtml( getString( R.string.location_info,
-								info.ip,
-								info.host == null ? "" : ( "<a href=\"http://" //$NON-NLS-1$ //$NON-NLS-2$
-										+ info.host
-										+ "\">" //$NON-NLS-1$
-										+ info.host + "</a>" ), //$NON-NLS-1$
-								info.country == null ? "" : info.country, //$NON-NLS-1$
-								info.region == null ? "" : info.region, //$NON-NLS-1$
-								info.city == null ? "" : info.city ) ) ); //$NON-NLS-1$
-						txt.setMovementMethod( LinkMovementMethod.getInstance( ) );
-
-						new AlertDialog.Builder( NetStateManager.this ).setTitle( R.string.ip_location )
-								.setPositiveButton( R.string.view_map, listener )
-								.setNegativeButton( R.string.close, null )
-								.setView( txt )
-								.create( )
-								.show( );
-					}
-					else
-					{
-						Toast.makeText( NetStateManager.this,
-								R.string.no_ip_info,
-								Toast.LENGTH_SHORT ).show( );
-					}
 					break;
 				case MSG_DISMISS_PROGRESS :
 
@@ -750,6 +697,61 @@ public final class NetStateManager extends ListActivity
 		Editor et = sp.edit( );
 		et.putInt( PREF_KEY_REMOTE_QUERY, state );
 		et.commit( );
+	}
+
+	static void showIpInfo( final IpInfo info, final Activity context )
+	{
+		if ( info != null
+				&& !TextUtils.isEmpty( info.latitude )
+				&& !TextUtils.isEmpty( info.longitude ) )
+		{
+
+			OnClickListener listener = new OnClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which )
+				{
+					Intent it = new Intent( Intent.ACTION_VIEW );
+
+					it.setData( Uri.parse( "geo:0,0?q=" //$NON-NLS-1$
+							+ info.latitude
+							+ "," //$NON-NLS-1$
+							+ info.longitude
+							+ "&z=8" ) ); //$NON-NLS-1$
+
+					it = Intent.createChooser( it, null );
+
+					context.startActivity( it );
+				}
+			};
+
+			TextView txt = new TextView( context );
+			txt.setPadding( 15, 0, 15, 0 );
+			txt.setTextAppearance( context,
+					android.R.style.TextAppearance_Medium );
+
+			txt.setText( Html.fromHtml( context.getString( R.string.location_info,
+					info.ip,
+					info.host == null ? "" : ( "<a href=\"http://" //$NON-NLS-1$ //$NON-NLS-2$
+							+ info.host
+							+ "\">" //$NON-NLS-1$
+							+ info.host + "</a><br>" ), //$NON-NLS-1$
+					info.country == null ? "" : info.country, //$NON-NLS-1$
+					info.region == null ? "" : info.region, //$NON-NLS-1$
+					info.city == null ? "" : info.city ) ) ); //$NON-NLS-1$
+			txt.setMovementMethod( LinkMovementMethod.getInstance( ) );
+
+			new AlertDialog.Builder( context ).setTitle( R.string.ip_location )
+					.setPositiveButton( R.string.view_map, listener )
+					.setNegativeButton( R.string.close, null )
+					.setView( txt )
+					.create( )
+					.show( );
+		}
+		else
+		{
+			Toast.makeText( context, R.string.no_ip_info, Toast.LENGTH_SHORT )
+					.show( );
+		}
 	}
 
 	static IpInfo getIpInfo( IpInfo info )

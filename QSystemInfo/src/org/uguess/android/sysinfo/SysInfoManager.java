@@ -284,6 +284,10 @@ public final class SysInfoManager extends PreferenceActivity
 		findPreference( "sd_storage" ).setSummary( ei == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
 				: getString( R.string.storage_summary, ei[0], ei[1] ) );
 
+		ei = getA2SDStorageInfo( );
+		findPreference( "app2sd_storage" ).setSummary( ei == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+				: getString( R.string.storage_summary, ei[0], ei[1] ) );
+
 		String[] ii = getInternalStorageInfo( );
 		findPreference( "internal_storage" ).setSummary( getString( R.string.storage_summary, //$NON-NLS-1$
 				ii[0],
@@ -294,7 +298,10 @@ public final class SysInfoManager extends PreferenceActivity
 				cc[0],
 				cc[1] ) );
 
-		findPreference( "net_address" ).setSummary( getNetAddressInfo( ) ); //$NON-NLS-1$
+		String nInfo = getNetAddressInfo( );
+		findPreference( "net_address" ).setSummary( nInfo == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+				: nInfo );
+		findPreference( "net_address" ).setEnabled( nInfo != null ); //$NON-NLS-1$
 
 		int s = getSensorState( );
 		findPreference( "sensors" ).setSummary( getSensorInfo( s ) ); //$NON-NLS-1$
@@ -711,6 +718,85 @@ public final class SysInfoManager extends PreferenceActivity
 		return null;
 	}
 
+	private String[] getA2SDStorageInfo( )
+	{
+		String state = Environment.getExternalStorageState( );
+
+		if ( Environment.MEDIA_MOUNTED_READ_ONLY.equals( state )
+				|| Environment.MEDIA_MOUNTED.equals( state ) )
+		{
+			// here we just guess if it's app2sd enabled, this should work for
+			// most app2sd enabled roms, but may not all.
+
+			File f = new File( "/dev/block/mmcblk0p2" ); //$NON-NLS-1$
+
+			if ( f.exists( ) )
+			{
+				BufferedReader reader = null;
+				String mountPoint = null;
+
+				try
+				{
+					reader = new BufferedReader( new InputStreamReader( new FileInputStream( "/proc/mounts" ) ), //$NON-NLS-1$
+							1024 );
+
+					String line;
+
+					while ( ( line = reader.readLine( ) ) != null )
+					{
+						if ( line.startsWith( "/dev/block/mmcblk0p2 " ) ) //$NON-NLS-1$
+						{
+							// 21==length of the above string
+							int idx = line.indexOf( ' ', 21 );
+
+							if ( idx != -1 )
+							{
+								mountPoint = line.substring( 21, idx ).trim( );
+							}
+
+							break;
+						}
+					}
+				}
+				catch ( Exception e )
+				{
+					Log.e( SysInfoManager.class.getName( ),
+							e.getLocalizedMessage( ),
+							e );
+				}
+				finally
+				{
+					if ( reader != null )
+					{
+						try
+						{
+							reader.close( );
+							reader = null;
+						}
+						catch ( IOException ie )
+						{
+							Log.e( SysInfoManager.class.getName( ),
+									ie.getLocalizedMessage( ),
+									ie );
+						}
+					}
+				}
+
+				if ( mountPoint != null )
+				{
+					f = new File( mountPoint );
+
+					if ( f.exists( ) && f.isDirectory( ) )
+					{
+						return getStorageInfo( f );
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+
 	private String[] getInternalStorageInfo( )
 	{
 		return getStorageInfo( Environment.getDataDirectory( ) );
@@ -735,7 +821,7 @@ public final class SysInfoManager extends PreferenceActivity
 		return info;
 	}
 
-	private String getNetAddressInfo( )
+	static String getNetAddressInfo( )
 	{
 		try
 		{
@@ -778,14 +864,23 @@ public final class SysInfoManager extends PreferenceActivity
 			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
 		}
 
-		return getString( R.string.info_not_available );
+		return null;
 	}
 
 	@Override
 	public boolean onPreferenceTreeClick( PreferenceScreen preferenceScreen,
 			Preference preference )
 	{
-		if ( "battery_level".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		if ( "net_address".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		{
+			Intent it = new Intent( Intent.ACTION_VIEW );
+			it.setClass( this, NetworkInfoActivity.class );
+
+			startActivityForResult( it, 1 );
+
+			return true;
+		}
+		else if ( "battery_level".equals( preference.getKey( ) ) ) //$NON-NLS-1$
 		{
 			Intent it = new Intent( Intent.ACTION_VIEW );
 			it.setClass( this, BatteryInfoActivity.class );
@@ -1103,6 +1198,23 @@ public final class SysInfoManager extends PreferenceActivity
 			sb.append( "\n\n" ); //$NON-NLS-1$
 
 			sb.append( "* " ) //$NON-NLS-1$
+					.append( getString( R.string.a2sd_storage ) )
+					.append( "\n\t" ); //$NON-NLS-1$
+
+			info = getA2SDStorageInfo( );
+			if ( info == null )
+			{
+				sb.append( getString( R.string.info_not_available ) );
+			}
+			else
+			{
+				sb.append( getString( R.string.storage_summary,
+						info[0],
+						info[1] ) );
+			}
+			sb.append( "\n\n" ); //$NON-NLS-1$
+
+			sb.append( "* " ) //$NON-NLS-1$
 					.append( getString( R.string.internal_storage ) )
 					.append( "\n\t" ); //$NON-NLS-1$
 
@@ -1160,10 +1272,12 @@ public final class SysInfoManager extends PreferenceActivity
 					.append( getCpuInfo( ) )
 					.append( "\n\n" ); //$NON-NLS-1$
 
+			String nInfo = getNetAddressInfo( );
 			sb.append( "* " ) //$NON-NLS-1$
 					.append( getString( R.string.net_address ) )
 					.append( "\n\t" ) //$NON-NLS-1$
-					.append( getNetAddressInfo( ) )
+					.append( nInfo == null ? getString( R.string.info_not_available )
+							: nInfo )
 					.append( "\n\n" ); //$NON-NLS-1$
 
 			sb.append( '\n' );
@@ -1407,6 +1521,23 @@ public final class SysInfoManager extends PreferenceActivity
 			sb.append( closeRow );
 
 			sb.append( openRow )
+					.append( getString( R.string.a2sd_storage ) )
+					.append( nextColumn4 );
+
+			info = getA2SDStorageInfo( );
+			if ( info == null )
+			{
+				sb.append( getString( R.string.info_not_available ) );
+			}
+			else
+			{
+				sb.append( getString( R.string.storage_summary,
+						info[0],
+						info[1] ) );
+			}
+			sb.append( closeRow );
+
+			sb.append( openRow )
 					.append( getString( R.string.internal_storage ) )
 					.append( nextColumn4 );
 
@@ -1464,10 +1595,12 @@ public final class SysInfoManager extends PreferenceActivity
 					.append( escapeHtml( getCpuInfo( ) ) )
 					.append( closeRow );
 
+			String nInfo = getNetAddressInfo( );
 			sb.append( openRow )
 					.append( getString( R.string.net_address ) )
 					.append( nextColumn4 )
-					.append( getNetAddressInfo( ) )
+					.append( nInfo == null ? getString( R.string.info_not_available )
+							: nInfo )
 					.append( closeRow );
 
 			sb.append( emptyRow );
@@ -2313,6 +2446,8 @@ public final class SysInfoManager extends PreferenceActivity
 
 		private GestureDetector gestureDetector;
 
+		protected boolean eventConsumed;
+
 		@Override
 		protected void onCreate( Bundle savedInstanceState )
 		{
@@ -2328,7 +2463,14 @@ public final class SysInfoManager extends PreferenceActivity
 						@Override
 						public boolean onSingleTapConfirmed( MotionEvent e )
 						{
-							finish( );
+							if ( eventConsumed )
+							{
+								eventConsumed = false;
+							}
+							else
+							{
+								finish( );
+							}
 							return true;
 						}
 					} );

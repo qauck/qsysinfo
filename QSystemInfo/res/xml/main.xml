@@ -6,6 +6,9 @@
 		android:key="sd_storage" android:title="@string/sd_storage" />
 
 	<Preference style="?android:preferenceInformationStyle"
+		android:key="app2sd_storage" android:title="@string/a2sd_storage" />
+
+	<Preference style="?android:preferenceInformationStyle"
 		android:key="internal_storage" android:title="@string/internal_storage" />
 
 	<Preference style="?android:preferenceInformationStyle"
@@ -17,8 +20,7 @@
 	<Preference style="?android:preferenceInformationStyle"
 		android:key="processor" android:title="@string/processor"></Preference>
 
-	<Preference style="?android:preferenceInformationStyle"
-		android:key="net_address" android:title="@string/net_address" />
+	<Preference android:key="net_address" android:title="@string/net_address" />
 
 	<Preference android:key="battery_level" android:title="@string/battery_level"
 		android:summary="@string/retrieving" />

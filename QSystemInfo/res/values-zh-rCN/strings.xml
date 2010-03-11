@@ -88,7 +88,7 @@
 	<string name="local_remote_addr">本地/远程地址</string>
 	<string name="state">状态</string>
 	<string name="copy_ip">复制远程地址</string>
-	<string name="location_info">&lt;b>%s&lt;/b>&lt;br>%s&lt;br>&lt;br>国家:
+	<string name="location_info">&lt;b>%s&lt;/b>&lt;br>%s&lt;br>国家:
 		%s&lt;br>地区: %s&lt;br>城市: %s</string>
 	<string name="view_map">查看地图</string>
 	<string name="remote_query">远程信息查询</string>
@@ -172,5 +172,14 @@
     <string name="ignored_list">忽略项列表</string>
     <string name="ignored_as">忽略项为</string>
     <string name="ignore">忽略</string>
+    <string name="a2sd_storage">A2SD 存储</string>
+    <string name="check">查询</string>
+    <string name="network_type">网络类型</string>
+    <string name="extra_info">附加信息</string>
+    <string name="not_roaming">非漫游</string>
+    <string name="roaming">漫游</string>
+    <string name="roaming_state">漫游状态</string>
+    <string name="local_address">本地地址</string>
+    <string name="public_address">公共地址</string>
 
 </resources>
