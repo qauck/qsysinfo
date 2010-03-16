@@ -22,8 +22,10 @@
 package org.uguess.android.sysinfo;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.Collator;
 import java.util.ArrayList;
@@ -119,6 +121,8 @@ public final class ProcessManager extends ListActivity
 	private long totalLoad, totalDelta;
 
 	private LinkedHashSet<String> ignoreList;
+
+	private byte[] buf = new byte[512];
 
 	private Handler handler = new Handler( ) {
 
@@ -293,8 +297,7 @@ public final class ProcessManager extends ListActivity
 
 					img_type.setImageDrawable( itm.icon );
 
-					txt_mem.setText( Formatter.formatFileSize( ProcessManager.this,
-							itm.rss * 4 * 1024 ) );
+					txt_mem.setText( itm.mem );
 
 					long delta = itm.lastcputime == 0 ? 0
 							: ( itm.cputime - itm.lastcputime );
@@ -310,7 +313,7 @@ public final class ProcessManager extends ListActivity
 						cu = 100;
 					}
 
-					txt_cpu.setText( "" + cu + ' ' ); //$NON-NLS-1$
+					txt_cpu.setText( String.valueOf( cu ) );
 				}
 
 				return view;
@@ -810,7 +813,7 @@ public final class ProcessManager extends ListActivity
 					pi = new ProcessItem( );
 					pi.procInfo = rap;
 
-					readProcessInfo( pi, pm, true );
+					readProcessInfo( pi, pm, true, buf );
 
 					procCache.resCache.put( name, pi );
 				}
@@ -819,7 +822,7 @@ public final class ProcessManager extends ListActivity
 					pi.procInfo = rap;
 					pi.lastcputime = pi.cputime;
 
-					readProcessInfo( pi, pm, false );
+					readProcessInfo( pi, pm, false, buf );
 				}
 
 				procCache.procList.add( pi );
@@ -835,7 +838,7 @@ public final class ProcessManager extends ListActivity
 		try
 		{
 			reader = new BufferedReader( new InputStreamReader( new FileInputStream( "/proc/stat" ) ), //$NON-NLS-1$
-					1024 );
+					256 );
 
 			String line = reader.readLine( );
 
@@ -884,17 +887,27 @@ public final class ProcessManager extends ListActivity
 		return 0;
 	}
 
-	private static void readProcessStat( int pid, ProcessItem pi )
+	private static void readProcessStat( Context ctx, byte[] buf, ProcessItem pi )
 	{
-		BufferedReader reader = null;
+		InputStream is = null;
 		try
 		{
-			reader = new BufferedReader( new InputStreamReader( new FileInputStream( "/proc/" //$NON-NLS-1$
-					+ pid
-					+ "/stat" ) ), //$NON-NLS-1$
-					1024 );
+			is = new FileInputStream( "/proc/" //$NON-NLS-1$
+					+ pi.procInfo.pid
+					+ "/stat" ); //$NON-NLS-1$
 
-			String line = reader.readLine( );
+			ByteArrayOutputStream output = new ByteArrayOutputStream( );
+
+			int len;
+
+			while ( ( len = is.read( buf ) ) != -1 )
+			{
+				output.write( buf, 0, len );
+			}
+
+			output.close( );
+
+			String line = output.toString( );
 
 			if ( line != null )
 			{
@@ -912,6 +925,7 @@ public final class ProcessManager extends ListActivity
 					String utime = null;
 					String stime = null;
 
+					long nrss;
 					int i = 0;
 					String tk;
 
@@ -953,7 +967,15 @@ public final class ProcessManager extends ListActivity
 
 					if ( rss != null )
 					{
-						pi.rss = Long.parseLong( rss );
+						nrss = Long.parseLong( rss );
+
+						if ( pi.rss != nrss || pi.mem == null )
+						{
+							pi.rss = nrss;
+
+							pi.mem = Formatter.formatFileSize( ctx,
+									pi.rss * 4 * 1024 );
+						}
 					}
 				}
 			}
@@ -964,11 +986,11 @@ public final class ProcessManager extends ListActivity
 		}
 		finally
 		{
-			if ( reader != null )
+			if ( is != null )
 			{
 				try
 				{
-					reader.close( );
+					is.close( );
 				}
 				catch ( IOException e )
 				{
@@ -981,7 +1003,7 @@ public final class ProcessManager extends ListActivity
 	}
 
 	private void readProcessInfo( ProcessItem proc, PackageManager pm,
-			boolean isNew )
+			boolean isNew, byte[] buf )
 	{
 		if ( isNew && pm != null )
 		{
@@ -1042,7 +1064,7 @@ public final class ProcessManager extends ListActivity
 
 		if ( proc.procInfo.pid != 0 )
 		{
-			readProcessStat( proc.procInfo.pid, proc );
+			readProcessStat( ProcessManager.this, buf, proc );
 		}
 	}
 
@@ -1465,6 +1487,8 @@ public final class ProcessManager extends ListActivity
 		Drawable icon;
 
 		long rss;
+
+		String mem;
 
 		long cputime;
 

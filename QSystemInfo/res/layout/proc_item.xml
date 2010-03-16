@@ -21,9 +21,8 @@
 		android:layout_gravity="bottom" android:gravity="right"></TextView>
 	<TextView android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:layout_marginRight="2dip"
-		android:id="@+id/txt_cpu" android:paddingRight="3dip"
-		android:textAppearance="?android:attr/textAppearanceSmall"
+		android:id="@+id/txt_cpu" android:textAppearance="?android:attr/textAppearanceSmall"
 		android:gravity="right" android:layout_gravity="bottom" android:text="CPU%"
-		android:minWidth="40dip"></TextView>
+		android:minWidth="40dip" android:paddingRight="5dip"></TextView>
 
 </LinearLayout>
