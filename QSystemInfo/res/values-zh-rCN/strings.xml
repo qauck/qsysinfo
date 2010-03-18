@@ -185,5 +185,12 @@
     <string name="show_remote_msg">远程信息查询后以主机名称替代IP地址显示</string>
     <string name="display_remote_name">显示远程主机名称</string>
     <string name="remote_address">远程地址</string>
+    <string name="restore">还原</string>
+    <string name="file_size">文件大小</string>
+    <string name="installation">安装状态</string>
+    <string name="installed_ver">%s (已安装 %s)</string>
+    <string name="scanning">正在扫描 %s</string>
+	<string name="no_apk_show">没有找到应用程序包.</string>
+	<string name="no_apk_selected">没有选中的程序包可以还原.</string>
 
 </resources>

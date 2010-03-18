@@ -185,5 +185,12 @@
     <string name="show_remote_msg">遠端資訊獲取后以主機名稱替代IP位址顯示</string>
     <string name="display_remote_name">顯示遠端主機名稱</string>
     <string name="remote_address">遠端位址</string>
+    <string name="restore">還原</string>
+    <string name="file_size">檔案大小</string>
+    <string name="installation">安裝狀態</string>
+    <string name="installed_ver">%s (已安裝 %s)</string>
+    <string name="scanning">正在掃描 %s</string>
+	<string name="no_apk_show">沒有發現應用程式包.</string>
+	<string name="no_apk_selected">沒有選取的程式包可以還原.</string>
 
 </resources>

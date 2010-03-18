@@ -193,5 +193,12 @@
     <string name="show_remote_msg">Show remote host name instead of IP address after the remote query</string>
     <string name="display_remote_name">Display Remote Name</string>
     <string name="remote_address">Remote Address</string>
+    <string name="restore">Restore</string>
+    <string name="file_size">File Size</string>
+    <string name="installation">Installation</string>
+    <string name="installed_ver">%s (Installed %s)</string>
+    <string name="scanning">Scanning %s</string>
+	<string name="no_apk_show">No application package found.</string>
+	<string name="no_apk_selected">No selected package to restore.</string>
 
 </resources>

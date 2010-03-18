@@ -116,6 +116,7 @@ public final class ApplicationManager extends ListActivity
 	private static final int ORDER_DESC = -1;
 
 	private static final int REQUEST_SETTINGS = 1;
+	private static final int REQUEST_RESTORE = 2;
 
 	private static final String PREF_KEY_FILTER_APP_TYPE = "filter_app_type"; //$NON-NLS-1$
 	private static final String PREF_KEY_APP_EXPORT_DIR = "app_export_dir"; //$NON-NLS-1$
@@ -591,7 +592,8 @@ public final class ApplicationManager extends ListActivity
 					{
 						PackageInfo pi = pm.getPackageInfo( info.packageName, 0 );
 
-						holder.version = pi.versionName;
+						holder.version = pi.versionName == null ? String.valueOf( pi.versionCode )
+								: pi.versionName;
 					}
 					catch ( NameNotFoundException e )
 					{
@@ -603,7 +605,7 @@ public final class ApplicationManager extends ListActivity
 					dataList.add( holder );
 				}
 
-				appCache.udpate( dataList );
+				appCache.update( dataList );
 
 				appCache.reOrder( getSortOrderType( ), getSortDirection( ) );
 
@@ -1023,6 +1025,12 @@ public final class ApplicationManager extends ListActivity
 	public boolean onCreateOptionsMenu( Menu menu )
 	{
 		MenuItem mi = menu.add( Menu.NONE,
+				R.id.mi_preference + 1,
+				Menu.NONE,
+				R.string.restore );
+		mi.setIcon( android.R.drawable.ic_menu_revert );
+
+		mi = menu.add( Menu.NONE,
 				R.id.mi_preference,
 				Menu.NONE,
 				R.string.preference );
@@ -1046,6 +1054,19 @@ public final class ApplicationManager extends ListActivity
 			intent.putExtra( PREF_KEY_SORT_DIRECTION, getSortDirection( ) );
 
 			startActivityForResult( intent, REQUEST_SETTINGS );
+
+			return true;
+		}
+		else if ( item.getItemId( ) == R.id.mi_preference + 1 )
+		{
+			Intent intent = new Intent( Intent.ACTION_VIEW );
+
+			intent.setClass( this, RestoreAppActivity.class );
+
+			intent.putExtra( RestoreAppActivity.KEY_RESTORE_PATH,
+					getAppExportDir( ) + '/' + USER_APP );
+
+			startActivityForResult( intent, REQUEST_RESTORE );
 
 			return true;
 		}
@@ -1092,7 +1113,6 @@ public final class ApplicationManager extends ListActivity
 
 	private void toggleAllSelection( boolean selected )
 	{
-		// reset hidden item states
 		int totalCount = lstApps.getCount( );
 		for ( int i = 0; i < totalCount; i++ )
 		{
@@ -1287,7 +1307,7 @@ public final class ApplicationManager extends ListActivity
 
 		HashMap<String, AppInfoHolder> appLookup = new HashMap<String, AppInfoHolder>( );
 
-		synchronized void udpate( ArrayList<AppInfoHolder> apps )
+		synchronized void update( ArrayList<AppInfoHolder> apps )
 		{
 			appList.retainAll( apps );
 
