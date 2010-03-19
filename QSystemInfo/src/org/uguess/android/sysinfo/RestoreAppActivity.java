@@ -279,10 +279,10 @@ public final class RestoreAppActivity extends ListActivity
 						txt_name.setTextColor( Color.YELLOW );
 						break;
 					case 2 :
-						txt_name.setTextColor( Color.CYAN );
+						txt_name.setTextColor( 0xff00bb00 );
 						break;
 					case 3 :
-						txt_name.setTextColor( Color.GREEN );
+						txt_name.setTextColor( 0xffF183BD );
 						break;
 					default :
 						txt_name.setTextColor( Color.WHITE );
