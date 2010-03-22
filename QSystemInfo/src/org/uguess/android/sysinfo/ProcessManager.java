@@ -57,6 +57,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
@@ -97,6 +98,8 @@ public final class ProcessManager extends ListActivity
 	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
 	private static final String PREF_KEY_IGNORE_ACTION = "ignore_action"; //$NON-NLS-1$
 	private static final String PREF_KEY_IGNORE_LIST = "ignore_list"; //$NON-NLS-1$
+	private static final String PREF_KEY_SHOW_MEM = "show_mem"; //$NON-NLS-1$
+	private static final String PREF_KEY_SHOW_CPU = "show_cpu"; //$NON-NLS-1$
 
 	private static final int REFRESH_HIGH = 0;
 	private static final int REFRESH_NORMAL = 1;
@@ -145,7 +148,8 @@ public final class ProcessManager extends ListActivity
 
 				adapter.notifyDataSetChanged( );
 
-				int interval = getRefreshInterval( );
+				int interval = getIntOption( PREF_KEY_REFRESH_INTERVAL,
+						REFRESH_LOW );
 
 				switch ( interval )
 				{
@@ -257,6 +261,9 @@ public final class ProcessManager extends ListActivity
 				txt_mem = (TextView) view.findViewById( R.id.txt_mem );
 				txt_cpu = (TextView) view.findViewById( R.id.txt_cpu );
 
+				boolean showMem = getBooleanOption( PREF_KEY_SHOW_MEM );
+				boolean showCpu = getBooleanOption( PREF_KEY_SHOW_CPU );
+
 				if ( itm == dummyInfo )
 				{
 					txt_name.setText( itm.label );
@@ -265,8 +272,25 @@ public final class ProcessManager extends ListActivity
 
 					img_type.setImageDrawable( null );
 
-					txt_mem.setText( "MEM" ); //$NON-NLS-1$
-					txt_cpu.setText( "CPU%" ); //$NON-NLS-1$
+					if ( showMem )
+					{
+						txt_mem.setVisibility( View.VISIBLE );
+						txt_mem.setText( "MEM" ); //$NON-NLS-1$
+					}
+					else
+					{
+						txt_mem.setVisibility( View.GONE );
+					}
+
+					if ( showCpu )
+					{
+						txt_cpu.setVisibility( View.VISIBLE );
+						txt_cpu.setText( "CPU%" ); //$NON-NLS-1$
+					}
+					else
+					{
+						txt_cpu.setVisibility( View.GONE );
+					}
 				}
 				else
 				{
@@ -297,23 +321,41 @@ public final class ProcessManager extends ListActivity
 
 					img_type.setImageDrawable( itm.icon );
 
-					txt_mem.setText( itm.mem );
-
-					long delta = itm.lastcputime == 0 ? 0
-							: ( itm.cputime - itm.lastcputime );
-
-					long cu = totalDelta == 0 ? 0 : ( delta * 100 / totalDelta );
-
-					if ( cu < 0 )
+					if ( showMem )
 					{
-						cu = 0;
+						txt_mem.setVisibility( View.VISIBLE );
+						txt_mem.setText( itm.mem );
 					}
-					if ( cu > 100 )
+					else
 					{
-						cu = 100;
+						txt_mem.setVisibility( View.GONE );
 					}
 
-					txt_cpu.setText( String.valueOf( cu ) );
+					if ( showCpu )
+					{
+						txt_cpu.setVisibility( View.VISIBLE );
+
+						long delta = itm.lastcputime == 0 ? 0
+								: ( itm.cputime - itm.lastcputime );
+
+						long cu = totalDelta == 0 ? 0
+								: ( delta * 100 / totalDelta );
+
+						if ( cu < 0 )
+						{
+							cu = 0;
+						}
+						if ( cu > 100 )
+						{
+							cu = 100;
+						}
+
+						txt_cpu.setText( String.valueOf( cu ) );
+					}
+					else
+					{
+						txt_cpu.setVisibility( View.GONE );
+					}
 				}
 
 				return view;
@@ -350,27 +392,40 @@ public final class ProcessManager extends ListActivity
 		if ( requestCode == 1 )
 		{
 			int t = data.getIntExtra( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW );
-			if ( t != getRefreshInterval( ) )
+			if ( t != getIntOption( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW ) )
 			{
-				setRefreshInterval( t );
+				setIntOption( PREF_KEY_REFRESH_INTERVAL, t );
 			}
 
 			t = data.getIntExtra( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME );
-			if ( t != getSortOrderType( ) )
+			if ( t != getIntOption( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME ) )
 			{
-				setSortOrderType( t );
+				setIntOption( PREF_KEY_SORT_ORDER_TYPE, t );
 			}
 
 			t = data.getIntExtra( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
-			if ( t != getSortDirection( ) )
+			if ( t != getIntOption( PREF_KEY_SORT_DIRECTION, ORDER_ASC ) )
 			{
-				setSortDirection( t );
+				setIntOption( PREF_KEY_SORT_DIRECTION, t );
 			}
 
 			t = data.getIntExtra( PREF_KEY_IGNORE_ACTION, IGNORE_ACTION_HIDDEN );
-			if ( t != getIgnoreAction( ) )
+			if ( t != getIntOption( PREF_KEY_IGNORE_ACTION,
+					IGNORE_ACTION_HIDDEN ) )
 			{
-				setIgnoreAction( t );
+				setIntOption( PREF_KEY_IGNORE_ACTION, t );
+			}
+
+			boolean b = data.getBooleanExtra( PREF_KEY_SHOW_MEM, true );
+			if ( b != getBooleanOption( PREF_KEY_SHOW_MEM ) )
+			{
+				setBooleanOption( PREF_KEY_SHOW_MEM, b );
+			}
+
+			b = data.getBooleanExtra( PREF_KEY_SHOW_CPU, true );
+			if ( b != getBooleanOption( PREF_KEY_SHOW_CPU ) )
+			{
+				setBooleanOption( PREF_KEY_SHOW_CPU, b );
 			}
 
 			ArrayList<String> list = data.getStringArrayListExtra( PREF_KEY_IGNORE_LIST );
@@ -407,12 +462,20 @@ public final class ProcessManager extends ListActivity
 
 			intent.setClass( this, ProcessSettings.class );
 
-			intent.putExtra( PREF_KEY_REFRESH_INTERVAL, getRefreshInterval( ) );
-			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, getSortOrderType( ) );
-			intent.putExtra( PREF_KEY_SORT_DIRECTION, getSortDirection( ) );
-			intent.putExtra( PREF_KEY_IGNORE_ACTION, getIgnoreAction( ) );
+			intent.putExtra( PREF_KEY_REFRESH_INTERVAL,
+					getIntOption( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW ) );
+			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE,
+					getIntOption( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME ) );
+			intent.putExtra( PREF_KEY_SORT_DIRECTION,
+					getIntOption( PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
+			intent.putExtra( PREF_KEY_IGNORE_ACTION,
+					getIntOption( PREF_KEY_IGNORE_ACTION, IGNORE_ACTION_HIDDEN ) );
 			intent.putStringArrayListExtra( PREF_KEY_IGNORE_LIST,
 					getIgnoreList( ) );
+			intent.putExtra( PREF_KEY_SHOW_MEM,
+					getBooleanOption( PREF_KEY_SHOW_MEM ) );
+			intent.putExtra( PREF_KEY_SHOW_CPU,
+					getBooleanOption( PREF_KEY_SHOW_CPU ) );
 
 			startActivityForResult( intent, 1 );
 
@@ -546,7 +609,8 @@ public final class ProcessManager extends ListActivity
 
 				setIgnoreList( ignoreList );
 
-				if ( IGNORE_ACTION_HIDDEN == getIgnoreAction( ) )
+				if ( IGNORE_ACTION_HIDDEN == getIntOption( PREF_KEY_IGNORE_ACTION,
+						IGNORE_ACTION_HIDDEN ) )
 				{
 					handler.removeCallbacks( task );
 					handler.post( task );
@@ -605,22 +669,6 @@ public final class ProcessManager extends ListActivity
 		return super.onContextItemSelected( item );
 	}
 
-	private int getIgnoreAction( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_IGNORE_ACTION, IGNORE_ACTION_HIDDEN );
-	}
-
-	private void setIgnoreAction( int action )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_IGNORE_ACTION, action );
-		et.commit( );
-	}
-
 	private ArrayList<String> getIgnoreList( )
 	{
 		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
@@ -673,51 +721,35 @@ public final class ProcessManager extends ListActivity
 		et.commit( );
 	}
 
-	private int getSortOrderType( )
+	private int getIntOption( String key, int defValue )
 	{
 		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
 
-		return sp.getInt( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME );
+		return sp.getInt( key, defValue );
 	}
 
-	private void setSortOrderType( int type )
+	private void setIntOption( String key, int val )
 	{
 		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
 
 		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_SORT_ORDER_TYPE, type );
+		et.putInt( key, val );
 		et.commit( );
 	}
 
-	private int getSortDirection( )
+	private boolean getBooleanOption( String key )
 	{
 		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
 
-		return sp.getInt( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
+		return sp.getBoolean( key, true );
 	}
 
-	private void setSortDirection( int type )
+	private void setBooleanOption( String key, boolean val )
 	{
 		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
 
 		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_SORT_DIRECTION, type );
-		et.commit( );
-	}
-
-	private int getRefreshInterval( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW );
-	}
-
-	private void setRefreshInterval( int interval )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_REFRESH_INTERVAL, interval );
+		et.putBoolean( key, val );
 		et.commit( );
 	}
 
@@ -768,14 +800,19 @@ public final class ProcessManager extends ListActivity
 
 	private void updateProcess( List<RunningAppProcessInfo> list )
 	{
-		long newload = readCpuLoad( );
+		boolean showCpu = getBooleanOption( PREF_KEY_SHOW_CPU );
 
-		if ( totalLoad != 0 )
+		if ( showCpu )
 		{
-			totalDelta = newload - totalLoad;
-		}
+			long newload = readCpuLoad( );
 
-		totalLoad = newload;
+			if ( totalLoad != 0 )
+			{
+				totalDelta = newload - totalLoad;
+			}
+
+			totalLoad = newload;
+		}
 
 		procCache.procList.clear( );
 
@@ -783,7 +820,9 @@ public final class ProcessManager extends ListActivity
 		{
 			PackageManager pm = getPackageManager( );
 
-			int ignoreAction = getIgnoreAction( );
+			int ignoreAction = getIntOption( PREF_KEY_IGNORE_ACTION,
+					IGNORE_ACTION_HIDDEN );
+			boolean showMem = getBooleanOption( PREF_KEY_SHOW_MEM );
 
 			String name;
 			for ( RunningAppProcessInfo rap : list )
@@ -813,7 +852,7 @@ public final class ProcessManager extends ListActivity
 					pi = new ProcessItem( );
 					pi.procInfo = rap;
 
-					readProcessInfo( pi, pm, true, buf );
+					readProcessInfo( pi, pm, true, buf, showMem, showCpu );
 
 					procCache.resCache.put( name, pi );
 				}
@@ -822,13 +861,15 @@ public final class ProcessManager extends ListActivity
 					pi.procInfo = rap;
 					pi.lastcputime = pi.cputime;
 
-					readProcessInfo( pi, pm, false, buf );
+					readProcessInfo( pi, pm, false, buf, showMem, showCpu );
 				}
 
 				procCache.procList.add( pi );
 			}
 
-			procCache.reOrder( getSortOrderType( ), getSortDirection( ) );
+			procCache.reOrder( getIntOption( PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_NAME ), getIntOption( PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
 		}
 	}
 
@@ -887,7 +928,8 @@ public final class ProcessManager extends ListActivity
 		return 0;
 	}
 
-	private static void readProcessStat( Context ctx, byte[] buf, ProcessItem pi )
+	private static void readProcessStat( Context ctx, byte[] buf,
+			ProcessItem pi, boolean showMem, boolean showCpu )
 	{
 		InputStream is = null;
 		try
@@ -955,17 +997,20 @@ public final class ProcessManager extends ListActivity
 						i++;
 					}
 
-					if ( utime != null )
+					if ( showCpu )
 					{
-						pi.cputime = Long.parseLong( utime );
+						if ( utime != null )
+						{
+							pi.cputime = Long.parseLong( utime );
+						}
+
+						if ( stime != null )
+						{
+							pi.cputime += Long.parseLong( stime );
+						}
 					}
 
-					if ( stime != null )
-					{
-						pi.cputime += Long.parseLong( stime );
-					}
-
-					if ( rss != null )
+					if ( showMem && rss != null )
 					{
 						nrss = Long.parseLong( rss );
 
@@ -1003,7 +1048,7 @@ public final class ProcessManager extends ListActivity
 	}
 
 	private void readProcessInfo( ProcessItem proc, PackageManager pm,
-			boolean isNew, byte[] buf )
+			boolean isNew, byte[] buf, boolean showMem, boolean showCpu )
 	{
 		if ( isNew && pm != null )
 		{
@@ -1062,9 +1107,9 @@ public final class ProcessManager extends ListActivity
 			}
 		}
 
-		if ( proc.procInfo.pid != 0 )
+		if ( proc.procInfo.pid != 0 && ( showMem || showCpu ) )
 		{
-			readProcessStat( ProcessManager.this, buf, proc );
+			readProcessStat( ProcessManager.this, buf, proc, showMem, showCpu );
 		}
 	}
 
@@ -1091,6 +1136,18 @@ public final class ProcessManager extends ListActivity
 			perfInterval.setKey( PREF_KEY_REFRESH_INTERVAL );
 			perfInterval.setTitle( R.string.update_speed );
 			pc.addPreference( perfInterval );
+
+			CheckBoxPreference perfShowMem = new CheckBoxPreference( this );
+			perfShowMem.setKey( PREF_KEY_SHOW_MEM );
+			perfShowMem.setTitle( R.string.show_memory_usage );
+			perfShowMem.setSummary( R.string.show_memory_summary );
+			pc.addPreference( perfShowMem );
+
+			CheckBoxPreference perfShowCpu = new CheckBoxPreference( this );
+			perfShowCpu.setKey( PREF_KEY_SHOW_CPU );
+			perfShowCpu.setTitle( R.string.show_cpu_usage );
+			perfShowCpu.setSummary( R.string.show_cpu_summary );
+			pc.addPreference( perfShowCpu );
 
 			pc = new PreferenceCategory( this );
 			pc.setTitle( R.string.sort );
@@ -1121,6 +1178,8 @@ public final class ProcessManager extends ListActivity
 			pc.addPreference( perfIgnoreList );
 
 			refreshInterval( );
+			refreshBooleanOption( PREF_KEY_SHOW_MEM );
+			refreshBooleanOption( PREF_KEY_SHOW_CPU );
 			refreshSortType( );
 			refreshSortDirection( );
 			refreshIgnoreAction( );
@@ -1149,6 +1208,13 @@ public final class ProcessManager extends ListActivity
 			}
 
 			findPreference( PREF_KEY_REFRESH_INTERVAL ).setSummary( label );
+		}
+
+		private void refreshBooleanOption( String key )
+		{
+			boolean val = getIntent( ).getBooleanExtra( key, true );
+
+			( (CheckBoxPreference) findPreference( key ) ).setChecked( val );
 		}
 
 		private void refreshSortType( )
@@ -1309,6 +1375,20 @@ public final class ProcessManager extends ListActivity
 								listener )
 						.create( )
 						.show( );
+
+				return true;
+			}
+			else if ( PREF_KEY_SHOW_MEM.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_MEM,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_MEM ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_SHOW_CPU.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_CPU,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_CPU ) ).isChecked( ) );
 
 				return true;
 			}

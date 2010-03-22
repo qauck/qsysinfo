@@ -200,5 +200,9 @@
     <string name="scanning">Scanning %s</string>
 	<string name="no_apk_show">No application package found.</string>
 	<string name="no_apk_selected">No selected package to restore.</string>
+    <string name="show_cpu_summary">Show CPU usage for each process</string>
+    <string name="show_memory_summary">Show memory usage for each process</string>
+    <string name="show_cpu_usage">Show CPU Usage</string>
+    <string name="show_memory_usage">Show Memory Usage</string>
 
 </resources>

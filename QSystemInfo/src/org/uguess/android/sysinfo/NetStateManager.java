@@ -167,7 +167,7 @@ public final class NetStateManager extends ListActivity
 		{
 			refresh( );
 
-			int interval = getRefreshInterval( );
+			int interval = getIntOption( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW );
 
 			switch ( interval )
 			{
@@ -205,7 +205,7 @@ public final class NetStateManager extends ListActivity
 			{
 				if ( position > 0 )
 				{
-					int state = getRemoteQueryState( );
+					int state = getIntOption( PREF_KEY_REMOTE_QUERY, ENABLED );
 
 					if ( state == DISABLED )
 					{
@@ -344,11 +344,15 @@ public final class NetStateManager extends ListActivity
 			Intent it = new Intent( Intent.ACTION_VIEW );
 			it.setClass( this, NetStateSettings.class );
 
-			it.putExtra( PREF_KEY_REFRESH_INTERVAL, getRefreshInterval( ) );
-			it.putExtra( PREF_KEY_REMOTE_QUERY, getRemoteQueryState( ) );
+			it.putExtra( PREF_KEY_REFRESH_INTERVAL,
+					getIntOption( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW ) );
+			it.putExtra( PREF_KEY_REMOTE_QUERY,
+					getIntOption( PREF_KEY_REMOTE_QUERY, ENABLED ) );
 			it.putExtra( PREF_KEY_SHOW_REMOTE_NAME, isShowRemoteName( ) );
-			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, getSortOrderType( ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION, getSortDirection( ) );
+			it.putExtra( PREF_KEY_SORT_ORDER_TYPE,
+					getIntOption( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_PROTO ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION,
+					getIntOption( PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
 
 			startActivityForResult( it, 1 );
 
@@ -403,27 +407,27 @@ public final class NetStateManager extends ListActivity
 		if ( requestCode == 1 )
 		{
 			int t = data.getIntExtra( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW );
-			if ( t != getRefreshInterval( ) )
+			if ( t != getIntOption( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW ) )
 			{
-				setRefreshInterval( t );
+				setIntOption( PREF_KEY_REFRESH_INTERVAL, t );
 			}
 
 			t = data.getIntExtra( PREF_KEY_REMOTE_QUERY, ENABLED );
-			if ( t != getRemoteQueryState( ) )
+			if ( t != getIntOption( PREF_KEY_REMOTE_QUERY, ENABLED ) )
 			{
-				setRemoteQueryState( t );
+				setIntOption( PREF_KEY_REMOTE_QUERY, t );
 			}
 
 			t = data.getIntExtra( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_PROTO );
-			if ( t != getSortOrderType( ) )
+			if ( t != getIntOption( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_PROTO ) )
 			{
-				setSortOrderType( t );
+				setIntOption( PREF_KEY_SORT_ORDER_TYPE, t );
 			}
 
 			t = data.getIntExtra( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
-			if ( t != getSortDirection( ) )
+			if ( t != getIntOption( PREF_KEY_SORT_DIRECTION, ORDER_ASC ) )
 			{
-				setSortDirection( t );
+				setIntOption( PREF_KEY_SORT_DIRECTION, t );
 			}
 
 			boolean b = data.getBooleanExtra( PREF_KEY_SHOW_REMOTE_NAME, true );
@@ -500,8 +504,10 @@ public final class NetStateManager extends ListActivity
 
 		if ( items != null )
 		{
-			final int type = getSortOrderType( );
-			final int direction = getSortDirection( );
+			final int type = getIntOption( PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_PROTO );
+			final int direction = getIntOption( PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC );
 			final Collator clt = Collator.getInstance( );
 
 			switch ( type )
@@ -796,35 +802,19 @@ public final class NetStateManager extends ListActivity
 		return raw;
 	}
 
-	private int getRefreshInterval( )
+	private int getIntOption( String key, int defValue )
 	{
 		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
 
-		return sp.getInt( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW );
+		return sp.getInt( key, defValue );
 	}
 
-	private void setRefreshInterval( int interval )
+	private void setIntOption( String key, int val )
 	{
 		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
 
 		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_REFRESH_INTERVAL, interval );
-		et.commit( );
-	}
-
-	private int getRemoteQueryState( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_REMOTE_QUERY, ENABLED );
-	}
-
-	private void setRemoteQueryState( int state )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_REMOTE_QUERY, state );
+		et.putInt( key, val );
 		et.commit( );
 	}
 
@@ -841,38 +831,6 @@ public final class NetStateManager extends ListActivity
 
 		Editor et = sp.edit( );
 		et.putBoolean( PREF_KEY_SHOW_REMOTE_NAME, val );
-		et.commit( );
-	}
-
-	private int getSortOrderType( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_PROTO );
-	}
-
-	private void setSortOrderType( int type )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_SORT_ORDER_TYPE, type );
-		et.commit( );
-	}
-
-	private int getSortDirection( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
-	}
-
-	private void setSortDirection( int type )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_SORT_DIRECTION, type );
 		et.commit( );
 	}
 

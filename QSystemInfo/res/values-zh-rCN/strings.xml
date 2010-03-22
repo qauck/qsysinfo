@@ -192,5 +192,9 @@
     <string name="scanning">正在扫描 %s</string>
 	<string name="no_apk_show">没有找到应用程序包.</string>
 	<string name="no_apk_selected">没有选中的程序包可以还原.</string>
+    <string name="show_cpu_summary">显示每个进程的CPU占用</string>
+    <string name="show_memory_summary">显示每个进程的内存占用</string>
+    <string name="show_cpu_usage">显示CPU占用</string>
+    <string name="show_memory_usage">显示内存占用</string>
 
 </resources>
