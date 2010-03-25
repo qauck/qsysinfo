@@ -196,5 +196,12 @@
     <string name="show_memory_summary">显示每个进程的内存占用</string>
     <string name="show_cpu_usage">显示CPU占用</string>
     <string name="show_memory_usage">显示内存占用</string>
+    <string name="bug_failed">无法生成异常报告, 请手工发送Logcat日志给作者.</string>
+	<string name="bug_detail">系统信息在上次运行中报告了一个异常,
+		您是否愿意将该异常的详细信息发送给作者以帮助解决这个问题?\n\n此详细信息只会被用于调试目的, 不会包含任何有关用户的私密信息.</string>
+	<string name="bug_title">异常报告</string>
+	<string name="oops_msg">点击以报告此异常.</string>
+	<string name="oops">Oops, 发生异常.</string>
+	<string name="agree">同意</string>
 
 </resources>

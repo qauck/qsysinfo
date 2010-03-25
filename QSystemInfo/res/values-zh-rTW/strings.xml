@@ -196,5 +196,12 @@
     <string name="show_memory_summary">為每個進程顯示記憶體佔用</string>
     <string name="show_cpu_usage">顯示CPU佔用</string>
     <string name="show_memory_usage">顯示記憶體佔用</string>
+    <string name="bug_failed">無法生成異常報告, 請手工發送Logcat日誌給作者.</string>
+	<string name="bug_detail">系統資訊在上次運行中報告了一個異常,
+		您是否愿意將該異常的詳細資訊發送給作者以幫助解決這個問題?\n\n此詳細資訊只會被用于調試目的, 不會包含任何有關使用者的私密資訊.</string>
+	<string name="bug_title">異常報告</string>
+	<string name="oops_msg">點擊以報告此異常.</string>
+	<string name="oops">Oops, 發生異常.</string>
+	<string name="agree">同意</string>
 
 </resources>

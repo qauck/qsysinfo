@@ -204,5 +204,15 @@
     <string name="show_memory_summary">Show memory usage for each process</string>
     <string name="show_cpu_usage">Show CPU Usage</string>
     <string name="show_memory_usage">Show Memory Usage</string>
+    <string name="bug_failed">Failed to generate the bug report, please send the Logcat log to the author manually.</string>
+	<string name="bug_detail">An exception was caught during the last launch of
+		Quick System Info. Do you want to send the error details to the author
+		to help further addressing this issue?\n\nThe information collected is
+		for debug purpose only, it will NOT contain any data with regard to
+		your privacy.</string>
+	<string name="bug_title">Bug Report</string>
+	<string name="oops_msg">Click to report this exception.</string>
+	<string name="oops">Oops, An exception.</string>
+	<string name="agree">I Agree</string>
 
 </resources>
