@@ -549,7 +549,8 @@ public final class ProcessManager extends ListActivity
 								it.setClassName( ri.activityInfo.packageName,
 										ri.activityInfo.name );
 
-								it.addFlags( Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP );
+								it.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK )
+										.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
 
 								startActivity( it );
 							}
