@@ -24,9 +24,11 @@ package org.uguess.android.sysinfo;
 import java.io.File;
 import java.io.FileFilter;
 import java.text.Collator;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import android.app.AlertDialog;
@@ -87,6 +89,7 @@ public final class RestoreAppActivity extends ListActivity
 	private static final int ORDER_TYPE_NAME = 0;
 	private static final int ORDER_TYPE_SIZE = 1;
 	private static final int ORDER_TYPE_INSTALL = 2;
+	private static final int ORDER_TYPE_DATE = 3;
 
 	private static final int ORDER_ASC = 1;
 	private static final int ORDER_DESC = -1;
@@ -98,6 +101,8 @@ public final class RestoreAppActivity extends ListActivity
 	private Drawable defaultIcon;
 
 	private boolean skipUpdate;
+
+	private DateFormat dateFormatter = DateFormat.getDateTimeInstance( );
 
 	private Handler handler = new Handler( ) {
 
@@ -247,7 +252,7 @@ public final class RestoreAppActivity extends ListActivity
 					android.view.View convertView, android.view.ViewGroup parent )
 			{
 				View view;
-				TextView txt_name, txt_size, txt_ver;
+				TextView txt_name, txt_size, txt_ver, txt_time;
 				ImageView img_type;
 				CheckBox ckb_app;
 
@@ -308,6 +313,9 @@ public final class RestoreAppActivity extends ListActivity
 				{
 					txt_size.setText( R.string.unknown );
 				}
+
+				txt_time = (TextView) view.findViewById( R.id.app_time );
+				txt_time.setText( dateFormatter.format( new Date( itm.file.lastModified( ) ) ) );
 
 				img_type = (ImageView) view.findViewById( R.id.img_app_icon );
 				if ( itm.icon != null )
@@ -685,7 +693,9 @@ public final class RestoreAppActivity extends ListActivity
 
 					public int compare( ApkInfo obj1, ApkInfo obj2 )
 					{
-						return (int) ( obj1.size - obj2.size ) * direction;
+						return ( obj1.size == obj2.size ? 0
+								: ( obj1.size < obj2.size ? -1 : 1 ) )
+								* direction;
 					}
 				};
 			case ORDER_TYPE_INSTALL :
@@ -694,6 +704,18 @@ public final class RestoreAppActivity extends ListActivity
 					public int compare( ApkInfo obj1, ApkInfo obj2 )
 					{
 						return ( obj1.installed - obj2.installed ) * direction;
+					}
+				};
+			case ORDER_TYPE_DATE :
+				return new Comparator<ApkInfo>( ) {
+
+					public int compare( ApkInfo obj1, ApkInfo obj2 )
+					{
+						long d1 = obj1.file.lastModified( );
+						long d2 = obj2.file.lastModified( );
+
+						return ( d1 == d2 ? 0 : ( d1 < d2 ? -1 : 1 ) )
+								* direction;
 					}
 				};
 		}
@@ -769,6 +791,9 @@ public final class RestoreAppActivity extends ListActivity
 				case ORDER_TYPE_INSTALL :
 					label = getString( R.string.installation );
 					break;
+				case ORDER_TYPE_DATE :
+					label = getString( R.string.file_date );
+					break;
 			}
 
 			findPreference( PREF_KEY_SORT_ORDER_TYPE ).setSummary( label );
@@ -811,6 +836,7 @@ public final class RestoreAppActivity extends ListActivity
 								getString( R.string.name ),
 								getString( R.string.file_size ),
 								getString( R.string.installation ),
+								getString( R.string.file_date ),
 						},
 								it.getIntExtra( PREF_KEY_SORT_ORDER_TYPE,
 										ORDER_TYPE_NAME ),

@@ -31,9 +31,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.text.Collator;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -111,6 +113,7 @@ public final class ApplicationManager extends ListActivity
 	private static final int ORDER_TYPE_DATA_SIZE = 2;
 	private static final int ORDER_TYPE_CACHE_SIZE = 3;
 	private static final int ORDER_TYPE_TOTAL_SIZE = 4;
+	private static final int ORDER_TYPE_INSTALL_DATE = 5;
 
 	private static final int ORDER_ASC = 1;
 	private static final int ORDER_DESC = -1;
@@ -156,6 +159,8 @@ public final class ApplicationManager extends ListActivity
 	private String versionPrefix;
 
 	private AppCache appCache;
+
+	private DateFormat dateFormatter = DateFormat.getDateTimeInstance( );
 
 	private Handler handler = new Handler( ) {
 
@@ -396,7 +401,7 @@ public final class ApplicationManager extends ListActivity
 					android.view.View convertView, android.view.ViewGroup parent )
 			{
 				View view;
-				TextView txt_name, txt_size, txt_ver;
+				TextView txt_name, txt_size, txt_ver, txt_time;
 				ImageView img_type;
 				CheckBox ckb_app;
 
@@ -440,6 +445,17 @@ public final class ApplicationManager extends ListActivity
 				else
 				{
 					txt_size.setText( R.string.computing );
+				}
+
+				txt_time = (TextView) view.findViewById( R.id.app_time );
+				if ( itm.appInfo.sourceDir != null )
+				{
+					File f = new File( itm.appInfo.sourceDir );
+					txt_time.setText( dateFormatter.format( new Date( f.lastModified( ) ) ) );
+				}
+				else
+				{
+					txt_time.setText( null );
 				}
 
 				img_type = (ImageView) view.findViewById( R.id.img_app_icon );
@@ -649,7 +665,8 @@ public final class ApplicationManager extends ListActivity
 								{
 									int type = getSortOrderType( );
 
-									if ( type != ORDER_TYPE_NAME )
+									if ( type != ORDER_TYPE_NAME
+											&& type != ORDER_TYPE_INSTALL_DATE )
 									{
 										appCache.reOrder( type,
 												getSortDirection( ) );
@@ -1281,16 +1298,21 @@ public final class ApplicationManager extends ListActivity
 			switch ( type )
 			{
 				case ORDER_TYPE_CODE_SIZE :
-					return (int) ( obj1.codeSize - obj2.codeSize ) * direction;
+					return ( obj1.codeSize == obj2.codeSize ? 0
+							: ( obj1.codeSize < obj2.codeSize ? -1 : 1 ) )
+							* direction;
 				case ORDER_TYPE_DATA_SIZE :
-					return (int) ( obj1.dataSize - obj2.dataSize ) * direction;
+					return ( obj1.dataSize == obj2.dataSize ? 0
+							: ( obj1.dataSize < obj2.dataSize ? -1 : 1 ) )
+							* direction;
 				case ORDER_TYPE_CACHE_SIZE :
-					return (int) ( obj1.cacheSize - obj2.cacheSize )
+					return ( obj1.cacheSize == obj2.cacheSize ? 0
+							: ( obj1.cacheSize < obj2.cacheSize ? -1 : 1 ) )
 							* direction;
 				case ORDER_TYPE_TOTAL_SIZE :
 					long s1 = obj1.codeSize + obj1.dataSize + obj1.cacheSize;
 					long s2 = obj2.codeSize + obj2.dataSize + obj2.cacheSize;
-					return (int) ( s1 - s2 ) * direction;
+					return ( s1 == s2 ? 0 : ( s1 < s2 ? -1 : 1 ) ) * direction;
 			}
 
 			return 0;
@@ -1335,7 +1357,7 @@ public final class ApplicationManager extends ListActivity
 			}
 		}
 
-		synchronized void reOrder( int type, int direction )
+		synchronized void reOrder( int type, final int direction )
 		{
 			switch ( type )
 			{
@@ -1348,6 +1370,30 @@ public final class ApplicationManager extends ListActivity
 				case ORDER_TYPE_TOTAL_SIZE :
 					Collections.sort( appList, new SizeComparator( type,
 							direction ) );
+					break;
+				case ORDER_TYPE_INSTALL_DATE :
+					Collections.sort( appList,
+							new Comparator<AppInfoHolder>( ) {
+
+								public int compare( AppInfoHolder obj1,
+										AppInfoHolder obj2 )
+								{
+									long d1 = 0;
+									long d2 = 0;
+
+									if ( obj1.appInfo.sourceDir != null )
+									{
+										d1 = new File( obj1.appInfo.sourceDir ).lastModified( );
+									}
+									if ( obj2.appInfo.sourceDir != null )
+									{
+										d2 = new File( obj2.appInfo.sourceDir ).lastModified( );
+									}
+
+									return ( d1 == d2 ? 0 : ( d1 < d2 ? -1 : 1 ) )
+											* direction;
+								}
+							} );
 					break;
 			}
 		}
@@ -1421,6 +1467,9 @@ public final class ApplicationManager extends ListActivity
 					break;
 				case ORDER_TYPE_TOTAL_SIZE :
 					label = getString( R.string.total_size );
+					break;
+				case ORDER_TYPE_INSTALL_DATE :
+					label = getString( R.string.installed_date );
 					break;
 			}
 
@@ -1538,6 +1587,7 @@ public final class ApplicationManager extends ListActivity
 								getString( R.string.data_size ),
 								getString( R.string.cache_size ),
 								getString( R.string.total_size ),
+								getString( R.string.installed_date ),
 						},
 								it.getIntExtra( PREF_KEY_SORT_ORDER_TYPE,
 										ORDER_TYPE_NAME ),

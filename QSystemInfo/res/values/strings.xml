@@ -195,7 +195,7 @@
     <string name="remote_address">Remote Address</string>
     <string name="restore">Restore</string>
     <string name="file_size">File Size</string>
-    <string name="installation">Installation</string>
+    <string name="installation">Install State</string>
     <string name="installed_ver">%s (Installed %s)</string>
     <string name="scanning">Scanning %s</string>
 	<string name="no_apk_show">No application package found.</string>
@@ -214,5 +214,7 @@
 	<string name="oops_msg">Click to report this exception.</string>
 	<string name="oops">Oops, An exception.</string>
 	<string name="agree">I Agree</string>
+    <string name="file_date">File Date</string>
+    <string name="installed_date">Install Date</string>
 
 </resources>

@@ -1634,8 +1634,9 @@ public final class ProcessManager extends ListActivity
 
 						public int compare( ProcessItem obj1, ProcessItem obj2 )
 						{
-							return (int) ( obj1.rss - obj2.rss ) * direction;
-
+							return ( obj1.rss == obj2.rss ? 0
+									: ( obj1.rss < obj2.rss ? -1 : 1 ) )
+									* direction;
 						}
 					} );
 					break;
@@ -1644,9 +1645,11 @@ public final class ProcessManager extends ListActivity
 
 						public int compare( ProcessItem obj1, ProcessItem obj2 )
 						{
-							return (int) ( ( obj1.lastcputime == 0 ? 0
-									: ( obj1.cputime - obj1.lastcputime ) ) - ( obj2.lastcputime == 0 ? 0
-									: ( obj2.cputime - obj2.lastcputime ) ) )
+							long c1 = obj1.lastcputime == 0 ? 0
+									: ( obj1.cputime - obj1.lastcputime );
+							long c2 = obj2.lastcputime == 0 ? 0
+									: ( obj2.cputime - obj2.lastcputime );
+							return ( c1 == c2 ? 0 : ( c1 < c2 ? -1 : 1 ) )
 									* direction;
 						}
 					} );

@@ -203,5 +203,7 @@
 	<string name="oops_msg">点击以报告此异常.</string>
 	<string name="oops">Oops, 发生异常.</string>
 	<string name="agree">同意</string>
+    <string name="file_date">文件日期</string>
+    <string name="installed_date">安装日期</string>
 
 </resources>
