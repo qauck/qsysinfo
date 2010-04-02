@@ -648,7 +648,7 @@ public final class ProcessManager extends ListActivity
 					{
 						if ( pkg != null )
 						{
-							sb.append( "<br>&nbsp;&nbsp;" + pkg ); //$NON-NLS-1$
+							sb.append( "<br>" + pkg ); //$NON-NLS-1$
 						}
 					}
 				}

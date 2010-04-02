@@ -216,5 +216,8 @@
 	<string name="agree">I Agree</string>
     <string name="file_date">File Date</string>
     <string name="installed_date">Install Date</string>
+    <string name="delete_file_warn">Are you sure to delete this file?\n\n%s</string>
+    <string name="delete_file_failed">Failed to delete file: %s</string>
+    <string name="delete_file">Delete File</string>
 
 </resources>

@@ -205,5 +205,8 @@
 	<string name="agree">同意</string>
     <string name="file_date">文件日期</string>
     <string name="installed_date">安装日期</string>
+    <string name="delete_file_warn">是否确认删除此文件?\n\n%s</string>
+    <string name="delete_file_failed">删除文件失败: %s</string>
+    <string name="delete_file">删除文件</string>
 
 </resources>

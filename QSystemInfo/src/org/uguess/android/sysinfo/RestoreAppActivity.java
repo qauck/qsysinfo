@@ -54,10 +54,12 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.text.format.Formatter;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -68,6 +70,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
@@ -232,6 +235,8 @@ public final class RestoreAppActivity extends ListActivity
 		lstApps = getListView( );
 
 		lstApps.setFastScrollEnabled( true );
+
+		registerForContextMenu( lstApps );
 
 		lstApps.setOnItemClickListener( new OnItemClickListener( ) {
 
@@ -409,6 +414,62 @@ public final class RestoreAppActivity extends ListActivity
 			intent.putExtra( PREF_KEY_SORT_DIRECTION, getSortDirection( ) );
 
 			startActivityForResult( intent, 1 );
+
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public void onCreateContextMenu( ContextMenu menu, View v,
+			ContextMenuInfo menuInfo )
+	{
+		menu.setHeaderTitle( R.string.actions );
+		menu.add( R.string.delete_file );
+	}
+
+	@Override
+	public boolean onContextItemSelected( MenuItem item )
+	{
+		int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
+
+		if ( pos >= 0 && pos < lstApps.getCount( ) )
+		{
+			final ApkInfo ai = (ApkInfo) lstApps.getItemAtPosition( pos );
+
+			OnClickListener listener = new OnClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which )
+				{
+					boolean deleted = ai.file.delete( );
+
+					if ( deleted )
+					{
+						( (ArrayAdapter) lstApps.getAdapter( ) ).remove( ai );
+
+						if ( getSelectedCount( ) == 0 )
+						{
+							hideButtons( );
+						}
+					}
+					else
+					{
+						Toast.makeText( RestoreAppActivity.this,
+								getString( R.string.delete_file_failed,
+										ai.file.getAbsolutePath( ) ),
+								Toast.LENGTH_SHORT ).show( );
+					}
+				}
+			};
+
+			new AlertDialog.Builder( this ).setTitle( R.string.warning )
+					.setMessage( getString( R.string.delete_file_warn,
+							ai.file.getAbsolutePath( ) ) )
+					.setPositiveButton( android.R.string.yes, listener )
+					.setNegativeButton( android.R.string.no, null )
+					.create( )
+					.show( );
 
 			return true;
 		}
