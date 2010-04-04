@@ -59,6 +59,7 @@ import android.content.pm.IPackageStatsObserver;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageStats;
+import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -386,14 +387,25 @@ public final class ApplicationManager extends ListActivity
 			{
 				AppInfoHolder holder = (AppInfoHolder) parent.getItemAtPosition( position );
 
-				Intent intent = new Intent( Intent.ACTION_VIEW );
+				Intent it = new Intent( Intent.ACTION_VIEW );
 
-				intent.setClassName( "com.android.settings", //$NON-NLS-1$
+				it.setClassName( "com.android.settings", //$NON-NLS-1$
 						"com.android.settings.InstalledAppDetails" ); //$NON-NLS-1$
-				intent.putExtra( "com.android.settings.ApplicationPkgName", //$NON-NLS-1$
+				it.putExtra( "com.android.settings.ApplicationPkgName", //$NON-NLS-1$
 						holder.appInfo.packageName );
 
-				startActivity( intent );
+				List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
+						0 );
+
+				if ( acts.size( ) > 0 )
+				{
+					startActivity( it );
+				}
+				else
+				{
+					Log.d( ApplicationManager.class.getName( ),
+							"Failed to resolve activity for InstalledAppDetails" ); //$NON-NLS-1$
+				}
 			}
 		} );
 

@@ -56,6 +56,7 @@ import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
@@ -73,6 +74,7 @@ import android.os.Handler;
 import android.os.StatFs;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
 import android.provider.Settings;
 import android.text.Html;
@@ -250,6 +252,13 @@ public final class SysInfoManager extends PreferenceActivity
 		addPreferencesFromResource( R.xml.main );
 
 		prefBatteryLevel = findPreference( "battery_level" ); //$NON-NLS-1$
+
+		Intent it = getAboutSettingsIntent( );
+
+		if ( it == null )
+		{
+			( (PreferenceGroup) getPreferenceScreen( ).getPreference( getPreferenceScreen( ).getPreferenceCount( ) - 1 ) ).removePreference( findPreference( "more_info" ) ); //$NON-NLS-1$
+		}
 	}
 
 	@Override
@@ -1035,14 +1044,51 @@ public final class SysInfoManager extends PreferenceActivity
 		}
 		else if ( "more_info".equals( preference.getKey( ) ) ) //$NON-NLS-1$
 		{
-			Intent intent = new Intent( Intent.ACTION_VIEW );
-			intent.setClassName( "com.android.settings", //$NON-NLS-1$
-					"com.android.settings.DeviceInfoSettings" ); //$NON-NLS-1$
-			startActivity( intent );
+			Intent it = getAboutSettingsIntent( );
+
+			if ( it != null )
+			{
+				startActivity( it );
+			}
+			else
+			{
+				Log.d( SysInfoManager.class.getName( ),
+						"Failed to resolve activity for DeviceInfoSettings" ); //$NON-NLS-1$
+			}
 			return true;
 		}
 
 		return false;
+	}
+
+	private Intent getAboutSettingsIntent( )
+	{
+		Intent it = new Intent( Intent.ACTION_VIEW );
+		it.setClassName( "com.android.settings", //$NON-NLS-1$
+				"com.android.settings.DeviceInfoSettings" ); //$NON-NLS-1$
+
+		List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
+				0 );
+
+		if ( acts.size( ) > 0 )
+		{
+			return it;
+		}
+		else
+		{
+			// try the htc specifc settings
+			it.setClassName( "com.android.settings", //$NON-NLS-1$
+					"com.android.settings.framework.aboutphone.HtcAboutPhoneSettings" ); //$NON-NLS-1$
+
+			acts = getPackageManager( ).queryIntentActivities( it, 0 );
+
+			if ( acts.size( ) > 0 )
+			{
+				return it;
+			}
+		}
+
+		return null;
 	}
 
 	@Override
