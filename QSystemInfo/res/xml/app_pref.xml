@@ -5,6 +5,10 @@
 	<PreferenceCategory android:title="@string/preference">
 		<Preference android:key="export_dir" android:title="@string/export_dir" />
 		<Preference android:key="app_filter" android:title="@string/filter_title" />
+		<CheckBoxPreference android:key="show_size"
+			android:summary="@string/show_app_size_sum" android:title="@string/show_app_size"></CheckBoxPreference>
+		<CheckBoxPreference android:key="show_date"
+			android:title="@string/show_app_date" android:summary="@string/show_app_date_sum"></CheckBoxPreference>
 	</PreferenceCategory>
 
 	<PreferenceCategory android:title="@string/sort">

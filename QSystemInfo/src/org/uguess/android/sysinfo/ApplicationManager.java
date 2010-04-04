@@ -66,6 +66,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
@@ -125,6 +126,8 @@ public final class ApplicationManager extends ListActivity
 	private static final String PREF_KEY_APP_EXPORT_DIR = "app_export_dir"; //$NON-NLS-1$
 	private static final String PREF_KEY_SORT_ORDER_TYPE = "sort_order_type"; //$NON-NLS-1$
 	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
+	private static final String PREF_KEY_SHOW_SIZE = "show_size"; //$NON-NLS-1$
+	private static final String PREF_KEY_SHOW_DATE = "show_date"; //$NON-NLS-1$
 
 	private static final String DEFAULT_EXPORT_FOLDER = "/sdcard/backups/"; //$NON-NLS-1$
 
@@ -438,24 +441,42 @@ public final class ApplicationManager extends ListActivity
 				}
 
 				txt_size = (TextView) view.findViewById( R.id.app_size );
-				if ( itm.size != null )
+				if ( getBooleanOption( PREF_KEY_SHOW_SIZE ) )
 				{
-					txt_size.setText( itm.size );
+					txt_size.setVisibility( View.VISIBLE );
+
+					if ( itm.size != null )
+					{
+						txt_size.setText( itm.size );
+					}
+					else
+					{
+						txt_size.setText( R.string.computing );
+					}
 				}
 				else
 				{
-					txt_size.setText( R.string.computing );
+					txt_size.setVisibility( View.GONE );
 				}
 
 				txt_time = (TextView) view.findViewById( R.id.app_time );
-				if ( itm.appInfo.sourceDir != null )
+				if ( getBooleanOption( PREF_KEY_SHOW_DATE ) )
 				{
-					File f = new File( itm.appInfo.sourceDir );
-					txt_time.setText( dateFormatter.format( new Date( f.lastModified( ) ) ) );
+					txt_time.setVisibility( View.VISIBLE );
+
+					if ( itm.appInfo.sourceDir != null )
+					{
+						File f = new File( itm.appInfo.sourceDir );
+						txt_time.setText( dateFormatter.format( new Date( f.lastModified( ) ) ) );
+					}
+					else
+					{
+						txt_time.setText( R.string.unknown );
+					}
 				}
 				else
 				{
-					txt_time.setText( null );
+					txt_time.setVisibility( View.GONE );
 				}
 
 				img_type = (ImageView) view.findViewById( R.id.img_app_icon );
@@ -573,6 +594,22 @@ public final class ApplicationManager extends ListActivity
 
 		Editor et = sp.edit( );
 		et.putInt( PREF_KEY_SORT_DIRECTION, type );
+		et.commit( );
+	}
+
+	private boolean getBooleanOption( String key )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		return sp.getBoolean( key, true );
+	}
+
+	private void setBooleanOption( String key, boolean val )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		et.putBoolean( key, val );
 		et.commit( );
 	}
 
@@ -1035,6 +1072,18 @@ public final class ApplicationManager extends ListActivity
 			{
 				setSortDirection( t );
 			}
+
+			boolean b = data.getBooleanExtra( PREF_KEY_SHOW_SIZE, true );
+			if ( b != getBooleanOption( PREF_KEY_SHOW_SIZE ) )
+			{
+				setBooleanOption( PREF_KEY_SHOW_SIZE, b );
+			}
+
+			b = data.getBooleanExtra( PREF_KEY_SHOW_DATE, true );
+			if ( b != getBooleanOption( PREF_KEY_SHOW_DATE ) )
+			{
+				setBooleanOption( PREF_KEY_SHOW_DATE, b );
+			}
 		}
 	}
 
@@ -1069,6 +1118,10 @@ public final class ApplicationManager extends ListActivity
 			intent.putExtra( PREF_KEY_APP_EXPORT_DIR, getAppExportDir( ) );
 			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, getSortOrderType( ) );
 			intent.putExtra( PREF_KEY_SORT_DIRECTION, getSortDirection( ) );
+			intent.putExtra( PREF_KEY_SHOW_SIZE,
+					getBooleanOption( PREF_KEY_SHOW_SIZE ) );
+			intent.putExtra( PREF_KEY_SHOW_DATE,
+					getBooleanOption( PREF_KEY_SHOW_DATE ) );
 
 			startActivityForResult( intent, REQUEST_SETTINGS );
 
@@ -1418,8 +1471,17 @@ public final class ApplicationManager extends ListActivity
 			refreshAppType( );
 			refreshSortType( );
 			refreshSortDirection( );
+			refreshBooleanOption( PREF_KEY_SHOW_SIZE );
+			refreshBooleanOption( PREF_KEY_SHOW_DATE );
 
 			setResult( RESULT_OK, getIntent( ) );
+		}
+
+		private void refreshBooleanOption( String key )
+		{
+			boolean val = getIntent( ).getBooleanExtra( key, true );
+
+			( (CheckBoxPreference) findPreference( key ) ).setChecked( val );
 		}
 
 		private void refreshBackupFolder( )
@@ -1562,6 +1624,20 @@ public final class ApplicationManager extends ListActivity
 								listener )
 						.create( )
 						.show( );
+
+				return true;
+			}
+			else if ( PREF_KEY_SHOW_SIZE.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_SIZE,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_SIZE ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_SHOW_DATE.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_DATE,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_DATE ) ).isChecked( ) );
 
 				return true;
 			}

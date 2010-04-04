@@ -208,5 +208,13 @@
     <string name="delete_file_warn">是否確認移除此檔案?\n\n%s</string>
     <string name="delete_file_failed">移除檔案失敗: %s</string>
     <string name="delete_file">移除檔案</string>
+    <string name="show_file_date_sum">顯示每個檔案的日期資訊</string>
+    <string name="show_file_date">顯示檔案日期</string>
+    <string name="show_file_size_sum">顯示每個檔案的大小資訊</string>
+    <string name="show_file_size">顯示檔案大小</string>
+    <string name="show_app_date_sum">顯示每個應用程式的安裝日期</string>
+    <string name="show_app_size_sum">顯示每個應用程式的大小資訊</string>
+    <string name="show_app_date">顯示應用程式日期</string>
+    <string name="show_app_size">顯示應用程式大小</string>
 
 </resources>

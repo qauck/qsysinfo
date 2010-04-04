@@ -219,5 +219,13 @@
     <string name="delete_file_warn">Are you sure to delete this file?\n\n%s</string>
     <string name="delete_file_failed">Failed to delete file: %s</string>
     <string name="delete_file">Delete File</string>
+    <string name="show_file_date_sum">Show date info for each file</string>
+    <string name="show_file_date">Show File Date</string>
+    <string name="show_file_size_sum">Show size info for each file</string>
+    <string name="show_file_size">Show File Size</string>
+    <string name="show_app_date_sum">Show install date for each application</string>
+    <string name="show_app_size_sum">Show size info for each application</string>
+    <string name="show_app_date">Show Application Date</string>
+    <string name="show_app_size">Show Application Size</string>
 
 </resources>

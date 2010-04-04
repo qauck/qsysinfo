@@ -49,6 +49,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
@@ -88,6 +89,8 @@ public final class RestoreAppActivity extends ListActivity
 
 	private static final String PREF_KEY_SORT_ORDER_TYPE = "sort_order_type"; //$NON-NLS-1$
 	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
+	private static final String PREF_KEY_SHOW_SIZE = "show_size"; //$NON-NLS-1$
+	private static final String PREF_KEY_SHOW_DATE = "show_date"; //$NON-NLS-1$
 
 	private static final int ORDER_TYPE_NAME = 0;
 	private static final int ORDER_TYPE_SIZE = 1;
@@ -310,17 +313,35 @@ public final class RestoreAppActivity extends ListActivity
 				}
 
 				txt_size = (TextView) view.findViewById( R.id.app_size );
-				if ( itm.sizeString != null )
+				if ( getBooleanOption( PREF_KEY_SHOW_SIZE ) )
 				{
-					txt_size.setText( itm.sizeString );
+					txt_size.setVisibility( View.VISIBLE );
+
+					if ( itm.sizeString != null )
+					{
+						txt_size.setText( itm.sizeString );
+					}
+					else
+					{
+						txt_size.setText( R.string.unknown );
+					}
 				}
 				else
 				{
-					txt_size.setText( R.string.unknown );
+					txt_size.setVisibility( View.GONE );
 				}
 
 				txt_time = (TextView) view.findViewById( R.id.app_time );
-				txt_time.setText( dateFormatter.format( new Date( itm.file.lastModified( ) ) ) );
+				if ( getBooleanOption( PREF_KEY_SHOW_DATE ) )
+				{
+					txt_time.setVisibility( View.VISIBLE );
+
+					txt_time.setText( dateFormatter.format( new Date( itm.file.lastModified( ) ) ) );
+				}
+				else
+				{
+					txt_time.setVisibility( View.GONE );
+				}
 
 				img_type = (ImageView) view.findViewById( R.id.img_app_icon );
 				if ( itm.icon != null )
@@ -377,6 +398,18 @@ public final class RestoreAppActivity extends ListActivity
 				setSortDirection( t );
 			}
 
+			boolean b = data.getBooleanExtra( PREF_KEY_SHOW_SIZE, true );
+			if ( b != getBooleanOption( PREF_KEY_SHOW_SIZE ) )
+			{
+				setBooleanOption( PREF_KEY_SHOW_SIZE, b );
+			}
+
+			b = data.getBooleanExtra( PREF_KEY_SHOW_DATE, true );
+			if ( b != getBooleanOption( PREF_KEY_SHOW_DATE ) )
+			{
+				setBooleanOption( PREF_KEY_SHOW_DATE, b );
+			}
+
 			Comparator<ApkInfo> comp = getComparator( getSortOrderType( ),
 					getSortDirection( ) );
 
@@ -412,6 +445,10 @@ public final class RestoreAppActivity extends ListActivity
 
 			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, getSortOrderType( ) );
 			intent.putExtra( PREF_KEY_SORT_DIRECTION, getSortDirection( ) );
+			intent.putExtra( PREF_KEY_SHOW_SIZE,
+					getBooleanOption( PREF_KEY_SHOW_SIZE ) );
+			intent.putExtra( PREF_KEY_SHOW_DATE,
+					getBooleanOption( PREF_KEY_SHOW_DATE ) );
 
 			startActivityForResult( intent, 1 );
 
@@ -465,7 +502,7 @@ public final class RestoreAppActivity extends ListActivity
 
 			new AlertDialog.Builder( this ).setTitle( R.string.warning )
 					.setMessage( getString( R.string.delete_file_warn,
-							ai.file.getAbsolutePath( ) ) )
+							ai.file.getName( ) ) )
 					.setPositiveButton( android.R.string.yes, listener )
 					.setNegativeButton( android.R.string.no, null )
 					.create( )
@@ -506,6 +543,22 @@ public final class RestoreAppActivity extends ListActivity
 
 		Editor et = sp.edit( );
 		et.putInt( PREF_KEY_SORT_DIRECTION, type );
+		et.commit( );
+	}
+
+	private boolean getBooleanOption( String key )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		return sp.getBoolean( key, true );
+	}
+
+	private void setBooleanOption( String key, boolean val )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		et.putBoolean( key, val );
 		et.commit( );
 	}
 
@@ -816,6 +869,22 @@ public final class RestoreAppActivity extends ListActivity
 			setPreferenceScreen( getPreferenceManager( ).createPreferenceScreen( this ) );
 
 			PreferenceCategory pc = new PreferenceCategory( this );
+			pc.setTitle( R.string.preference );
+			getPreferenceScreen( ).addPreference( pc );
+
+			CheckBoxPreference perfShowSize = new CheckBoxPreference( this );
+			perfShowSize.setKey( PREF_KEY_SHOW_SIZE );
+			perfShowSize.setTitle( R.string.show_file_size );
+			perfShowSize.setSummary( R.string.show_file_size_sum );
+			pc.addPreference( perfShowSize );
+
+			CheckBoxPreference perfShowDate = new CheckBoxPreference( this );
+			perfShowDate.setKey( PREF_KEY_SHOW_DATE );
+			perfShowDate.setTitle( R.string.show_file_date );
+			perfShowDate.setSummary( R.string.show_file_date_sum );
+			pc.addPreference( perfShowDate );
+
+			pc = new PreferenceCategory( this );
 			pc.setTitle( R.string.sort );
 			getPreferenceScreen( ).addPreference( pc );
 
@@ -831,8 +900,17 @@ public final class RestoreAppActivity extends ListActivity
 
 			refreshSortType( );
 			refreshSortDirection( );
+			refreshBooleanOption( PREF_KEY_SHOW_SIZE );
+			refreshBooleanOption( PREF_KEY_SHOW_DATE );
 
 			setResult( RESULT_OK, getIntent( ) );
+		}
+
+		private void refreshBooleanOption( String key )
+		{
+			boolean val = getIntent( ).getBooleanExtra( key, true );
+
+			( (CheckBoxPreference) findPreference( key ) ).setChecked( val );
 		}
 
 		private void refreshSortType( )
@@ -877,7 +955,21 @@ public final class RestoreAppActivity extends ListActivity
 		{
 			final Intent it = getIntent( );
 
-			if ( PREF_KEY_SORT_ORDER_TYPE.equals( preference.getKey( ) ) )
+			if ( PREF_KEY_SHOW_SIZE.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_SIZE,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_SIZE ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_SHOW_DATE.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_DATE,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_DATE ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_SORT_ORDER_TYPE.equals( preference.getKey( ) ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
