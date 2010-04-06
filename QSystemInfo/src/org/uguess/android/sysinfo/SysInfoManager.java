@@ -201,9 +201,8 @@ public final class SysInfoManager extends PreferenceActivity
 
 					if ( content == null )
 					{
-						Toast.makeText( SysInfoManager.this,
-								R.string.no_report,
-								Toast.LENGTH_SHORT ).show( );
+						Util.shortToast( SysInfoManager.this,
+								R.string.no_report );
 					}
 					else
 					{
@@ -992,9 +991,8 @@ public final class SysInfoManager extends PreferenceActivity
 
 					if ( !hasContent )
 					{
-						Toast.makeText( SysInfoManager.this,
-								R.string.no_report_item,
-								Toast.LENGTH_SHORT ).show( );
+						Util.shortToast( SysInfoManager.this,
+								R.string.no_report_item );
 
 						return;
 					}
@@ -2248,9 +2246,7 @@ public final class SysInfoManager extends PreferenceActivity
 		{
 			if ( handler == null )
 			{
-				Toast.makeText( context,
-						R.string.error_sdcard,
-						Toast.LENGTH_SHORT ).show( );
+				Util.shortToast( context, R.string.error_sdcard );
 			}
 			else
 			{

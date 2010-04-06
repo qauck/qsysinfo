@@ -34,12 +34,9 @@ import java.util.List;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
-import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -146,9 +143,8 @@ public final class RestoreAppActivity extends ListActivity
 
 					if ( lstApps.getCount( ) == 0 )
 					{
-						Toast.makeText( RestoreAppActivity.this,
-								R.string.no_apk_show,
-								Toast.LENGTH_SHORT ).show( );
+						Util.shortToast( RestoreAppActivity.this,
+								R.string.no_apk_show );
 					}
 
 					break;
@@ -313,7 +309,8 @@ public final class RestoreAppActivity extends ListActivity
 				}
 
 				txt_size = (TextView) view.findViewById( R.id.app_size );
-				if ( getBooleanOption( PREF_KEY_SHOW_SIZE ) )
+				if ( Util.getBooleanOption( RestoreAppActivity.this,
+						PREF_KEY_SHOW_SIZE ) )
 				{
 					txt_size.setVisibility( View.VISIBLE );
 
@@ -332,7 +329,8 @@ public final class RestoreAppActivity extends ListActivity
 				}
 
 				txt_time = (TextView) view.findViewById( R.id.app_time );
-				if ( getBooleanOption( PREF_KEY_SHOW_DATE ) )
+				if ( Util.getBooleanOption( RestoreAppActivity.this,
+						PREF_KEY_SHOW_DATE ) )
 				{
 					txt_time.setVisibility( View.VISIBLE );
 
@@ -386,32 +384,23 @@ public final class RestoreAppActivity extends ListActivity
 	{
 		if ( requestCode == 1 )
 		{
-			int t = data.getIntExtra( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME );
-			if ( t != getSortOrderType( ) )
-			{
-				setSortOrderType( t );
-			}
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_NAME );
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC );
 
-			t = data.getIntExtra( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
-			if ( t != getSortDirection( ) )
-			{
-				setSortDirection( t );
-			}
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_SIZE );
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_DATE );
 
-			boolean b = data.getBooleanExtra( PREF_KEY_SHOW_SIZE, true );
-			if ( b != getBooleanOption( PREF_KEY_SHOW_SIZE ) )
-			{
-				setBooleanOption( PREF_KEY_SHOW_SIZE, b );
-			}
-
-			b = data.getBooleanExtra( PREF_KEY_SHOW_DATE, true );
-			if ( b != getBooleanOption( PREF_KEY_SHOW_DATE ) )
-			{
-				setBooleanOption( PREF_KEY_SHOW_DATE, b );
-			}
-
-			Comparator<ApkInfo> comp = getComparator( getSortOrderType( ),
-					getSortDirection( ) );
+			Comparator<ApkInfo> comp = getComparator( Util.getIntOption( this,
+					PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_NAME ), Util.getIntOption( this,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
 
 			if ( comp != null )
 			{
@@ -443,12 +432,16 @@ public final class RestoreAppActivity extends ListActivity
 
 			intent.setClass( this, RestoreAppSettings.class );
 
-			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, getSortOrderType( ) );
-			intent.putExtra( PREF_KEY_SORT_DIRECTION, getSortDirection( ) );
-			intent.putExtra( PREF_KEY_SHOW_SIZE,
-					getBooleanOption( PREF_KEY_SHOW_SIZE ) );
-			intent.putExtra( PREF_KEY_SHOW_DATE,
-					getBooleanOption( PREF_KEY_SHOW_DATE ) );
+			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
+					PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_NAME ) );
+			intent.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
+			intent.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_SIZE ) );
+			intent.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_DATE ) );
 
 			startActivityForResult( intent, 1 );
 
@@ -512,54 +505,6 @@ public final class RestoreAppActivity extends ListActivity
 		}
 
 		return false;
-	}
-
-	private int getSortOrderType( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME );
-	}
-
-	private void setSortOrderType( int type )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_SORT_ORDER_TYPE, type );
-		et.commit( );
-	}
-
-	private int getSortDirection( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
-	}
-
-	private void setSortDirection( int type )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_SORT_DIRECTION, type );
-		et.commit( );
-	}
-
-	private boolean getBooleanOption( String key )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getBoolean( key, true );
-	}
-
-	private void setBooleanOption( String key, boolean val )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putBoolean( key, val );
-		et.commit( );
 	}
 
 	private void loadApps( )
@@ -675,8 +620,12 @@ public final class RestoreAppActivity extends ListActivity
 					}
 				}
 
-				Comparator<ApkInfo> comp = getComparator( getSortOrderType( ),
-						getSortDirection( ) );
+				Comparator<ApkInfo> comp = getComparator( Util.getIntOption( RestoreAppActivity.this,
+						PREF_KEY_SORT_ORDER_TYPE,
+						ORDER_TYPE_NAME ),
+						Util.getIntOption( RestoreAppActivity.this,
+								PREF_KEY_SORT_DIRECTION,
+								ORDER_ASC ) );
 
 				if ( comp != null )
 				{
@@ -746,8 +695,7 @@ public final class RestoreAppActivity extends ListActivity
 
 		if ( apps == null || apps.size( ) == 0 )
 		{
-			Toast.makeText( this, R.string.no_apk_selected, Toast.LENGTH_SHORT )
-					.show( );
+			Util.shortToast( this, R.string.no_apk_selected );
 		}
 		else
 		{

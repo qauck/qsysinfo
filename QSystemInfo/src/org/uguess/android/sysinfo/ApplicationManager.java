@@ -73,10 +73,12 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
 import android.text.format.Formatter;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -88,6 +90,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
@@ -197,9 +200,8 @@ public final class ApplicationManager extends ListActivity
 
 					if ( lstApps.getCount( ) == 0 )
 					{
-						Toast.makeText( ApplicationManager.this,
-								R.string.no_app_show,
-								Toast.LENGTH_SHORT ).show( );
+						Util.shortToast( ApplicationManager.this,
+								R.string.no_app_show );
 					}
 
 					break;
@@ -380,6 +382,8 @@ public final class ApplicationManager extends ListActivity
 
 		lstApps.setFastScrollEnabled( true );
 
+		registerForContextMenu( lstApps );
+
 		lstApps.setOnItemClickListener( new OnItemClickListener( ) {
 
 			public void onItemClick( AdapterView<?> parent, View view,
@@ -453,7 +457,8 @@ public final class ApplicationManager extends ListActivity
 				}
 
 				txt_size = (TextView) view.findViewById( R.id.app_size );
-				if ( getBooleanOption( PREF_KEY_SHOW_SIZE ) )
+				if ( Util.getBooleanOption( ApplicationManager.this,
+						PREF_KEY_SHOW_SIZE ) )
 				{
 					txt_size.setVisibility( View.VISIBLE );
 
@@ -472,7 +477,8 @@ public final class ApplicationManager extends ListActivity
 				}
 
 				txt_time = (TextView) view.findViewById( R.id.app_time );
-				if ( getBooleanOption( PREF_KEY_SHOW_DATE ) )
+				if ( Util.getBooleanOption( ApplicationManager.this,
+						PREF_KEY_SHOW_DATE ) )
 				{
 					txt_time.setVisibility( View.VISIBLE );
 
@@ -561,70 +567,6 @@ public final class ApplicationManager extends ListActivity
 		et.commit( );
 	}
 
-	private int getAppFilterType( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_FILTER_APP_TYPE, APP_TYPE_ALL );
-	}
-
-	private void setAppFilterType( int type )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_FILTER_APP_TYPE, type );
-		et.commit( );
-	}
-
-	private int getSortOrderType( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME );
-	}
-
-	private void setSortOrderType( int type )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_SORT_ORDER_TYPE, type );
-		et.commit( );
-	}
-
-	private int getSortDirection( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
-	}
-
-	private void setSortDirection( int type )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_SORT_DIRECTION, type );
-		et.commit( );
-	}
-
-	private boolean getBooleanOption( String key )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getBoolean( key, true );
-	}
-
-	private void setBooleanOption( String key, boolean val )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putBoolean( key, val );
-		et.commit( );
-	}
-
 	private void loadApps( )
 	{
 		if ( progress == null )
@@ -672,7 +614,12 @@ public final class ApplicationManager extends ListActivity
 
 				appCache.update( dataList );
 
-				appCache.reOrder( getSortOrderType( ), getSortDirection( ) );
+				appCache.reOrder( Util.getIntOption( ApplicationManager.this,
+						PREF_KEY_SORT_ORDER_TYPE,
+						ORDER_TYPE_NAME ),
+						Util.getIntOption( ApplicationManager.this,
+								PREF_KEY_SORT_DIRECTION,
+								ORDER_ASC ) );
 
 				handler.sendEmptyMessage( MSG_INIT_OK );
 
@@ -712,13 +659,17 @@ public final class ApplicationManager extends ListActivity
 
 								if ( k == num - 1 )
 								{
-									int type = getSortOrderType( );
+									int type = Util.getIntOption( ApplicationManager.this,
+											PREF_KEY_SORT_ORDER_TYPE,
+											ORDER_TYPE_NAME );
 
 									if ( type != ORDER_TYPE_NAME
 											&& type != ORDER_TYPE_INSTALL_DATE )
 									{
 										appCache.reOrder( type,
-												getSortDirection( ) );
+												Util.getIntOption( ApplicationManager.this,
+														PREF_KEY_SORT_DIRECTION,
+														ORDER_ASC ) );
 
 										handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_SIZE,
 												1,
@@ -762,10 +713,14 @@ public final class ApplicationManager extends ListActivity
 						}
 
 						// reorder by new names
-						if ( getSortOrderType( ) == ORDER_TYPE_NAME )
+						if ( Util.getIntOption( ApplicationManager.this,
+								PREF_KEY_SORT_ORDER_TYPE,
+								ORDER_TYPE_NAME ) == ORDER_TYPE_NAME )
 						{
 							appCache.reOrder( ORDER_TYPE_NAME,
-									getSortDirection( ) );
+									Util.getIntOption( ApplicationManager.this,
+											PREF_KEY_SORT_DIRECTION,
+											ORDER_ASC ) );
 
 							handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_LABEL,
 									1,
@@ -806,7 +761,9 @@ public final class ApplicationManager extends ListActivity
 			return apps;
 		}
 
-		int type = getAppFilterType( );
+		int type = Util.getIntOption( this,
+				PREF_KEY_FILTER_APP_TYPE,
+				APP_TYPE_ALL );
 
 		if ( type == APP_TYPE_SYS )
 		{
@@ -889,8 +846,7 @@ public final class ApplicationManager extends ListActivity
 	{
 		if ( apps == null || apps.isEmpty( ) )
 		{
-			Toast.makeText( this, R.string.no_app_selected, Toast.LENGTH_SHORT )
-					.show( );
+			Util.shortToast( this, R.string.no_app_selected );
 			return;
 		}
 
@@ -1067,35 +1023,21 @@ public final class ApplicationManager extends ListActivity
 				setAppExportDir( nDir );
 			}
 
-			int t = data.getIntExtra( PREF_KEY_FILTER_APP_TYPE, APP_TYPE_ALL );
-			if ( t != getAppFilterType( ) )
-			{
-				setAppFilterType( t );
-			}
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_FILTER_APP_TYPE,
+					APP_TYPE_ALL );
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_NAME );
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC );
 
-			t = data.getIntExtra( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME );
-			if ( t != getSortOrderType( ) )
-			{
-				setSortOrderType( t );
-			}
-
-			t = data.getIntExtra( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
-			if ( t != getSortDirection( ) )
-			{
-				setSortDirection( t );
-			}
-
-			boolean b = data.getBooleanExtra( PREF_KEY_SHOW_SIZE, true );
-			if ( b != getBooleanOption( PREF_KEY_SHOW_SIZE ) )
-			{
-				setBooleanOption( PREF_KEY_SHOW_SIZE, b );
-			}
-
-			b = data.getBooleanExtra( PREF_KEY_SHOW_DATE, true );
-			if ( b != getBooleanOption( PREF_KEY_SHOW_DATE ) )
-			{
-				setBooleanOption( PREF_KEY_SHOW_DATE, b );
-			}
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_SIZE );
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_DATE );
 		}
 	}
 
@@ -1126,14 +1068,20 @@ public final class ApplicationManager extends ListActivity
 
 			intent.setClass( this, AppSettings.class );
 
-			intent.putExtra( PREF_KEY_FILTER_APP_TYPE, getAppFilterType( ) );
+			intent.putExtra( PREF_KEY_FILTER_APP_TYPE, Util.getIntOption( this,
+					PREF_KEY_FILTER_APP_TYPE,
+					APP_TYPE_ALL ) );
 			intent.putExtra( PREF_KEY_APP_EXPORT_DIR, getAppExportDir( ) );
-			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, getSortOrderType( ) );
-			intent.putExtra( PREF_KEY_SORT_DIRECTION, getSortDirection( ) );
-			intent.putExtra( PREF_KEY_SHOW_SIZE,
-					getBooleanOption( PREF_KEY_SHOW_SIZE ) );
-			intent.putExtra( PREF_KEY_SHOW_DATE,
-					getBooleanOption( PREF_KEY_SHOW_DATE ) );
+			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
+					PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_NAME ) );
+			intent.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
+			intent.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_SIZE ) );
+			intent.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_DATE ) );
 
 			startActivityForResult( intent, REQUEST_SETTINGS );
 
@@ -1156,19 +1104,78 @@ public final class ApplicationManager extends ListActivity
 		return false;
 	}
 
+	@Override
+	public void onCreateContextMenu( ContextMenu menu, View v,
+			ContextMenuInfo menuInfo )
+	{
+		menu.setHeaderTitle( R.string.actions );
+		menu.add( R.string.run );
+	}
+
+	@Override
+	public boolean onContextItemSelected( MenuItem item )
+	{
+		int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
+
+		if ( pos >= 0 && pos < lstApps.getCount( ) )
+		{
+			final AppInfoHolder ai = (AppInfoHolder) lstApps.getItemAtPosition( pos );
+
+			String pkgName = ai.appInfo.packageName;
+
+			if ( !pkgName.equals( this.getPackageName( ) ) )
+			{
+				Intent it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
+				it.addCategory( Intent.CATEGORY_LAUNCHER );
+
+				List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
+						0 );
+
+				if ( acts != null )
+				{
+					boolean started = false;
+
+					for ( ResolveInfo ri : acts )
+					{
+						if ( pkgName.equals( ri.activityInfo.packageName ) )
+						{
+							it.setClassName( ri.activityInfo.packageName,
+									ri.activityInfo.name );
+
+							it.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK )
+									.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
+
+							startActivity( it );
+
+							started = true;
+							break;
+						}
+					}
+
+					if ( !started )
+					{
+						Util.shortToast( this, R.string.run_failed );
+					}
+				}
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
 	private void doExport( )
 	{
 		final List<ApplicationInfo> sels = getSelected( );
 
 		if ( sels == null || sels.size( ) == 0 )
 		{
-			Toast.makeText( this, R.string.no_app_selected, Toast.LENGTH_SHORT )
-					.show( );
+			Util.shortToast( this, R.string.no_app_selected );
 		}
 		else if ( !ensureSDCard( ) )
 		{
-			Toast.makeText( this, R.string.error_sdcard, Toast.LENGTH_SHORT )
-					.show( );
+			Util.shortToast( this, R.string.error_sdcard );
 		}
 		else
 		{

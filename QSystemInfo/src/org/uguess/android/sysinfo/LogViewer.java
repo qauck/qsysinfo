@@ -104,9 +104,7 @@ public final class LogViewer extends ListActivity
 
 					if ( adapter.getCount( ) == 0 )
 					{
-						Toast.makeText( LogViewer.this,
-								R.string.no_log_info,
-								Toast.LENGTH_SHORT ).show( );
+						Util.shortToast( LogViewer.this, R.string.no_log_info );
 					}
 					else
 					{
@@ -122,9 +120,7 @@ public final class LogViewer extends ListActivity
 
 					if ( content == null )
 					{
-						Toast.makeText( LogViewer.this,
-								R.string.no_log_info,
-								Toast.LENGTH_SHORT ).show( );
+						Util.shortToast( LogViewer.this, R.string.no_log_info );
 					}
 					else
 					{
@@ -318,11 +314,16 @@ public final class LogViewer extends ListActivity
 
 			it.putExtra( DMESG_MODE, dmesgMode );
 
-			it.putExtra( PREF_KEY_CLOG_LEVL, getCLogLevel( ) );
+			it.putExtra( PREF_KEY_CLOG_LEVL, Util.getIntOption( this,
+					PREF_KEY_CLOG_LEVL,
+					Log.VERBOSE ) );
 			it.putExtra( PREF_KEY_TAG_FILTER, getCTagFilter( ) );
-			it.putExtra( PREF_KEY_PID_FILTER, getPIDFilter( ) );
-
-			it.putExtra( PREF_KEY_DLOG_LEVL, getDLogLevel( ) );
+			it.putExtra( PREF_KEY_PID_FILTER, Util.getIntOption( this,
+					PREF_KEY_PID_FILTER,
+					0 ) );
+			it.putExtra( PREF_KEY_DLOG_LEVL, Util.getIntOption( this,
+					PREF_KEY_DLOG_LEVL,
+					DM_LVL_DEBUG ) );
 
 			startActivityForResult( it, 1 );
 
@@ -424,10 +425,11 @@ public final class LogViewer extends ListActivity
 		{
 			boolean needRefresh = false;
 
-			int logLevel = data.getIntExtra( PREF_KEY_CLOG_LEVL, Log.VERBOSE );
-			if ( logLevel != getCLogLevel( ) )
+			if ( Util.updateIntOption( data,
+					this,
+					PREF_KEY_CLOG_LEVL,
+					Log.VERBOSE ) )
 			{
-				setCLogLevel( logLevel );
 				needRefresh = true;
 			}
 
@@ -438,17 +440,16 @@ public final class LogViewer extends ListActivity
 				needRefresh = true;
 			}
 
-			int pidFilter = data.getIntExtra( PREF_KEY_PID_FILTER, 0 );
-			if ( pidFilter != getPIDFilter( ) )
+			if ( Util.updateIntOption( data, this, PREF_KEY_PID_FILTER, 0 ) )
 			{
-				setPIDFilter( pidFilter );
 				needRefresh = true;
 			}
 
-			logLevel = data.getIntExtra( PREF_KEY_DLOG_LEVL, DM_LVL_DEBUG );
-			if ( logLevel != getDLogLevel( ) )
+			if ( Util.updateIntOption( data,
+					this,
+					PREF_KEY_DLOG_LEVL,
+					DM_LVL_DEBUG ) )
 			{
-				setDLogLevel( logLevel );
 				needRefresh = true;
 			}
 
@@ -706,22 +707,6 @@ public final class LogViewer extends ListActivity
 		return sb.toString( );
 	}
 
-	private int getCLogLevel( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_CLOG_LEVL, Log.VERBOSE );
-	}
-
-	private void setCLogLevel( int level )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_CLOG_LEVL, level );
-		et.commit( );
-	}
-
 	private String getCTagFilter( )
 	{
 		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
@@ -745,38 +730,6 @@ public final class LogViewer extends ListActivity
 		et.commit( );
 	}
 
-	private int getPIDFilter( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_PID_FILTER, 0 );
-	}
-
-	private void setPIDFilter( int pid )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_PID_FILTER, pid );
-		et.commit( );
-	}
-
-	private int getDLogLevel( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( PREF_KEY_DLOG_LEVL, DM_LVL_DEBUG );
-	}
-
-	private void setDLogLevel( int level )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( PREF_KEY_DLOG_LEVL, level );
-		et.commit( );
-	}
-
 	private void refreshLogs( )
 	{
 		if ( progress == null )
@@ -791,10 +744,16 @@ public final class LogViewer extends ListActivity
 
 			public void run( )
 			{
-				ArrayList<LogItem> logs = dmesgMode ? collectDLog( getDLogLevel( ) )
-						: collectCLog( getCLogLevel( ),
+				ArrayList<LogItem> logs = dmesgMode ? collectDLog( Util.getIntOption( LogViewer.this,
+						PREF_KEY_DLOG_LEVL,
+						DM_LVL_DEBUG ) )
+						: collectCLog( Util.getIntOption( LogViewer.this,
+								PREF_KEY_CLOG_LEVL,
+								Log.VERBOSE ),
 								getCTagFilter( ),
-								getPIDFilter( ) );
+								Util.getIntOption( LogViewer.this,
+										PREF_KEY_PID_FILTER,
+										0 ) );
 
 				handler.sendMessage( handler.obtainMessage( SysInfoManager.MSG_INIT_OK,
 						logs ) );

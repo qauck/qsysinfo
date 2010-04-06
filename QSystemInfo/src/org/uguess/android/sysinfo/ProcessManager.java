@@ -76,7 +76,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
@@ -148,7 +147,8 @@ public final class ProcessManager extends ListActivity
 
 				adapter.notifyDataSetChanged( );
 
-				int interval = getIntOption( PREF_KEY_REFRESH_INTERVAL,
+				int interval = Util.getIntOption( ProcessManager.this,
+						PREF_KEY_REFRESH_INTERVAL,
 						REFRESH_LOW );
 
 				switch ( interval )
@@ -261,8 +261,10 @@ public final class ProcessManager extends ListActivity
 				txt_mem = (TextView) view.findViewById( R.id.txt_mem );
 				txt_cpu = (TextView) view.findViewById( R.id.txt_cpu );
 
-				boolean showMem = getBooleanOption( PREF_KEY_SHOW_MEM );
-				boolean showCpu = getBooleanOption( PREF_KEY_SHOW_CPU );
+				boolean showMem = Util.getBooleanOption( ProcessManager.this,
+						PREF_KEY_SHOW_MEM );
+				boolean showCpu = Util.getBooleanOption( ProcessManager.this,
+						PREF_KEY_SHOW_CPU );
 
 				if ( itm == dummyInfo )
 				{
@@ -391,42 +393,25 @@ public final class ProcessManager extends ListActivity
 	{
 		if ( requestCode == 1 )
 		{
-			int t = data.getIntExtra( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW );
-			if ( t != getIntOption( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW ) )
-			{
-				setIntOption( PREF_KEY_REFRESH_INTERVAL, t );
-			}
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_REFRESH_INTERVAL,
+					REFRESH_LOW );
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_NAME );
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC );
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_IGNORE_ACTION,
+					IGNORE_ACTION_HIDDEN );
 
-			t = data.getIntExtra( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME );
-			if ( t != getIntOption( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME ) )
-			{
-				setIntOption( PREF_KEY_SORT_ORDER_TYPE, t );
-			}
-
-			t = data.getIntExtra( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
-			if ( t != getIntOption( PREF_KEY_SORT_DIRECTION, ORDER_ASC ) )
-			{
-				setIntOption( PREF_KEY_SORT_DIRECTION, t );
-			}
-
-			t = data.getIntExtra( PREF_KEY_IGNORE_ACTION, IGNORE_ACTION_HIDDEN );
-			if ( t != getIntOption( PREF_KEY_IGNORE_ACTION,
-					IGNORE_ACTION_HIDDEN ) )
-			{
-				setIntOption( PREF_KEY_IGNORE_ACTION, t );
-			}
-
-			boolean b = data.getBooleanExtra( PREF_KEY_SHOW_MEM, true );
-			if ( b != getBooleanOption( PREF_KEY_SHOW_MEM ) )
-			{
-				setBooleanOption( PREF_KEY_SHOW_MEM, b );
-			}
-
-			b = data.getBooleanExtra( PREF_KEY_SHOW_CPU, true );
-			if ( b != getBooleanOption( PREF_KEY_SHOW_CPU ) )
-			{
-				setBooleanOption( PREF_KEY_SHOW_CPU, b );
-			}
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_MEM );
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_CPU );
 
 			ArrayList<String> list = data.getStringArrayListExtra( PREF_KEY_IGNORE_LIST );
 
@@ -463,19 +448,24 @@ public final class ProcessManager extends ListActivity
 			intent.setClass( this, ProcessSettings.class );
 
 			intent.putExtra( PREF_KEY_REFRESH_INTERVAL,
-					getIntOption( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW ) );
-			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE,
-					getIntOption( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_NAME ) );
-			intent.putExtra( PREF_KEY_SORT_DIRECTION,
-					getIntOption( PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
-			intent.putExtra( PREF_KEY_IGNORE_ACTION,
-					getIntOption( PREF_KEY_IGNORE_ACTION, IGNORE_ACTION_HIDDEN ) );
+					Util.getIntOption( this,
+							PREF_KEY_REFRESH_INTERVAL,
+							REFRESH_LOW ) );
+			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
+					PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_NAME ) );
+			intent.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
+			intent.putExtra( PREF_KEY_IGNORE_ACTION, Util.getIntOption( this,
+					PREF_KEY_IGNORE_ACTION,
+					IGNORE_ACTION_HIDDEN ) );
 			intent.putStringArrayListExtra( PREF_KEY_IGNORE_LIST,
 					getIgnoreList( ) );
-			intent.putExtra( PREF_KEY_SHOW_MEM,
-					getBooleanOption( PREF_KEY_SHOW_MEM ) );
-			intent.putExtra( PREF_KEY_SHOW_CPU,
-					getBooleanOption( PREF_KEY_SHOW_CPU ) );
+			intent.putExtra( PREF_KEY_SHOW_MEM, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_MEM ) );
+			intent.putExtra( PREF_KEY_SHOW_CPU, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_CPU ) );
 
 			startActivityForResult( intent, 1 );
 
@@ -527,24 +517,23 @@ public final class ProcessManager extends ListActivity
 			{
 				ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
 
-				Intent it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
-				it.addCategory( Intent.CATEGORY_LAUNCHER );
+				String pkgName = rap.procInfo.processName;
 
-				List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
-						0 );
-
-				if ( acts != null )
+				if ( !pkgName.equals( this.getPackageName( ) ) )
 				{
-					String pkgName = rap.procInfo.processName;
-					String self = this.getPackageName( );
+					Intent it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
+					it.addCategory( Intent.CATEGORY_LAUNCHER );
 
-					boolean started = false;
+					List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
+							0 );
 
-					for ( ResolveInfo ri : acts )
+					if ( acts != null )
 					{
-						if ( pkgName.equals( ri.activityInfo.packageName ) )
+						boolean started = false;
+
+						for ( ResolveInfo ri : acts )
 						{
-							if ( !pkgName.equals( self ) )
+							if ( pkgName.equals( ri.activityInfo.packageName ) )
 							{
 								it.setClassName( ri.activityInfo.packageName,
 										ri.activityInfo.name );
@@ -553,18 +542,16 @@ public final class ProcessManager extends ListActivity
 										.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
 
 								startActivity( it );
+
+								started = true;
+								break;
 							}
-
-							started = true;
-							break;
 						}
-					}
 
-					if ( !started )
-					{
-						Toast.makeText( this,
-								R.string.error_switch_task,
-								Toast.LENGTH_SHORT ).show( );
+						if ( !started )
+						{
+							Util.shortToast( this, R.string.error_switch_task );
+						}
 					}
 				}
 			}
@@ -610,7 +597,8 @@ public final class ProcessManager extends ListActivity
 
 				setIgnoreList( ignoreList );
 
-				if ( IGNORE_ACTION_HIDDEN == getIntOption( PREF_KEY_IGNORE_ACTION,
+				if ( IGNORE_ACTION_HIDDEN == Util.getIntOption( this,
+						PREF_KEY_IGNORE_ACTION,
 						IGNORE_ACTION_HIDDEN ) )
 				{
 					handler.removeCallbacks( task );
@@ -722,38 +710,6 @@ public final class ProcessManager extends ListActivity
 		et.commit( );
 	}
 
-	private int getIntOption( String key, int defValue )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( key, defValue );
-	}
-
-	private void setIntOption( String key, int val )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( key, val );
-		et.commit( );
-	}
-
-	private boolean getBooleanOption( String key )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getBoolean( key, true );
-	}
-
-	private void setBooleanOption( String key, boolean val )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putBoolean( key, val );
-		et.commit( );
-	}
-
 	private void endProcess( ActivityManager am, String[] pkgs )
 	{
 		if ( pkgs != null )
@@ -801,7 +757,7 @@ public final class ProcessManager extends ListActivity
 
 	private void updateProcess( List<RunningAppProcessInfo> list )
 	{
-		boolean showCpu = getBooleanOption( PREF_KEY_SHOW_CPU );
+		boolean showCpu = Util.getBooleanOption( this, PREF_KEY_SHOW_CPU );
 
 		if ( showCpu )
 		{
@@ -821,9 +777,10 @@ public final class ProcessManager extends ListActivity
 		{
 			PackageManager pm = getPackageManager( );
 
-			int ignoreAction = getIntOption( PREF_KEY_IGNORE_ACTION,
+			int ignoreAction = Util.getIntOption( this,
+					PREF_KEY_IGNORE_ACTION,
 					IGNORE_ACTION_HIDDEN );
-			boolean showMem = getBooleanOption( PREF_KEY_SHOW_MEM );
+			boolean showMem = Util.getBooleanOption( this, PREF_KEY_SHOW_MEM );
 
 			String name;
 			for ( RunningAppProcessInfo rap : list )
@@ -868,8 +825,10 @@ public final class ProcessManager extends ListActivity
 				procCache.procList.add( pi );
 			}
 
-			procCache.reOrder( getIntOption( PREF_KEY_SORT_ORDER_TYPE,
-					ORDER_TYPE_NAME ), getIntOption( PREF_KEY_SORT_DIRECTION,
+			procCache.reOrder( Util.getIntOption( this,
+					PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_NAME ), Util.getIntOption( this,
+					PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC ) );
 		}
 	}
@@ -1501,9 +1460,8 @@ public final class ProcessManager extends ListActivity
 
 						if ( list.size( ) == nlist.size( ) )
 						{
-							Toast.makeText( ProcessSettings.this,
-									R.string.no_item_remove,
-									Toast.LENGTH_SHORT ).show( );
+							Util.shortToast( ProcessSettings.this,
+									R.string.no_item_remove );
 						}
 						else
 						{

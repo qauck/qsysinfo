@@ -41,12 +41,9 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
-import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
@@ -73,7 +70,6 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
@@ -167,7 +163,9 @@ public final class NetStateManager extends ListActivity
 		{
 			refresh( );
 
-			int interval = getIntOption( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW );
+			int interval = Util.getIntOption( NetStateManager.this,
+					PREF_KEY_REFRESH_INTERVAL,
+					REFRESH_LOW );
 
 			switch ( interval )
 			{
@@ -205,7 +203,9 @@ public final class NetStateManager extends ListActivity
 			{
 				if ( position > 0 )
 				{
-					int state = getIntOption( PREF_KEY_REMOTE_QUERY, ENABLED );
+					int state = Util.getIntOption( NetStateManager.this,
+							PREF_KEY_REMOTE_QUERY,
+							ENABLED );
 
 					if ( state == DISABLED )
 					{
@@ -233,9 +233,8 @@ public final class NetStateManager extends ListActivity
 					}
 					else
 					{
-						Toast.makeText( NetStateManager.this,
-								R.string.no_ip_info,
-								Toast.LENGTH_SHORT ).show( );
+						Util.shortToast( NetStateManager.this,
+								R.string.no_ip_info );
 					}
 				}
 			}
@@ -344,15 +343,20 @@ public final class NetStateManager extends ListActivity
 			Intent it = new Intent( Intent.ACTION_VIEW );
 			it.setClass( this, NetStateSettings.class );
 
-			it.putExtra( PREF_KEY_REFRESH_INTERVAL,
-					getIntOption( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW ) );
-			it.putExtra( PREF_KEY_REMOTE_QUERY,
-					getIntOption( PREF_KEY_REMOTE_QUERY, ENABLED ) );
-			it.putExtra( PREF_KEY_SHOW_REMOTE_NAME, isShowRemoteName( ) );
-			it.putExtra( PREF_KEY_SORT_ORDER_TYPE,
-					getIntOption( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_PROTO ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION,
-					getIntOption( PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
+			it.putExtra( PREF_KEY_REFRESH_INTERVAL, Util.getIntOption( this,
+					PREF_KEY_REFRESH_INTERVAL,
+					REFRESH_LOW ) );
+			it.putExtra( PREF_KEY_REMOTE_QUERY, Util.getIntOption( this,
+					PREF_KEY_REMOTE_QUERY,
+					ENABLED ) );
+			it.putExtra( PREF_KEY_SHOW_REMOTE_NAME,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_REMOTE_NAME ) );
+			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
+					PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_PROTO ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
 
 			startActivityForResult( it, 1 );
 
@@ -406,35 +410,20 @@ public final class NetStateManager extends ListActivity
 	{
 		if ( requestCode == 1 )
 		{
-			int t = data.getIntExtra( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW );
-			if ( t != getIntOption( PREF_KEY_REFRESH_INTERVAL, REFRESH_LOW ) )
-			{
-				setIntOption( PREF_KEY_REFRESH_INTERVAL, t );
-			}
-
-			t = data.getIntExtra( PREF_KEY_REMOTE_QUERY, ENABLED );
-			if ( t != getIntOption( PREF_KEY_REMOTE_QUERY, ENABLED ) )
-			{
-				setIntOption( PREF_KEY_REMOTE_QUERY, t );
-			}
-
-			t = data.getIntExtra( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_PROTO );
-			if ( t != getIntOption( PREF_KEY_SORT_ORDER_TYPE, ORDER_TYPE_PROTO ) )
-			{
-				setIntOption( PREF_KEY_SORT_ORDER_TYPE, t );
-			}
-
-			t = data.getIntExtra( PREF_KEY_SORT_DIRECTION, ORDER_ASC );
-			if ( t != getIntOption( PREF_KEY_SORT_DIRECTION, ORDER_ASC ) )
-			{
-				setIntOption( PREF_KEY_SORT_DIRECTION, t );
-			}
-
-			boolean b = data.getBooleanExtra( PREF_KEY_SHOW_REMOTE_NAME, true );
-			if ( b != isShowRemoteName( ) )
-			{
-				setShowRemoteName( b );
-			}
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_REFRESH_INTERVAL,
+					REFRESH_LOW );
+			Util.updateIntOption( data, this, PREF_KEY_REMOTE_QUERY, ENABLED );
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_PROTO );
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC );
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_REMOTE_NAME );
 		}
 	}
 
@@ -504,9 +493,11 @@ public final class NetStateManager extends ListActivity
 
 		if ( items != null )
 		{
-			final int type = getIntOption( PREF_KEY_SORT_ORDER_TYPE,
+			final int type = Util.getIntOption( this,
+					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_PROTO );
-			final int direction = getIntOption( PREF_KEY_SORT_DIRECTION,
+			final int direction = Util.getIntOption( this,
+					PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC );
 			final Collator clt = Collator.getInstance( );
 
@@ -625,7 +616,8 @@ public final class NetStateManager extends ListActivity
 			int localOffset = -1, remOffset = -1, stateOffset = -1, stateEndOffset = -1;
 			String line;
 
-			final boolean showRemoteName = isShowRemoteName( );
+			final boolean showRemoteName = Util.getBooleanOption( this,
+					PREF_KEY_SHOW_REMOTE_NAME );
 			String remoteIp;
 			int portIdx;
 			IpInfo remoteInfo;
@@ -802,38 +794,6 @@ public final class NetStateManager extends ListActivity
 		return raw;
 	}
 
-	private int getIntOption( String key, int defValue )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getInt( key, defValue );
-	}
-
-	private void setIntOption( String key, int val )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putInt( key, val );
-		et.commit( );
-	}
-
-	private boolean isShowRemoteName( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getBoolean( PREF_KEY_SHOW_REMOTE_NAME, true );
-	}
-
-	private void setShowRemoteName( boolean val )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		et.putBoolean( PREF_KEY_SHOW_REMOTE_NAME, val );
-		et.commit( );
-	}
-
 	static void showIpInfo( final IpInfo info, final Activity context )
 	{
 		if ( info != null
@@ -884,8 +844,7 @@ public final class NetStateManager extends ListActivity
 		}
 		else
 		{
-			Toast.makeText( context, R.string.no_ip_info, Toast.LENGTH_SHORT )
-					.show( );
+			Util.shortToast( context, R.string.no_ip_info );
 		}
 	}
 

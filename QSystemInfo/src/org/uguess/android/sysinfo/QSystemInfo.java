@@ -40,7 +40,6 @@ import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TabHost;
-import android.widget.Toast;
 
 /**
  * QSystemInfo
@@ -258,9 +257,7 @@ public final class QSystemInfo extends TabActivity
 						}
 					}
 
-					Toast.makeText( this,
-							R.string.bug_failed,
-							Toast.LENGTH_SHORT ).show( );
+					Util.shortToast( this, R.string.bug_failed );
 				}
 			}
 		}

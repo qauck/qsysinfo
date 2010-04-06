@@ -227,5 +227,7 @@
     <string name="show_app_size_sum">Show size info for each application</string>
     <string name="show_app_date">Show Application Date</string>
     <string name="show_app_size">Show Application Size</string>
+    <string name="run_failed">Cannot run this application.</string>
+    <string name="run">Run</string>
 
 </resources>
