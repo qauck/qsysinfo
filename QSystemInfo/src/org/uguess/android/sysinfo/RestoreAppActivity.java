@@ -67,7 +67,6 @@ import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.CompoundButton.OnCheckedChangeListener;
@@ -77,8 +76,6 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
  */
 public final class RestoreAppActivity extends ListActivity
 {
-
-	static final String KEY_RESTORE_PATH = "restore_path"; //$NON-NLS-1$
 
 	private static final int MSG_INIT_OK = 9;
 	private static final int MSG_DISMISS_PROGRESS = 10;
@@ -485,10 +482,9 @@ public final class RestoreAppActivity extends ListActivity
 					}
 					else
 					{
-						Toast.makeText( RestoreAppActivity.this,
+						Util.shortToast( RestoreAppActivity.this,
 								getString( R.string.delete_file_failed,
-										ai.file.getAbsolutePath( ) ),
-								Toast.LENGTH_SHORT ).show( );
+										ai.file.getAbsolutePath( ) ) );
 					}
 				}
 			};
@@ -509,7 +505,7 @@ public final class RestoreAppActivity extends ListActivity
 
 	private void loadApps( )
 	{
-		String appPath = getIntent( ).getStringExtra( KEY_RESTORE_PATH );
+		String appPath = getIntent( ).getStringExtra( ApplicationManager.KEY_RESTORE_PATH );
 
 		if ( appPath == null )
 		{

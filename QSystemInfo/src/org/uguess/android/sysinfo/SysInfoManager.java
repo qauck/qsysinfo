@@ -93,7 +93,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
 /**
  * SysInfoManager
@@ -234,9 +233,7 @@ public final class SysInfoManager extends PreferenceActivity
 					break;
 				case MSG_TOAST :
 
-					Toast.makeText( SysInfoManager.this,
-							(String) msg.obj,
-							Toast.LENGTH_SHORT ).show( );
+					Util.shortToast( SysInfoManager.this, (String) msg.obj );
 					break;
 			}
 		}
@@ -2173,11 +2170,9 @@ public final class SysInfoManager extends PreferenceActivity
 				{
 					if ( handler == null )
 					{
-						Toast.makeText( context,
+						Util.shortToast( context,
 								context.getString( R.string.error_create_folder,
-										tf.getAbsolutePath( ) ),
-								Toast.LENGTH_SHORT )
-								.show( );
+										tf.getAbsolutePath( ) ) );
 					}
 					else
 					{

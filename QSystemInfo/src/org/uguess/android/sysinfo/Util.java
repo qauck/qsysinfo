@@ -32,6 +32,7 @@ import android.widget.Toast;
  */
 final class Util
 {
+
 	static int getIntOption( Activity ac, String key, int defValue )
 	{
 		return ac.getPreferences( Context.MODE_PRIVATE ).getInt( key, defValue );
@@ -59,6 +60,11 @@ final class Util
 	static void shortToast( Context context, int resId )
 	{
 		Toast.makeText( context, resId, Toast.LENGTH_SHORT ).show( );
+	}
+
+	static void shortToast( Context context, String msg )
+	{
+		Toast.makeText( context, msg, Toast.LENGTH_SHORT ).show( );
 	}
 
 	static boolean updateIntOption( Intent data, Activity ac, String key,

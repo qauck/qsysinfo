@@ -44,7 +44,6 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 /**
@@ -152,9 +151,7 @@ public final class LogViewer extends ListActivity
 					break;
 				case SysInfoManager.MSG_TOAST :
 
-					Toast.makeText( LogViewer.this,
-							(String) msg.obj,
-							Toast.LENGTH_SHORT ).show( );
+					Util.shortToast( LogViewer.this, (String) msg.obj );
 					break;
 			}
 		};

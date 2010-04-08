@@ -89,7 +89,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.CompoundButton.OnCheckedChangeListener;
@@ -132,6 +131,8 @@ public final class ApplicationManager extends ListActivity
 	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_SIZE = "show_size"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_DATE = "show_date"; //$NON-NLS-1$
+
+	static final String KEY_RESTORE_PATH = "restore_path"; //$NON-NLS-1$
 
 	private static final String DEFAULT_EXPORT_FOLDER = "/sdcard/backups/"; //$NON-NLS-1$
 
@@ -222,11 +223,9 @@ public final class ApplicationManager extends ListActivity
 						progress = null;
 					}
 
-					Toast.makeText( ApplicationManager.this,
+					Util.shortToast( ApplicationManager.this,
 							getString( R.string.copy_error,
-									( (Exception) msg.obj ).getLocalizedMessage( ) ),
-							Toast.LENGTH_LONG )
-							.show( );
+									( (Exception) msg.obj ).getLocalizedMessage( ) ) );
 					break;
 				case MSG_COPING_FINISHED :
 
@@ -239,11 +238,10 @@ public final class ApplicationManager extends ListActivity
 						progress = null;
 					}
 
-					Toast.makeText( ApplicationManager.this,
+					Util.shortToast( ApplicationManager.this,
 							getString( R.string.exported_to,
 									msg.obj,
-									getAppExportDir( ) ),
-							Toast.LENGTH_SHORT ).show( );
+									getAppExportDir( ) ) );
 
 					Notification nc = new Notification( R.drawable.icon,
 							getResources( ).getString( R.string.export_complete ),
@@ -1093,8 +1091,9 @@ public final class ApplicationManager extends ListActivity
 
 			intent.setClass( this, RestoreAppActivity.class );
 
-			intent.putExtra( RestoreAppActivity.KEY_RESTORE_PATH,
-					getAppExportDir( ) + '/' + USER_APP );
+			intent.putExtra( KEY_RESTORE_PATH, getAppExportDir( )
+					+ '/'
+					+ USER_APP );
 
 			startActivityForResult( intent, REQUEST_RESTORE );
 
