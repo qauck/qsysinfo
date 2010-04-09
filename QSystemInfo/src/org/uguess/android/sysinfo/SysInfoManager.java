@@ -285,23 +285,21 @@ public final class SysInfoManager extends PreferenceActivity
 				: ( getString( R.string.storage_summary, mi[0], mi[2] ) + getString( R.string.idle_info,
 						mi[1] ) ) );
 
-		String[] ei = getExternalStorageInfo( );
-		findPreference( "sd_storage" ).setSummary( ei == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
-				: getString( R.string.storage_summary, ei[0], ei[1] ) );
+		String[] si = getExternalStorageInfo( );
+		findPreference( "sd_storage" ).setSummary( si == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+				: getString( R.string.storage_summary, si[0], si[1] ) );
 
-		ei = getA2SDStorageInfo( );
-		findPreference( "app2sd_storage" ).setSummary( ei == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
-				: getString( R.string.storage_summary, ei[0], ei[1] ) );
+		si = getA2SDStorageInfo( );
+		findPreference( "app2sd_storage" ).setSummary( si == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+				: getString( R.string.storage_summary, si[0], si[1] ) );
 
-		String[] ii = getInternalStorageInfo( );
-		findPreference( "internal_storage" ).setSummary( getString( R.string.storage_summary, //$NON-NLS-1$
-				ii[0],
-				ii[1] ) );
+		si = getInternalStorageInfo( );
+		findPreference( "internal_storage" ).setSummary( si == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+				: getString( R.string.storage_summary, si[0], si[1] ) );
 
-		String[] cc = getCacheStorageInfo( );
-		findPreference( "cache_storage" ).setSummary( getString( R.string.storage_summary, //$NON-NLS-1$
-				cc[0],
-				cc[1] ) );
+		si = getCacheStorageInfo( );
+		findPreference( "cache_storage" ).setSummary( si == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+				: getString( R.string.storage_summary, si[0], si[1] ) );
 
 		String nInfo = getNetAddressInfo( );
 		findPreference( "net_address" ).setSummary( nInfo == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
@@ -814,16 +812,29 @@ public final class SysInfoManager extends PreferenceActivity
 
 	private String[] getStorageInfo( File path )
 	{
-		StatFs stat = new StatFs( path.getPath( ) );
-		long blockSize = stat.getBlockSize( );
+		if ( path != null )
+		{
+			try
+			{
+				StatFs stat = new StatFs( path.getAbsolutePath( ) );
+				long blockSize = stat.getBlockSize( );
 
-		String[] info = new String[2];
-		info[0] = Formatter.formatFileSize( this, stat.getBlockCount( )
-				* blockSize );
-		info[1] = Formatter.formatFileSize( this, stat.getAvailableBlocks( )
-				* blockSize );
+				String[] info = new String[2];
+				info[0] = Formatter.formatFileSize( this, stat.getBlockCount( )
+						* blockSize );
+				info[1] = Formatter.formatFileSize( this,
+						stat.getAvailableBlocks( ) * blockSize );
 
-		return info;
+				return info;
+			}
+			catch ( Exception e )
+			{
+				Log.e( SysInfoManager.class.getName( ), "Cannot access path: " //$NON-NLS-1$
+						+ path.getAbsolutePath( ), e );
+			}
+		}
+
+		return null;
 	}
 
 	static String getNetAddressInfo( )
