@@ -17,7 +17,7 @@
 	<string name="export">Export</string>
 	<string name="select_all">Select All</string>
 	<string name="deselect_all">Deselect All</string>
-	<string name="no_app_selected">No selected application to export.</string>
+	<string name="no_app_selected">No application selected.</string>
 	<string name="no_app_show">No application available under current filter
 		condition.</string>
 	<string name="warning">Warning</string>
@@ -198,8 +198,8 @@
     <string name="installation">Install State</string>
     <string name="installed_ver">%s (Installed %s)</string>
     <string name="scanning">Scanning %s</string>
-	<string name="no_apk_show">No application package found.</string>
-	<string name="no_apk_selected">No selected package to restore.</string>
+	<string name="no_apk_show">No application file found.</string>
+	<string name="no_apk_selected">No file selected.</string>
     <string name="show_cpu_summary">Show CPU usage for each process</string>
     <string name="show_memory_summary">Show memory usage for each process</string>
     <string name="show_cpu_usage">Show CPU Usage</string>
@@ -216,9 +216,9 @@
 	<string name="agree">I Agree</string>
     <string name="file_date">File Date</string>
     <string name="installed_date">Install Date</string>
-    <string name="delete_file_warn">Are you sure to delete this file?\n\n%s</string>
+    <string name="delete_file_warn">Are you sure to delete following files?\n\n%s</string>
     <string name="delete_file_failed">Failed to delete file: %s</string>
-    <string name="delete_file">Delete File</string>
+    <string name="delete_file">Delete</string>
     <string name="show_file_date_sum">Show date info for each file</string>
     <string name="show_file_date">Show File Date</string>
     <string name="show_file_size_sum">Show size info for each file</string>
@@ -227,7 +227,11 @@
     <string name="show_app_size_sum">Show size info for each application</string>
     <string name="show_app_date">Show Application Date</string>
     <string name="show_app_size">Show Application Size</string>
-    <string name="run_failed">Cannot run this application.</string>
-    <string name="run">Run</string>
+    <string name="run_failed">Cannot launch this application.</string>
+    <string name="run">Launch</string>
+    <string name="install_fail">No activity found to handle the install request.</string>
+    <string name="uninstall_fail">No activity found to handle the uninstall request.</string>
+    <string name="uninstall_msg">Are you sure to uninstall all selected applications?</string>
+    <string name="uninstall">Uninstall</string>
 
 </resources>

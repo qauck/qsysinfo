@@ -19,7 +19,7 @@
 	<string name="export">导出</string>
 	<string name="select_all">全部选择</string>
 	<string name="deselect_all">取消选择</string>
-	<string name="no_app_selected">没有选中的应用程序可以导出.</string>
+	<string name="no_app_selected">没有选中的应用程序.</string>
 	<string name="warning">警告</string>
 	<string name="warning_msg">应用程序会被导出到 ''%s'', 任何已存在的文件会被覆盖，请确定是否继续?</string>
 	<string name="cont">继续</string>
@@ -190,8 +190,8 @@
     <string name="installation">安装状态</string>
     <string name="installed_ver">%s (已安装 %s)</string>
     <string name="scanning">正在扫描 %s</string>
-	<string name="no_apk_show">没有找到应用程序包.</string>
-	<string name="no_apk_selected">没有选中的程序包可以还原.</string>
+	<string name="no_apk_show">没有找到应用程序文件.</string>
+	<string name="no_apk_selected">没有选中的文件.</string>
     <string name="show_cpu_summary">显示每个进程的CPU占用</string>
     <string name="show_memory_summary">显示每个进程的内存占用</string>
     <string name="show_cpu_usage">显示CPU占用</string>
@@ -205,7 +205,7 @@
 	<string name="agree">同意</string>
     <string name="file_date">文件日期</string>
     <string name="installed_date">安装日期</string>
-    <string name="delete_file_warn">是否确认删除此文件?\n\n%s</string>
+    <string name="delete_file_warn">是否确认删除以下文件?\n\n%s</string>
     <string name="delete_file_failed">删除文件失败: %s</string>
     <string name="delete_file">删除文件</string>
     <string name="show_file_date_sum">显示每个文件的日期信息</string>
@@ -218,5 +218,9 @@
     <string name="show_app_size">显示应用程序大小</string>
     <string name="run_failed">无法运行此应用程序.</string>
     <string name="run">运行</string>
+    <string name="install_fail">系统无法处理安装请求.</string>
+    <string name="uninstall_fail">系统无法处理卸载请求.</string>
+    <string name="uninstall_msg">是否确认卸载所有选中的应用程序?</string>
+    <string name="uninstall">卸载</string>
 
 </resources>

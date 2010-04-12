@@ -62,6 +62,7 @@ import android.content.pm.PackageStats;
 import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -1043,6 +1044,12 @@ public final class ApplicationManager extends ListActivity
 	public boolean onCreateOptionsMenu( Menu menu )
 	{
 		MenuItem mi = menu.add( Menu.NONE,
+				R.id.mi_preference + 2,
+				Menu.NONE,
+				R.string.uninstall );
+		mi.setIcon( android.R.drawable.ic_menu_delete );
+
+		mi = menu.add( Menu.NONE,
 				R.id.mi_preference + 1,
 				Menu.NONE,
 				R.string.restore );
@@ -1096,6 +1103,12 @@ public final class ApplicationManager extends ListActivity
 					+ USER_APP );
 
 			startActivityForResult( intent, REQUEST_RESTORE );
+
+			return true;
+		}
+		else if ( item.getItemId( ) == R.id.mi_preference + 2 )
+		{
+			doUninstall( );
 
 			return true;
 		}
@@ -1162,6 +1175,64 @@ public final class ApplicationManager extends ListActivity
 		}
 
 		return false;
+	}
+
+	private void doUninstall( )
+	{
+		final List<ApplicationInfo> sels = getSelected( );
+
+		if ( sels == null || sels.size( ) == 0 )
+		{
+			Util.shortToast( this, R.string.no_app_selected );
+		}
+		else
+		{
+			OnClickListener listener = new OnClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which )
+				{
+					boolean canUninstall = false;
+
+					for ( int i = 0; i < sels.size( ); i++ )
+					{
+						ApplicationInfo app = sels.get( i );
+
+						Intent it = new Intent( Intent.ACTION_DELETE,
+								Uri.parse( "package:" //$NON-NLS-1$
+										+ app.packageName ) );
+
+						if ( !canUninstall )
+						{
+							List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
+									0 );
+
+							canUninstall = acts.size( ) > 0;
+						}
+
+						if ( canUninstall )
+						{
+							startActivity( it );
+						}
+					}
+
+					if ( !canUninstall )
+					{
+						Util.shortToast( ApplicationManager.this,
+								R.string.uninstall_fail );
+
+						Log.d( ApplicationManager.class.getName( ),
+								"No activity found to handle the uninstall request." ); //$NON-NLS-1$
+					}
+				}
+			};
+
+			new AlertDialog.Builder( this ).setTitle( R.string.warning )
+					.setMessage( R.string.uninstall_msg )
+					.setPositiveButton( android.R.string.ok, listener )
+					.setNegativeButton( android.R.string.cancel, null )
+					.create( )
+					.show( );
+		}
 	}
 
 	private void doExport( )

@@ -39,6 +39,7 @@ import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -52,6 +53,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.text.format.Formatter;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -412,6 +414,12 @@ public final class RestoreAppActivity extends ListActivity
 	public boolean onCreateOptionsMenu( Menu menu )
 	{
 		MenuItem mi = menu.add( Menu.NONE,
+				R.id.mi_preference + 1,
+				Menu.NONE,
+				R.string.delete_file );
+		mi.setIcon( android.R.drawable.ic_menu_delete );
+
+		mi = menu.add( Menu.NONE,
 				R.id.mi_preference,
 				Menu.NONE,
 				R.string.preference );
@@ -441,6 +449,65 @@ public final class RestoreAppActivity extends ListActivity
 					PREF_KEY_SHOW_DATE ) );
 
 			startActivityForResult( intent, 1 );
+
+			return true;
+		}
+		else if ( item.getItemId( ) == R.id.mi_preference + 1 )
+		{
+			final List<ApkInfo> apks = getSelected( );
+
+			if ( apks.size( ) == 0 )
+			{
+				Util.shortToast( this, R.string.no_apk_selected );
+			}
+			else
+			{
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						ArrayAdapter adapter = ( (ArrayAdapter) lstApps.getAdapter( ) );
+						adapter.setNotifyOnChange( false );
+
+						for ( ApkInfo ai : apks )
+						{
+							boolean deleted = ai.file.delete( );
+
+							if ( deleted )
+							{
+								adapter.remove( ai );
+							}
+							else
+							{
+								Util.shortToast( RestoreAppActivity.this,
+										getString( R.string.delete_file_failed,
+												ai.file.getAbsolutePath( ) ) );
+							}
+						}
+
+						adapter.notifyDataSetChanged( );
+
+						if ( getSelectedCount( ) == 0 )
+						{
+							hideButtons( );
+						}
+					}
+				};
+
+				StringBuilder sb = new StringBuilder( );
+				for ( ApkInfo ai : apks )
+				{
+					sb.append( ai.file.getName( ) ).append( '\n' );
+				}
+
+				new AlertDialog.Builder( this ).setTitle( R.string.warning )
+						.setMessage( getString( R.string.delete_file_warn,
+								sb.toString( ) ) )
+						.setPositiveButton( android.R.string.yes, listener )
+						.setNegativeButton( android.R.string.no, null )
+						.create( )
+						.show( );
+			}
 
 			return true;
 		}
@@ -695,6 +762,8 @@ public final class RestoreAppActivity extends ListActivity
 		}
 		else
 		{
+			boolean canInstall = false;
+
 			for ( int i = 0; i < apps.size( ); i++ )
 			{
 				ApkInfo app = apps.get( i );
@@ -704,7 +773,26 @@ public final class RestoreAppActivity extends ListActivity
 				it.setDataAndType( Uri.fromFile( app.file ),
 						"application/vnd.android.package-archive" ); //$NON-NLS-1$
 
-				startActivity( it );
+				if ( !canInstall )
+				{
+					List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
+							0 );
+
+					canInstall = acts.size( ) > 0;
+				}
+
+				if ( canInstall )
+				{
+					startActivity( it );
+				}
+			}
+
+			if ( !canInstall )
+			{
+				Util.shortToast( this, R.string.install_fail );
+
+				Log.d( RestoreAppActivity.class.getName( ),
+						"No activity found to handle the install request." ); //$NON-NLS-1$
 			}
 		}
 	}
