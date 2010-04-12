@@ -49,8 +49,8 @@
 	<string name="tab_apps">應用程式</string>
 	<string name="tab_procs">進程</string>
 	<string name="preference">設定</string>
-	<string name="export_dir">備份目錄</string>
-	<string name="error_create_folder">創建目錄 %s 失敗.</string>
+	<string name="export_dir">備份資料夾</string>
+	<string name="error_create_folder">創建資料夾 %s 失敗.</string>
 	<string name="error_switch_task">無法切換至該任務.</string>
 	<string name="net_address">網路位址</string>
 	<string name="verbose">詳細</string>
@@ -222,5 +222,11 @@
     <string name="uninstall_fail">系統無法處理解除安裝請求.</string>
     <string name="uninstall_msg">是否確認解除安裝所有選取的應用程式?</string>
     <string name="uninstall">解除安裝</string>
+    <string name="file_path">檔案路徑</string>
+    <string name="show_file_path_sum">顯示每個檔案的路徑資訊</string>
+    <string name="show_file_path">顯示檔案路徑</string>
+    <string name="search_subdir_sum">檢索子資料夾中的檔案</string>
+    <string name="search_subdir">檢索子資料夾</string>
+    <string name="scan_dir">還原資料夾</string>
 
 </resources>

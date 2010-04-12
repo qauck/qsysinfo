@@ -34,9 +34,12 @@ import java.util.List;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
+import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -52,6 +55,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -66,6 +70,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -82,16 +87,22 @@ public final class RestoreAppActivity extends ListActivity
 	private static final int MSG_INIT_OK = 9;
 	private static final int MSG_DISMISS_PROGRESS = 10;
 	private static final int MSG_SCAN = 11;
+	private static final int MSG_PRE_SCAN = 12;
 
+	private static final String PREF_KEY_DEFAULT_RESTORE_DIR = "default_restore_dir"; //$NON-NLS-1$
+	private static final String PREF_KEY_APP_RESTORE_DIR = "app_restore_dir"; //$NON-NLS-1$
+	private static final String PREF_KEY_SEARCH_SUB_DIR = "search_sub_dir"; //$NON-NLS-1$
 	private static final String PREF_KEY_SORT_ORDER_TYPE = "sort_order_type"; //$NON-NLS-1$
 	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_SIZE = "show_size"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_DATE = "show_date"; //$NON-NLS-1$
+	private static final String PREF_KEY_SHOW_PATH = "show_path"; //$NON-NLS-1$
 
 	private static final int ORDER_TYPE_NAME = 0;
 	private static final int ORDER_TYPE_SIZE = 1;
 	private static final int ORDER_TYPE_INSTALL = 2;
 	private static final int ORDER_TYPE_DATE = 3;
+	private static final int ORDER_TYPE_PATH = 4;
 
 	private static final int ORDER_ASC = 1;
 	private static final int ORDER_DESC = -1;
@@ -163,6 +174,20 @@ public final class RestoreAppActivity extends ListActivity
 								msg.obj ) );
 						progress.setProgress( progress.getProgress( ) + 1 );
 					}
+					break;
+				case MSG_PRE_SCAN :
+
+					if ( progress != null )
+					{
+						progress.dismiss( );
+					}
+
+					progress = new ProgressDialog( RestoreAppActivity.this );
+					progress.setMessage( getResources( ).getText( R.string.loading ) );
+					progress.setIndeterminate( false );
+					progress.setProgressStyle( ProgressDialog.STYLE_HORIZONTAL );
+					progress.setMax( msg.arg1 );
+					progress.show( );
 					break;
 			}
 		}
@@ -241,7 +266,6 @@ public final class RestoreAppActivity extends ListActivity
 			public void onItemClick( AdapterView<?> parent, View view,
 					int position, long id )
 			{
-				// TODO invoke other action?
 				CheckBox ckb_app = (CheckBox) view.findViewById( R.id.ckb_app );
 
 				ckb_app.setChecked( !ckb_app.isChecked( ) );
@@ -255,7 +279,7 @@ public final class RestoreAppActivity extends ListActivity
 					android.view.View convertView, android.view.ViewGroup parent )
 			{
 				View view;
-				TextView txt_name, txt_size, txt_ver, txt_time;
+				TextView txt_name, txt_size, txt_ver, txt_time, txt_path;
 				ImageView img_type;
 				CheckBox ckb_app;
 
@@ -327,6 +351,19 @@ public final class RestoreAppActivity extends ListActivity
 					txt_size.setVisibility( View.GONE );
 				}
 
+				txt_path = (TextView) view.findViewById( R.id.app_path );
+				if ( Util.getBooleanOption( RestoreAppActivity.this,
+						PREF_KEY_SHOW_PATH ) )
+				{
+					txt_path.setVisibility( View.VISIBLE );
+
+					txt_path.setText( itm.file.getAbsolutePath( ) );
+				}
+				else
+				{
+					txt_path.setVisibility( View.GONE );
+				}
+
 				txt_time = (TextView) view.findViewById( R.id.app_time );
 				if ( Util.getBooleanOption( RestoreAppActivity.this,
 						PREF_KEY_SHOW_DATE ) )
@@ -383,6 +420,32 @@ public final class RestoreAppActivity extends ListActivity
 	{
 		if ( requestCode == 1 )
 		{
+			skipUpdate = true;
+
+			String nDir = data.getStringExtra( PREF_KEY_APP_RESTORE_DIR );
+
+			if ( nDir != null )
+			{
+				nDir = nDir.trim( );
+
+				if ( nDir.length( ) == 0 )
+				{
+					nDir = null;
+				}
+			}
+
+			if ( !TextUtils.equals( nDir, getAppRestoreDir( ) ) )
+			{
+				setAppRestoreDir( nDir );
+
+				skipUpdate = false;
+			}
+
+			if ( Util.updateBooleanOption( data, this, PREF_KEY_SEARCH_SUB_DIR ) )
+			{
+				skipUpdate = false;
+			}
+
 			Util.updateIntOption( data,
 					this,
 					PREF_KEY_SORT_ORDER_TYPE,
@@ -394,19 +457,22 @@ public final class RestoreAppActivity extends ListActivity
 
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_SIZE );
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_DATE );
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_PATH );
 
-			Comparator<ApkInfo> comp = getComparator( Util.getIntOption( this,
-					PREF_KEY_SORT_ORDER_TYPE,
-					ORDER_TYPE_NAME ), Util.getIntOption( this,
-					PREF_KEY_SORT_DIRECTION,
-					ORDER_ASC ) );
-
-			if ( comp != null )
+			if ( skipUpdate )
 			{
-				( (ArrayAdapter<ApkInfo>) lstApps.getAdapter( ) ).sort( comp );
-			}
+				Comparator<ApkInfo> comp = getComparator( Util.getIntOption( this,
+						PREF_KEY_SORT_ORDER_TYPE,
+						ORDER_TYPE_NAME ),
+						Util.getIntOption( this,
+								PREF_KEY_SORT_DIRECTION,
+								ORDER_ASC ) );
 
-			skipUpdate = true;
+				if ( comp != null )
+				{
+					( (ArrayAdapter<ApkInfo>) lstApps.getAdapter( ) ).sort( comp );
+				}
+			}
 		}
 	}
 
@@ -437,6 +503,11 @@ public final class RestoreAppActivity extends ListActivity
 
 			intent.setClass( this, RestoreAppSettings.class );
 
+			intent.putExtra( PREF_KEY_DEFAULT_RESTORE_DIR,
+					getIntent( ).getStringExtra( ApplicationManager.KEY_RESTORE_PATH ) );
+			intent.putExtra( PREF_KEY_APP_RESTORE_DIR, getAppRestoreDir( ) );
+			intent.putExtra( PREF_KEY_SEARCH_SUB_DIR,
+					Util.getBooleanOption( this, PREF_KEY_SEARCH_SUB_DIR ) );
 			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
@@ -447,6 +518,8 @@ public final class RestoreAppActivity extends ListActivity
 					PREF_KEY_SHOW_SIZE ) );
 			intent.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
 					PREF_KEY_SHOW_DATE ) );
+			intent.putExtra( PREF_KEY_SHOW_PATH, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_PATH ) );
 
 			startActivityForResult( intent, 1 );
 
@@ -570,9 +643,77 @@ public final class RestoreAppActivity extends ListActivity
 		return false;
 	}
 
+	private String getAppRestoreDir( )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		return sp.getString( PREF_KEY_APP_RESTORE_DIR, null );
+	}
+
+	private void setAppRestoreDir( String val )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		if ( val == null )
+		{
+			et.remove( PREF_KEY_APP_RESTORE_DIR );
+		}
+		else
+		{
+			et.putString( PREF_KEY_APP_RESTORE_DIR, val );
+		}
+		et.commit( );
+	}
+
+	private ArrayList<File> getFiles( File parent, final boolean recursive )
+	{
+		final ArrayList<File> files = new ArrayList<File>( );
+
+		FileFilter filter = new FileFilter( ) {
+
+			public boolean accept( File f )
+			{
+				if ( f.isFile( )
+						&& f.getName( ).toLowerCase( ).endsWith( ".apk" ) ) //$NON-NLS-1$
+				{
+					files.add( f );
+				}
+				else if ( recursive && f.isDirectory( ) )
+				{
+					try
+					{
+						// try skip links
+						if ( f.getAbsolutePath( )
+								.equals( f.getCanonicalPath( ) ) )
+						{
+							f.listFiles( this );
+						}
+					}
+					catch ( Exception e )
+					{
+						Log.e( RestoreAppActivity.class.getName( ),
+								e.getLocalizedMessage( ),
+								e );
+					}
+				}
+				return false;
+			}
+		};
+
+		parent.listFiles( filter );
+
+		return files;
+	}
+
 	private void loadApps( )
 	{
-		String appPath = getIntent( ).getStringExtra( ApplicationManager.KEY_RESTORE_PATH );
+		String appPath = getAppRestoreDir( );
+
+		if ( appPath == null )
+		{
+			appPath = getIntent( ).getStringExtra( ApplicationManager.KEY_RESTORE_PATH );
+		}
 
 		if ( appPath == null )
 		{
@@ -588,36 +729,30 @@ public final class RestoreAppActivity extends ListActivity
 			return;
 		}
 
-		final File[] files = appFolder.listFiles( new FileFilter( ) {
-
-			public boolean accept( File f )
-			{
-				if ( f.isFile( ) )
-				{
-					return f.getName( ).toLowerCase( ).endsWith( ".apk" ); //$NON-NLS-1$
-				}
-				return false;
-			}
-		} );
-
 		if ( progress == null )
 		{
 			progress = new ProgressDialog( this );
 		}
 		progress.setMessage( getResources( ).getText( R.string.loading ) );
-		progress.setIndeterminate( false );
-		progress.setProgressStyle( ProgressDialog.STYLE_HORIZONTAL );
-		progress.setMax( files == null ? 0 : files.length );
+		progress.setIndeterminate( true );
 		progress.show( );
 
 		new Thread( new Runnable( ) {
 
 			public void run( )
 			{
+				ArrayList<File> files = getFiles( appFolder,
+						Util.getBooleanOption( RestoreAppActivity.this,
+								PREF_KEY_SEARCH_SUB_DIR ) );
+
 				ArrayList<ApkInfo> dataList = new ArrayList<ApkInfo>( );
 
-				if ( files != null )
+				if ( files.size( ) > 0 )
 				{
+					handler.sendMessage( handler.obtainMessage( MSG_PRE_SCAN,
+							files.size( ),
+							0 ) );
+
 					PackageManager pm = getPackageManager( );
 
 					PackageInfo pi;
@@ -681,18 +816,18 @@ public final class RestoreAppActivity extends ListActivity
 							dataList.add( holder );
 						}
 					}
-				}
 
-				Comparator<ApkInfo> comp = getComparator( Util.getIntOption( RestoreAppActivity.this,
-						PREF_KEY_SORT_ORDER_TYPE,
-						ORDER_TYPE_NAME ),
-						Util.getIntOption( RestoreAppActivity.this,
-								PREF_KEY_SORT_DIRECTION,
-								ORDER_ASC ) );
+					Comparator<ApkInfo> comp = getComparator( Util.getIntOption( RestoreAppActivity.this,
+							PREF_KEY_SORT_ORDER_TYPE,
+							ORDER_TYPE_NAME ),
+							Util.getIntOption( RestoreAppActivity.this,
+									PREF_KEY_SORT_DIRECTION,
+									ORDER_ASC ) );
 
-				if ( comp != null )
-				{
-					Collections.sort( dataList, comp );
+					if ( comp != null )
+					{
+						Collections.sort( dataList, comp );
+					}
 				}
 
 				handler.sendMessage( handler.obtainMessage( MSG_INIT_OK,
@@ -864,6 +999,14 @@ public final class RestoreAppActivity extends ListActivity
 								* direction;
 					}
 				};
+			case ORDER_TYPE_PATH :
+				return new Comparator<ApkInfo>( ) {
+
+					public int compare( ApkInfo obj1, ApkInfo obj2 )
+					{
+						return obj1.file.compareTo( obj2.file ) * direction;
+					}
+				};
 		}
 
 		return null;
@@ -904,6 +1047,17 @@ public final class RestoreAppActivity extends ListActivity
 			pc.setTitle( R.string.preference );
 			getPreferenceScreen( ).addPreference( pc );
 
+			Preference perfRestoreFolder = new Preference( this );
+			perfRestoreFolder.setKey( PREF_KEY_APP_RESTORE_DIR );
+			perfRestoreFolder.setTitle( R.string.scan_dir );
+			pc.addPreference( perfRestoreFolder );
+
+			CheckBoxPreference perfSubDir = new CheckBoxPreference( this );
+			perfSubDir.setKey( PREF_KEY_SEARCH_SUB_DIR );
+			perfSubDir.setTitle( R.string.search_subdir );
+			perfSubDir.setSummary( R.string.search_subdir_sum );
+			pc.addPreference( perfSubDir );
+
 			CheckBoxPreference perfShowSize = new CheckBoxPreference( this );
 			perfShowSize.setKey( PREF_KEY_SHOW_SIZE );
 			perfShowSize.setTitle( R.string.show_file_size );
@@ -915,6 +1069,12 @@ public final class RestoreAppActivity extends ListActivity
 			perfShowDate.setTitle( R.string.show_file_date );
 			perfShowDate.setSummary( R.string.show_file_date_sum );
 			pc.addPreference( perfShowDate );
+
+			CheckBoxPreference perfShowPath = new CheckBoxPreference( this );
+			perfShowPath.setKey( PREF_KEY_SHOW_PATH );
+			perfShowPath.setTitle( R.string.show_file_path );
+			perfShowPath.setSummary( R.string.show_file_path_sum );
+			pc.addPreference( perfShowPath );
 
 			pc = new PreferenceCategory( this );
 			pc.setTitle( R.string.sort );
@@ -930,12 +1090,26 @@ public final class RestoreAppActivity extends ListActivity
 			perfSortDirection.setTitle( R.string.sort_direction );
 			pc.addPreference( perfSortDirection );
 
+			refreshRestoreFolder( );
+			refreshBooleanOption( PREF_KEY_SEARCH_SUB_DIR );
 			refreshSortType( );
 			refreshSortDirection( );
 			refreshBooleanOption( PREF_KEY_SHOW_SIZE );
 			refreshBooleanOption( PREF_KEY_SHOW_DATE );
+			refreshBooleanOption( PREF_KEY_SHOW_PATH );
 
 			setResult( RESULT_OK, getIntent( ) );
+		}
+
+		private void refreshRestoreFolder( )
+		{
+			String path = getIntent( ).getStringExtra( PREF_KEY_APP_RESTORE_DIR );
+			if ( path == null )
+			{
+				path = getIntent( ).getStringExtra( PREF_KEY_DEFAULT_RESTORE_DIR );
+			}
+
+			findPreference( PREF_KEY_APP_RESTORE_DIR ).setSummary( path );
 		}
 
 		private void refreshBooleanOption( String key )
@@ -965,6 +1139,9 @@ public final class RestoreAppActivity extends ListActivity
 				case ORDER_TYPE_DATE :
 					label = getString( R.string.file_date );
 					break;
+				case ORDER_TYPE_PATH :
+					label = getString( R.string.file_path );
+					break;
 			}
 
 			findPreference( PREF_KEY_SORT_ORDER_TYPE ).setSummary( label );
@@ -987,7 +1164,59 @@ public final class RestoreAppActivity extends ListActivity
 		{
 			final Intent it = getIntent( );
 
-			if ( PREF_KEY_SHOW_SIZE.equals( preference.getKey( ) ) )
+			if ( PREF_KEY_APP_RESTORE_DIR.equals( preference.getKey( ) ) )
+			{
+				final EditText txt = new EditText( this );
+				final String defaultPath = it.getStringExtra( PREF_KEY_DEFAULT_RESTORE_DIR );
+
+				String path = it.getStringExtra( PREF_KEY_APP_RESTORE_DIR );
+				if ( path == null )
+				{
+					path = defaultPath;
+				}
+				txt.setText( path );
+
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						String path = txt.getText( ).toString( );
+
+						if ( path != null )
+						{
+							path = path.trim( );
+
+							if ( path.length( ) == 0 )
+							{
+								path = null;
+							}
+						}
+
+						it.putExtra( PREF_KEY_APP_RESTORE_DIR, path );
+
+						dialog.dismiss( );
+
+						refreshRestoreFolder( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.scan_dir )
+						.setPositiveButton( android.R.string.ok, listener )
+						.setNegativeButton( android.R.string.cancel, null )
+						.setView( txt )
+						.create( )
+						.show( );
+
+				return true;
+			}
+			else if ( PREF_KEY_SEARCH_SUB_DIR.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SEARCH_SUB_DIR,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SEARCH_SUB_DIR ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_SHOW_SIZE.equals( preference.getKey( ) ) )
 			{
 				it.putExtra( PREF_KEY_SHOW_SIZE,
 						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_SIZE ) ).isChecked( ) );
@@ -998,6 +1227,13 @@ public final class RestoreAppActivity extends ListActivity
 			{
 				it.putExtra( PREF_KEY_SHOW_DATE,
 						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_DATE ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_SHOW_PATH.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_PATH,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_PATH ) ).isChecked( ) );
 
 				return true;
 			}
@@ -1022,6 +1258,7 @@ public final class RestoreAppActivity extends ListActivity
 								getString( R.string.file_size ),
 								getString( R.string.installation ),
 								getString( R.string.file_date ),
+								getString( R.string.file_path ),
 						},
 								it.getIntExtra( PREF_KEY_SORT_ORDER_TYPE,
 										ORDER_TYPE_NAME ),

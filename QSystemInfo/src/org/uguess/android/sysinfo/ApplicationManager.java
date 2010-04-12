@@ -1098,9 +1098,8 @@ public final class ApplicationManager extends ListActivity
 
 			intent.setClass( this, RestoreAppActivity.class );
 
-			intent.putExtra( KEY_RESTORE_PATH, getAppExportDir( )
-					+ '/'
-					+ USER_APP );
+			intent.putExtra( KEY_RESTORE_PATH, new File( getAppExportDir( ),
+					USER_APP ).getAbsolutePath( ) );
 
 			startActivityForResult( intent, REQUEST_RESTORE );
 

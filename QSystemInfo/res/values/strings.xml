@@ -233,5 +233,11 @@
     <string name="uninstall_fail">No activity found to handle the uninstall request.</string>
     <string name="uninstall_msg">Are you sure to uninstall all selected applications?</string>
     <string name="uninstall">Uninstall</string>
+    <string name="file_path">File Path</string>
+    <string name="show_file_path_sum">Show path info for each file</string>
+    <string name="show_file_path">Show File Path</string>
+    <string name="search_subdir_sum">Search files in subfolder</string>
+    <string name="search_subdir">Search Subfolder</string>
+    <string name="scan_dir">Restore Folder</string>
 
 </resources>

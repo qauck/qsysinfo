@@ -222,5 +222,11 @@
     <string name="uninstall_fail">系统无法处理卸载请求.</string>
     <string name="uninstall_msg">是否确认卸载所有选中的应用程序?</string>
     <string name="uninstall">卸载</string>
+    <string name="file_path">文件路径</string>
+    <string name="show_file_path_sum">显示每个文件的路径信息</string>
+    <string name="show_file_path">显示文件路径</string>
+    <string name="search_subdir_sum">搜索子目录中的文件</string>
+    <string name="search_subdir">搜索子目录</string>
+    <string name="scan_dir">还原目录</string>
 
 </resources>
