@@ -133,8 +133,17 @@ public final class BatteryInfoActivity extends SysInfoManager.PopActivity
 
 				int tens = temperature / 10;
 
-				String tpStr = String.valueOf( Integer.toString( tens ) + "." //$NON-NLS-1$
-						+ ( temperature - 10 * tens ) ) + "\u00B0 C"; //$NON-NLS-1$
+				String ct = Integer.toString( tens ) + "." //$NON-NLS-1$
+						+ ( temperature - 10 * tens );
+
+				tens = temperature * 18 / 100;
+
+				String ft = Integer.toString( tens + 32 ) + "." //$NON-NLS-1$
+						+ ( temperature * 18 - 100 * tens );
+
+				String tpStr = ct + "\u00B0C / " //$NON-NLS-1$
+						+ ft
+						+ "\u00B0F"; //$NON-NLS-1$
 
 				data.add( new String[]{
 						getString( R.string.batt_temp ), tpStr
