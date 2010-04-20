@@ -228,5 +228,9 @@
     <string name="search_subdir_sum">檢索子資料夾中的檔案</string>
     <string name="search_subdir">檢索子資料夾</string>
     <string name="scan_dir">還原資料夾</string>
+	<string name="task_widget_name">任務終結者</string>
+	<string name="widget_bar_name">系統資訊欄</string>
+	<string name="kill_info">結束了 %s 個任務, 忽略 %s 個.</string>
+	<string name="kill_info2">結束了 %s 個任務, 忽略 %s 個.</string>
 
 </resources>

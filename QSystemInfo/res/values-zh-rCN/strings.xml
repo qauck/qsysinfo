@@ -228,5 +228,9 @@
     <string name="search_subdir_sum">搜索子目录中的文件</string>
     <string name="search_subdir">搜索子目录</string>
     <string name="scan_dir">还原目录</string>
+	<string name="task_widget_name">任务终止器</string>
+	<string name="widget_bar_name">系统信息栏</string>
+	<string name="kill_info">结束了 %s 个任务, 忽略 %s 个.</string>
+	<string name="kill_info2">结束了 %s 个任务, 忽略 %s 个.</string>
 
 </resources>

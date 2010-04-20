@@ -658,9 +658,12 @@ public final class ProcessManager extends ListActivity
 		return super.onContextItemSelected( item );
 	}
 
-	private ArrayList<String> getIgnoreList( )
+	static ArrayList<String> getIgnoreList( SharedPreferences sp )
 	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+		if ( sp == null )
+		{
+			return null;
+		}
 
 		String listVal = sp.getString( PREF_KEY_IGNORE_LIST, null );
 
@@ -678,6 +681,11 @@ public final class ProcessManager extends ListActivity
 		}
 
 		return list.size( ) == 0 ? null : list;
+	}
+
+	private ArrayList<String> getIgnoreList( )
+	{
+		return getIgnoreList( getPreferences( Context.MODE_PRIVATE ) );
 	}
 
 	private void setIgnoreList( Collection<String> list )

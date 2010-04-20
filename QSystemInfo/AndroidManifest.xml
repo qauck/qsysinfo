@@ -39,6 +39,29 @@
 			android:configChanges="keyboardHidden|orientation"></activity>
 		<activity android:name=".QSystemInfo$ErrorReportActivity"
 			android:configChanges="keyboardHidden|orientation"></activity>
+		<receiver android:name=".WidgetProvider" android:label="@string/widget_bar_name">
+			<intent-filter>
+				<action android:name="android.appwidget.action.APPWIDGET_UPDATE"></action>
+			</intent-filter>
+			<meta-data android:resource="@xml/widget_bar_info"
+				android:name="android.appwidget.provider"></meta-data>
+		</receiver>
+		<receiver android:name=".WidgetProvider$TaskWidget"
+			android:icon="@drawable/end" android:label="@string/task_widget_name">
+			<intent-filter>
+				<action android:name="android.appwidget.action.APPWIDGET_UPDATE"></action>
+			</intent-filter>
+			<meta-data android:resource="@xml/widget_info"
+				android:name="android.appwidget.provider"></meta-data>
+		</receiver>
+		<receiver android:name=".WidgetProvider$InfoWidget">
+			<intent-filter>
+				<action android:name="android.appwidget.action.APPWIDGET_UPDATE"></action>
+			</intent-filter>
+			<meta-data android:resource="@xml/widget_info"
+				android:name="android.appwidget.provider"></meta-data>
+		</receiver>
+		<service android:name=".WidgetProvider$EndTaskService"></service>
 	</application>
 
 	<uses-sdk android:minSdkVersion="3" />
