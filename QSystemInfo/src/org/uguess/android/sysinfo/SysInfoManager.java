@@ -72,8 +72,10 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.StatFs;
+import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
 import android.provider.Settings;
@@ -133,6 +135,10 @@ public final class SysInfoManager extends PreferenceActivity
 	static final int PLAINTEXT = 0;
 	static final int HTML = 1;
 	static final int CSV = 2;
+
+	static final String PREF_KEY_SHOW_INFO_ICON = "show_info_icon"; //$NON-NLS-1$
+	static final String PREF_KEY_SHOW_TASK_ICON = "show_task_icon"; //$NON-NLS-1$
+	static final String PREF_KEY_AUTO_START_ICON = "auto_start_icon"; //$NON-NLS-1$
 
 	private static final int BASIC_INFO = 0;
 	private static final int APPLICATIONS = 1;
@@ -1098,6 +1104,21 @@ public final class SysInfoManager extends PreferenceActivity
 	}
 
 	@Override
+	protected void onActivityResult( int requestCode, int resultCode,
+			Intent data )
+	{
+		if ( requestCode == 2 )
+		{
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_INFO_ICON );
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_TASK_ICON );
+			Util.updateBooleanOption( data,
+					this,
+					PREF_KEY_AUTO_START_ICON,
+					false );
+		}
+	}
+
+	@Override
 	public boolean onCreateOptionsMenu( Menu menu )
 	{
 		MenuInflater inflater = getMenuInflater( );
@@ -1108,7 +1129,26 @@ public final class SysInfoManager extends PreferenceActivity
 	@Override
 	public boolean onOptionsItemSelected( MenuItem item )
 	{
-		if ( item.getItemId( ) == R.id.mi_help )
+		if ( item.getItemId( ) == R.id.mi_preference )
+		{
+			Intent intent = new Intent( Intent.ACTION_VIEW );
+
+			intent.setClass( this, InfoSettings.class );
+
+			intent.putExtra( PREF_KEY_SHOW_INFO_ICON,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_INFO_ICON ) );
+			intent.putExtra( PREF_KEY_SHOW_TASK_ICON,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_TASK_ICON ) );
+			intent.putExtra( PREF_KEY_AUTO_START_ICON,
+					Util.getBooleanOption( this,
+							PREF_KEY_AUTO_START_ICON,
+							false ) );
+
+			startActivityForResult( intent, 2 );
+
+			return true;
+		}
+		else if ( item.getItemId( ) == R.id.mi_help )
 		{
 			Intent it = new Intent( Intent.ACTION_VIEW );
 
@@ -2533,6 +2573,95 @@ public final class SysInfoManager extends PreferenceActivity
 			}
 
 			return super.dispatchTouchEvent( ev );
+		}
+	}
+
+	/**
+	 * InfoSettings
+	 */
+	public static final class InfoSettings extends PreferenceActivity
+	{
+
+		@Override
+		protected void onCreate( Bundle savedInstanceState )
+		{
+			requestWindowFeature( Window.FEATURE_NO_TITLE );
+
+			super.onCreate( savedInstanceState );
+
+			setPreferenceScreen( getPreferenceManager( ).createPreferenceScreen( this ) );
+
+			PreferenceCategory pc = new PreferenceCategory( this );
+			pc.setTitle( R.string.preference );
+			getPreferenceScreen( ).addPreference( pc );
+
+			CheckBoxPreference prefInfo = new CheckBoxPreference( this );
+			prefInfo.setKey( PREF_KEY_SHOW_INFO_ICON );
+			prefInfo.setTitle( R.string.show_info_icon );
+			prefInfo.setSummary( R.string.show_info_icon_sum );
+			pc.addPreference( prefInfo );
+
+			CheckBoxPreference prefTask = new CheckBoxPreference( this );
+			prefTask.setKey( PREF_KEY_SHOW_TASK_ICON );
+			prefTask.setTitle( R.string.show_task_icon );
+			prefTask.setSummary( R.string.show_task_icon_sum );
+			pc.addPreference( prefTask );
+
+			CheckBoxPreference prefAuto = new CheckBoxPreference( this );
+			prefAuto.setKey( PREF_KEY_AUTO_START_ICON );
+			prefAuto.setTitle( R.string.auto_start );
+			prefAuto.setSummary( R.string.auto_start_sum );
+			pc.addPreference( prefAuto );
+
+			refreshBooleanOption( PREF_KEY_SHOW_INFO_ICON, true );
+			refreshBooleanOption( PREF_KEY_SHOW_TASK_ICON, true );
+			refreshBooleanOption( PREF_KEY_AUTO_START_ICON, false );
+
+			setResult( RESULT_OK, getIntent( ) );
+		}
+
+		private void refreshBooleanOption( String key, boolean defValue )
+		{
+			boolean val = getIntent( ).getBooleanExtra( key, defValue );
+
+			( (CheckBoxPreference) findPreference( key ) ).setChecked( val );
+		}
+
+		@Override
+		public boolean onPreferenceTreeClick(
+				PreferenceScreen preferenceScreen, Preference preference )
+		{
+			final Intent it = getIntent( );
+
+			if ( PREF_KEY_SHOW_INFO_ICON.equals( preference.getKey( ) ) )
+			{
+				boolean enabled = ( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_INFO_ICON ) ).isChecked( );
+
+				it.putExtra( PREF_KEY_SHOW_INFO_ICON, enabled );
+
+				Util.updateInfoIcon( this, enabled );
+
+				return true;
+			}
+			else if ( PREF_KEY_SHOW_TASK_ICON.equals( preference.getKey( ) ) )
+			{
+				boolean enabled = ( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_TASK_ICON ) ).isChecked( );
+
+				it.putExtra( PREF_KEY_SHOW_TASK_ICON, enabled );
+
+				Util.updateTaskIcon( this, enabled );
+
+				return true;
+			}
+			else if ( PREF_KEY_AUTO_START_ICON.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_AUTO_START_ICON,
+						( (CheckBoxPreference) findPreference( PREF_KEY_AUTO_START_ICON ) ).isChecked( ) );
+
+				return true;
+			}
+
+			return false;
 		}
 	}
 }

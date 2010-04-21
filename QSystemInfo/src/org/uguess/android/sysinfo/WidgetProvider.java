@@ -79,6 +79,9 @@ public final class WidgetProvider extends AppWidgetProvider
 				if ( hasInfo )
 				{
 					Intent it = new Intent( context, QSystemInfo.class );
+					it.setFlags( it.getFlags( )
+							| Intent.FLAG_ACTIVITY_NEW_TASK
+							| Intent.FLAG_ACTIVITY_CLEAR_TOP );
 
 					PendingIntent pi = PendingIntent.getActivity( context,
 							0,

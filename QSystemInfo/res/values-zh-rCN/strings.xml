@@ -232,5 +232,13 @@
 	<string name="widget_bar_name">系统信息栏</string>
 	<string name="kill_info">结束了 %s 个任务, 忽略 %s 个.</string>
 	<string name="kill_info2">结束了 %s 个任务, 忽略 %s 个.</string>
+    <string name="auto_start_sum">重启后自动在通知区域显示图标</string>
+    <string name="show_task_icon_sum">在通知区域显示任务终止器图标</string>
+    <string name="show_info_icon_sum">在通知区域显示系统信息图标</string>
+    <string name="auto_start">自动显示图标</string>
+    <string name="show_task_icon">显示任务终止器图标</string>
+    <string name="show_info_icon">显示系统信息图标</string>
+    <string name="task_icon_hint">点击以结束所有正在运行的任务.</string>
+    <string name="info_icon_hint">点击以显示系统信息.</string>
 
 </resources>

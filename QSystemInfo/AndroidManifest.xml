@@ -13,6 +13,8 @@
 		</activity>
 		<activity android:name=".SysInfoManager"></activity>
 		<activity android:configChanges="keyboardHidden|orientation"
+			android:name=".SysInfoManager$InfoSettings"></activity>
+		<activity android:configChanges="keyboardHidden|orientation"
 			android:name=".LogViewer"></activity>
 		<activity android:configChanges="keyboardHidden|orientation"
 			android:name=".LogViewer$LogSettings"></activity>
@@ -62,6 +64,11 @@
 				android:name="android.appwidget.provider"></meta-data>
 		</receiver>
 		<service android:name=".WidgetProvider$EndTaskService"></service>
+		<receiver android:name=".QSystemInfo$BootReceiver">
+			<intent-filter>
+				<action android:name="android.intent.action.BOOT_COMPLETED"></action>
+			</intent-filter>
+		</receiver>
 	</application>
 
 	<uses-sdk android:minSdkVersion="3" />
@@ -72,6 +79,7 @@
 	<uses-permission android:name="android.permission.READ_LOGS"></uses-permission>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"></uses-permission>
+	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"></uses-permission>
 
 	<!--
 		uses-permission

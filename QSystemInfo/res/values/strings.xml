@@ -231,7 +231,7 @@
     <string name="run">Launch</string>
     <string name="install_fail">No activity found to handle the install request.</string>
     <string name="uninstall_fail">No activity found to handle the uninstall request.</string>
-    <string name="uninstall_msg">Are you sure to uninstall all selected applications?</string>
+    <string name="uninstall_msg">Are you sure to uninstall all the selected applications?</string>
     <string name="uninstall">Uninstall</string>
     <string name="file_path">File Path</string>
     <string name="show_file_path_sum">Show path info for each file</string>
@@ -243,5 +243,13 @@
 	<string name="widget_bar_name">Quick Info Bar</string>
 	<string name="kill_info">%s task ended, %s ignored.</string>
 	<string name="kill_info2">%s tasks ended, %s ignored.</string>
+    <string name="auto_start_sum">Show icons in notification area automatically after reboot</string>
+    <string name="show_task_icon_sum">Show quick task killer icon in notification area</string>
+    <string name="show_info_icon_sum">Show quick system info icon in notification area</string>
+    <string name="auto_start">Automatic Icons</string>
+    <string name="show_task_icon">Show Task Killer Icon</string>
+    <string name="show_info_icon">Show Info Icon</string>
+    <string name="task_icon_hint">Click to end all running tasks.</string>
+    <string name="info_icon_hint">Click to show quick system info.</string>
 
 </resources>

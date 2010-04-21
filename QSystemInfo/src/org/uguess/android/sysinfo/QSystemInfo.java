@@ -30,9 +30,11 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TabActivity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
 import android.net.Uri;
 import android.os.Bundle;
@@ -90,6 +92,10 @@ public final class QSystemInfo extends TabActivity
 				.setContent( it )
 				.setIndicator( getString( R.string.tab_netstat ),
 						getResources( ).getDrawable( R.drawable.connection ) ) );
+
+		Util.updateIcons( this,
+				getSharedPreferences( SysInfoManager.class.getSimpleName( ),
+						Context.MODE_PRIVATE ) );
 	}
 
 	/**
@@ -259,6 +265,27 @@ public final class QSystemInfo extends TabActivity
 
 					Util.shortToast( this, R.string.bug_failed );
 				}
+			}
+		}
+	}
+
+	/**
+	 * BootReceiver
+	 */
+	public static final class BootReceiver extends BroadcastReceiver
+	{
+
+		@Override
+		public void onReceive( Context context, Intent intent )
+		{
+			SharedPreferences sp = context.getSharedPreferences( SysInfoManager.class.getSimpleName( ),
+					Context.MODE_PRIVATE );
+
+			if ( sp != null
+					&& sp.getBoolean( SysInfoManager.PREF_KEY_AUTO_START_ICON,
+							false ) )
+			{
+				Util.updateIcons( context, sp );
 			}
 		}
 	}
