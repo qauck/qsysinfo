@@ -895,27 +895,21 @@ public final class SysInfoManager extends PreferenceActivity
 	{
 		if ( "net_address".equals( preference.getKey( ) ) ) //$NON-NLS-1$
 		{
-			Intent it = new Intent( Intent.ACTION_VIEW );
-			it.setClass( this, NetworkInfoActivity.class );
-
+			Intent it = new Intent( this, NetworkInfoActivity.class );
 			startActivityForResult( it, 1 );
 
 			return true;
 		}
 		else if ( "battery_level".equals( preference.getKey( ) ) ) //$NON-NLS-1$
 		{
-			Intent it = new Intent( Intent.ACTION_VIEW );
-			it.setClass( this, BatteryInfoActivity.class );
-
+			Intent it = new Intent( this, BatteryInfoActivity.class );
 			startActivityForResult( it, 1 );
 
 			return true;
 		}
 		else if ( "sensors".equals( preference.getKey( ) ) ) //$NON-NLS-1$
 		{
-			Intent it = new Intent( Intent.ACTION_VIEW );
-			it.setClass( this, SensorInfoActivity.class );
-
+			Intent it = new Intent( this, SensorInfoActivity.class );
 			startActivityForResult( it, 1 );
 
 			return true;
@@ -933,8 +927,7 @@ public final class SysInfoManager extends PreferenceActivity
 				}
 				else
 				{
-					Intent it = new Intent( Intent.ACTION_VIEW );
-					it.setClass( this, GpsInfoActivity.class );
+					Intent it = new Intent( this, GpsInfoActivity.class );
 					startActivityForResult( it, 1 );
 				}
 			}
@@ -1076,8 +1069,11 @@ public final class SysInfoManager extends PreferenceActivity
 	private Intent getAboutSettingsIntent( )
 	{
 		Intent it = new Intent( Intent.ACTION_VIEW );
+
+		// try the htc specifc settings first to avoid some broken manifest
+		// issue on certain htc models
 		it.setClassName( "com.android.settings", //$NON-NLS-1$
-				"com.android.settings.DeviceInfoSettings" ); //$NON-NLS-1$
+				"com.android.settings.framework.aboutphone.HtcAboutPhoneSettings" ); //$NON-NLS-1$
 
 		List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
 				0 );
@@ -1088,9 +1084,9 @@ public final class SysInfoManager extends PreferenceActivity
 		}
 		else
 		{
-			// try the htc specifc settings
+			// try the standard settings
 			it.setClassName( "com.android.settings", //$NON-NLS-1$
-					"com.android.settings.framework.aboutphone.HtcAboutPhoneSettings" ); //$NON-NLS-1$
+					"com.android.settings.DeviceInfoSettings" ); //$NON-NLS-1$
 
 			acts = getPackageManager( ).queryIntentActivities( it, 0 );
 
@@ -1131,9 +1127,7 @@ public final class SysInfoManager extends PreferenceActivity
 	{
 		if ( item.getItemId( ) == R.id.mi_preference )
 		{
-			Intent intent = new Intent( Intent.ACTION_VIEW );
-
-			intent.setClass( this, InfoSettings.class );
+			Intent intent = new Intent( this, InfoSettings.class );
 
 			intent.putExtra( PREF_KEY_SHOW_INFO_ICON,
 					Util.getBooleanOption( this, PREF_KEY_SHOW_INFO_ICON ) );
@@ -1199,8 +1193,7 @@ public final class SysInfoManager extends PreferenceActivity
 
 	private void showLog( boolean dmesg )
 	{
-		Intent it = new Intent( Intent.ACTION_VIEW );
-		it.setClass( this, LogViewer.class );
+		Intent it = new Intent( this, LogViewer.class );
 		it.putExtra( LogViewer.DMESG_MODE, dmesg );
 
 		startActivityForResult( it, 1 );

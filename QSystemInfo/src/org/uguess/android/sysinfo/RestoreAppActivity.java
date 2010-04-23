@@ -499,9 +499,7 @@ public final class RestoreAppActivity extends ListActivity
 	{
 		if ( item.getItemId( ) == R.id.mi_preference )
 		{
-			Intent intent = new Intent( Intent.ACTION_VIEW );
-
-			intent.setClass( this, RestoreAppSettings.class );
+			Intent intent = new Intent( this, RestoreAppSettings.class );
 
 			intent.putExtra( PREF_KEY_DEFAULT_RESTORE_DIR,
 					getIntent( ).getStringExtra( ApplicationManager.KEY_RESTORE_PATH ) );

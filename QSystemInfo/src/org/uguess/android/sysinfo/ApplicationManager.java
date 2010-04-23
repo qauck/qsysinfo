@@ -1069,9 +1069,7 @@ public final class ApplicationManager extends ListActivity
 	{
 		if ( item.getItemId( ) == R.id.mi_preference )
 		{
-			Intent intent = new Intent( Intent.ACTION_VIEW );
-
-			intent.setClass( this, AppSettings.class );
+			Intent intent = new Intent( this, AppSettings.class );
 
 			intent.putExtra( PREF_KEY_FILTER_APP_TYPE, Util.getIntOption( this,
 					PREF_KEY_FILTER_APP_TYPE,
@@ -1094,9 +1092,7 @@ public final class ApplicationManager extends ListActivity
 		}
 		else if ( item.getItemId( ) == R.id.mi_preference + 1 )
 		{
-			Intent intent = new Intent( Intent.ACTION_VIEW );
-
-			intent.setClass( this, RestoreAppActivity.class );
+			Intent intent = new Intent( this, RestoreAppActivity.class );
 
 			intent.putExtra( KEY_RESTORE_PATH, new File( getAppExportDir( ),
 					USER_APP ).getAbsolutePath( ) );

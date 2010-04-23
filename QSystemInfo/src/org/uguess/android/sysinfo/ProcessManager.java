@@ -443,9 +443,7 @@ public final class ProcessManager extends ListActivity
 	{
 		if ( item.getItemId( ) == R.id.mi_preference )
 		{
-			Intent intent = new Intent( Intent.ACTION_VIEW );
-
-			intent.setClass( this, ProcessSettings.class );
+			Intent intent = new Intent( this, ProcessSettings.class );
 
 			intent.putExtra( PREF_KEY_REFRESH_INTERVAL,
 					Util.getIntOption( this,

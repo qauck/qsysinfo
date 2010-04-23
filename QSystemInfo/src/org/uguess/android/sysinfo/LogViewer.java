@@ -306,8 +306,7 @@ public final class LogViewer extends ListActivity
 	{
 		if ( item.getItemId( ) == R.id.mi_preference )
 		{
-			Intent it = new Intent( Intent.ACTION_VIEW );
-			it.setClass( this, LogSettings.class );
+			Intent it = new Intent( this, LogSettings.class );
 
 			it.putExtra( DMESG_MODE, dmesgMode );
 

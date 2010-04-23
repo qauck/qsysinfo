@@ -340,8 +340,7 @@ public final class NetStateManager extends ListActivity
 	{
 		if ( item.getItemId( ) == R.id.mi_preference )
 		{
-			Intent it = new Intent( Intent.ACTION_VIEW );
-			it.setClass( this, NetStateSettings.class );
+			Intent it = new Intent( this, NetStateSettings.class );
 
 			it.putExtra( PREF_KEY_REFRESH_INTERVAL, Util.getIntOption( this,
 					PREF_KEY_REFRESH_INTERVAL,
