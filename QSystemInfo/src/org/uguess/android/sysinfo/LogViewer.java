@@ -339,6 +339,12 @@ public final class LogViewer extends ListActivity
 
 			return true;
 		}
+		else if ( item.getItemId( ) == R.id.mi_refresh )
+		{
+			refreshLogs( );
+
+			return true;
+		}
 		else if ( item.getItemId( ) == R.id.mi_send_log )
 		{
 			final FormatArrayAdapter adapter = new FormatArrayAdapter( this,
