@@ -48,12 +48,9 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
-import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.IPackageStatsObserver;
 import android.content.pm.PackageInfo;
@@ -242,7 +239,9 @@ public final class ApplicationManager extends ListActivity
 					Util.shortToast( ApplicationManager.this,
 							getString( R.string.exported_to,
 									msg.obj,
-									getAppExportDir( ) ) );
+									Util.getStringOption( ApplicationManager.this,
+											PREF_KEY_APP_EXPORT_DIR,
+											DEFAULT_EXPORT_FOLDER ) ) );
 
 					Notification nc = new Notification( R.drawable.icon,
 							getResources( ).getString( R.string.export_complete ),
@@ -543,29 +542,6 @@ public final class ApplicationManager extends ListActivity
 		super.onStop( );
 	}
 
-	private String getAppExportDir( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getString( PREF_KEY_APP_EXPORT_DIR, DEFAULT_EXPORT_FOLDER );
-	}
-
-	private void setAppExportDir( String val )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		if ( val == null )
-		{
-			et.remove( PREF_KEY_APP_EXPORT_DIR );
-		}
-		else
-		{
-			et.putString( PREF_KEY_APP_EXPORT_DIR, val );
-		}
-		et.commit( );
-	}
-
 	private void loadApps( )
 	{
 		if ( progress == null )
@@ -864,7 +840,9 @@ public final class ApplicationManager extends ListActivity
 
 			public void run( )
 			{
-				String exportFolder = getAppExportDir( );
+				String exportFolder = Util.getStringOption( ApplicationManager.this,
+						PREF_KEY_APP_EXPORT_DIR,
+						DEFAULT_EXPORT_FOLDER );
 
 				File output = new File( exportFolder );
 
@@ -1005,22 +983,7 @@ public final class ApplicationManager extends ListActivity
 	{
 		if ( requestCode == REQUEST_SETTINGS )
 		{
-			String nDir = data.getStringExtra( PREF_KEY_APP_EXPORT_DIR );
-
-			if ( nDir != null )
-			{
-				nDir = nDir.trim( );
-
-				if ( nDir.length( ) == 0 )
-				{
-					nDir = null;
-				}
-			}
-
-			if ( !getAppExportDir( ).equals( nDir ) )
-			{
-				setAppExportDir( nDir );
-			}
+			Util.updateStringOption( data, this, PREF_KEY_APP_EXPORT_DIR );
 
 			Util.updateIntOption( data,
 					this,
@@ -1074,7 +1037,10 @@ public final class ApplicationManager extends ListActivity
 			intent.putExtra( PREF_KEY_FILTER_APP_TYPE, Util.getIntOption( this,
 					PREF_KEY_FILTER_APP_TYPE,
 					APP_TYPE_ALL ) );
-			intent.putExtra( PREF_KEY_APP_EXPORT_DIR, getAppExportDir( ) );
+			intent.putExtra( PREF_KEY_APP_EXPORT_DIR,
+					Util.getStringOption( this,
+							PREF_KEY_APP_EXPORT_DIR,
+							DEFAULT_EXPORT_FOLDER ) );
 			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
@@ -1094,8 +1060,10 @@ public final class ApplicationManager extends ListActivity
 		{
 			Intent intent = new Intent( this, RestoreAppActivity.class );
 
-			intent.putExtra( KEY_RESTORE_PATH, new File( getAppExportDir( ),
-					USER_APP ).getAbsolutePath( ) );
+			intent.putExtra( KEY_RESTORE_PATH,
+					new File( Util.getStringOption( this,
+							PREF_KEY_APP_EXPORT_DIR,
+							DEFAULT_EXPORT_FOLDER ), USER_APP ).getAbsolutePath( ) );
 
 			startActivityForResult( intent, REQUEST_RESTORE );
 
@@ -1257,7 +1225,9 @@ public final class ApplicationManager extends ListActivity
 
 			new AlertDialog.Builder( this ).setTitle( R.string.warning )
 					.setMessage( getString( R.string.warning_msg,
-							getAppExportDir( ) ) )
+							Util.getStringOption( this,
+									PREF_KEY_APP_EXPORT_DIR,
+									DEFAULT_EXPORT_FOLDER ) ) )
 					.setPositiveButton( R.string.cont, listener )
 					.setNegativeButton( android.R.string.cancel, listener )
 					.create( )

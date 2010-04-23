@@ -240,5 +240,6 @@
     <string name="show_info_icon">显示系统信息图标</string>
     <string name="task_icon_hint">点击以结束所有正在运行的任务.</string>
     <string name="info_icon_hint">点击以显示系统信息.</string>
+    <string name="default_email">默认电子邮件地址</string>
 
 </resources>

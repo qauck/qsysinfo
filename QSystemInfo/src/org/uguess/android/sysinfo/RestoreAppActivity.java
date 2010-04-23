@@ -34,12 +34,9 @@ import java.util.List;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
-import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -55,7 +52,6 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
-import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -422,22 +418,8 @@ public final class RestoreAppActivity extends ListActivity
 		{
 			skipUpdate = true;
 
-			String nDir = data.getStringExtra( PREF_KEY_APP_RESTORE_DIR );
-
-			if ( nDir != null )
+			if ( Util.updateStringOption( data, this, PREF_KEY_APP_RESTORE_DIR ) )
 			{
-				nDir = nDir.trim( );
-
-				if ( nDir.length( ) == 0 )
-				{
-					nDir = null;
-				}
-			}
-
-			if ( !TextUtils.equals( nDir, getAppRestoreDir( ) ) )
-			{
-				setAppRestoreDir( nDir );
-
 				skipUpdate = false;
 			}
 
@@ -503,7 +485,8 @@ public final class RestoreAppActivity extends ListActivity
 
 			intent.putExtra( PREF_KEY_DEFAULT_RESTORE_DIR,
 					getIntent( ).getStringExtra( ApplicationManager.KEY_RESTORE_PATH ) );
-			intent.putExtra( PREF_KEY_APP_RESTORE_DIR, getAppRestoreDir( ) );
+			intent.putExtra( PREF_KEY_APP_RESTORE_DIR,
+					Util.getStringOption( this, PREF_KEY_APP_RESTORE_DIR, null ) );
 			intent.putExtra( PREF_KEY_SEARCH_SUB_DIR,
 					Util.getBooleanOption( this, PREF_KEY_SEARCH_SUB_DIR ) );
 			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
@@ -641,29 +624,6 @@ public final class RestoreAppActivity extends ListActivity
 		return false;
 	}
 
-	private String getAppRestoreDir( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getString( PREF_KEY_APP_RESTORE_DIR, null );
-	}
-
-	private void setAppRestoreDir( String val )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		if ( val == null )
-		{
-			et.remove( PREF_KEY_APP_RESTORE_DIR );
-		}
-		else
-		{
-			et.putString( PREF_KEY_APP_RESTORE_DIR, val );
-		}
-		et.commit( );
-	}
-
 	private ArrayList<File> getFiles( File parent, final boolean recursive )
 	{
 		final ArrayList<File> files = new ArrayList<File>( );
@@ -706,7 +666,9 @@ public final class RestoreAppActivity extends ListActivity
 
 	private void loadApps( )
 	{
-		String appPath = getAppRestoreDir( );
+		String appPath = Util.getStringOption( this,
+				PREF_KEY_APP_RESTORE_DIR,
+				null );
 
 		if ( appPath == null )
 		{

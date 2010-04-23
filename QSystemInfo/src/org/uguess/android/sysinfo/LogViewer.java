@@ -19,7 +19,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
-import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -123,7 +122,19 @@ public final class LogViewer extends ListActivity
 					}
 					else
 					{
+						SharedPreferences sp = getSharedPreferences( SysInfoManager.class.getSimpleName( ),
+								Context.MODE_PRIVATE );
+
+						String email = null;
+
+						if ( sp != null )
+						{
+							email = sp.getString( SysInfoManager.PREF_KEY_DEFAULT_EMAIL,
+									null );
+						}
+
 						SysInfoManager.sendContent( LogViewer.this,
+								email,
 								"Android Device Log - " + new Date( ).toLocaleString( ), //$NON-NLS-1$
 								content,
 								msg.arg2 == 1 );
@@ -313,7 +324,10 @@ public final class LogViewer extends ListActivity
 			it.putExtra( PREF_KEY_CLOG_LEVL, Util.getIntOption( this,
 					PREF_KEY_CLOG_LEVL,
 					Log.VERBOSE ) );
-			it.putExtra( PREF_KEY_TAG_FILTER, getCTagFilter( ) );
+			it.putExtra( PREF_KEY_TAG_FILTER,
+					Util.getStringOption( LogViewer.this,
+							PREF_KEY_TAG_FILTER,
+							null ) );
 			it.putExtra( PREF_KEY_PID_FILTER, Util.getIntOption( this,
 					PREF_KEY_PID_FILTER,
 					0 ) );
@@ -429,10 +443,8 @@ public final class LogViewer extends ListActivity
 				needRefresh = true;
 			}
 
-			String tagFilter = data.getStringExtra( PREF_KEY_TAG_FILTER );
-			if ( !TextUtils.equals( tagFilter, getCTagFilter( ) ) )
+			if ( Util.updateStringOption( data, this, PREF_KEY_TAG_FILTER ) )
 			{
-				setCTagFilter( tagFilter );
 				needRefresh = true;
 			}
 
@@ -703,29 +715,6 @@ public final class LogViewer extends ListActivity
 		return sb.toString( );
 	}
 
-	private String getCTagFilter( )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		return sp.getString( PREF_KEY_TAG_FILTER, null );
-	}
-
-	private void setCTagFilter( String val )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		if ( val == null )
-		{
-			et.remove( PREF_KEY_TAG_FILTER );
-		}
-		else
-		{
-			et.putString( PREF_KEY_TAG_FILTER, val );
-		}
-		et.commit( );
-	}
-
 	private void refreshLogs( )
 	{
 		if ( progress == null )
@@ -746,7 +735,9 @@ public final class LogViewer extends ListActivity
 						: collectCLog( Util.getIntOption( LogViewer.this,
 								PREF_KEY_CLOG_LEVL,
 								Log.VERBOSE ),
-								getCTagFilter( ),
+								Util.getStringOption( LogViewer.this,
+										PREF_KEY_TAG_FILTER,
+										null ),
 								Util.getIntOption( LogViewer.this,
 										PREF_KEY_PID_FILTER,
 										0 ) );

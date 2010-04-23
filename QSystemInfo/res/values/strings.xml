@@ -251,5 +251,6 @@
     <string name="show_info_icon">Show Info Icon</string>
     <string name="task_icon_hint">Click to end all running tasks.</string>
     <string name="info_icon_hint">Click to show quick system info.</string>
+    <string name="default_email">Default Email Address</string>
 
 </resources>

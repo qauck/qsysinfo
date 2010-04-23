@@ -31,6 +31,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 /**
@@ -69,6 +70,29 @@ final class Util
 		et.commit( );
 	}
 
+	static String getStringOption( Activity ac, String key, String defValue )
+	{
+		SharedPreferences sp = ac.getPreferences( Context.MODE_PRIVATE );
+
+		return sp.getString( key, defValue );
+	}
+
+	private static void setStringOption( Activity ac, String key, String val )
+	{
+		SharedPreferences sp = ac.getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		if ( val == null )
+		{
+			et.remove( key );
+		}
+		else
+		{
+			et.putString( key, val );
+		}
+		et.commit( );
+	}
+
 	static void shortToast( Context context, int resId )
 	{
 		Toast.makeText( context, resId, Toast.LENGTH_SHORT ).show( );
@@ -103,6 +127,28 @@ final class Util
 		if ( b != getBooleanOption( ac, key, defValue ) )
 		{
 			setBooleanOption( ac, key, b );
+			return true;
+		}
+		return false;
+	}
+
+	static boolean updateStringOption( Intent data, Activity ac, String key )
+	{
+		String s = data.getStringExtra( key );
+
+		if ( s != null )
+		{
+			s = s.trim( );
+
+			if ( s.length( ) == 0 )
+			{
+				s = null;
+			}
+		}
+
+		if ( !TextUtils.equals( s, getStringOption( ac, key, null ) ) )
+		{
+			setStringOption( ac, key, s );
 			return true;
 		}
 		return false;

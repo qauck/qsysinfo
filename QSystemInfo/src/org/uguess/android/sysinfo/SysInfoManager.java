@@ -94,6 +94,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.TextView;
 
 /**
@@ -139,6 +140,7 @@ public final class SysInfoManager extends PreferenceActivity
 	static final String PREF_KEY_SHOW_INFO_ICON = "show_info_icon"; //$NON-NLS-1$
 	static final String PREF_KEY_SHOW_TASK_ICON = "show_task_icon"; //$NON-NLS-1$
 	static final String PREF_KEY_AUTO_START_ICON = "auto_start_icon"; //$NON-NLS-1$
+	static final String PREF_KEY_DEFAULT_EMAIL = "default_email"; //$NON-NLS-1$
 
 	private static final int BASIC_INFO = 0;
 	private static final int APPLICATIONS = 1;
@@ -212,6 +214,9 @@ public final class SysInfoManager extends PreferenceActivity
 					else
 					{
 						sendContent( SysInfoManager.this,
+								Util.getStringOption( SysInfoManager.this,
+										PREF_KEY_DEFAULT_EMAIL,
+										null ),
 								"Android System Report - " + new Date( ).toLocaleString( ), //$NON-NLS-1$
 								content,
 								msg.arg2 == 1 );
@@ -1111,6 +1116,7 @@ public final class SysInfoManager extends PreferenceActivity
 					this,
 					PREF_KEY_AUTO_START_ICON,
 					false );
+			Util.updateStringOption( data, this, PREF_KEY_DEFAULT_EMAIL );
 		}
 	}
 
@@ -1127,18 +1133,20 @@ public final class SysInfoManager extends PreferenceActivity
 	{
 		if ( item.getItemId( ) == R.id.mi_preference )
 		{
-			Intent intent = new Intent( this, InfoSettings.class );
+			Intent it = new Intent( this, InfoSettings.class );
 
-			intent.putExtra( PREF_KEY_SHOW_INFO_ICON,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_INFO_ICON ) );
-			intent.putExtra( PREF_KEY_SHOW_TASK_ICON,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_TASK_ICON ) );
-			intent.putExtra( PREF_KEY_AUTO_START_ICON,
-					Util.getBooleanOption( this,
-							PREF_KEY_AUTO_START_ICON,
-							false ) );
+			it.putExtra( PREF_KEY_SHOW_INFO_ICON, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_INFO_ICON ) );
+			it.putExtra( PREF_KEY_SHOW_TASK_ICON, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_TASK_ICON ) );
+			it.putExtra( PREF_KEY_AUTO_START_ICON, Util.getBooleanOption( this,
+					PREF_KEY_AUTO_START_ICON,
+					false ) );
+			it.putExtra( PREF_KEY_DEFAULT_EMAIL, Util.getStringOption( this,
+					PREF_KEY_DEFAULT_EMAIL,
+					null ) );
 
-			startActivityForResult( intent, 2 );
+			startActivityForResult( it, 2 );
 
 			return true;
 		}
@@ -2342,12 +2350,19 @@ public final class SysInfoManager extends PreferenceActivity
 		}
 	}
 
-	static void sendContent( Activity context, String subject, String content,
-			boolean compressed )
+	static void sendContent( Activity context, String email, String subject,
+			String content, boolean compressed )
 	{
 		Intent it = new Intent( Intent.ACTION_SEND );
 
 		it.putExtra( Intent.EXTRA_SUBJECT, subject );
+
+		if ( email != null )
+		{
+			it.putExtra( Intent.EXTRA_EMAIL, new String[]{
+				email
+			} );
+		}
 
 		if ( compressed )
 		{
@@ -2606,9 +2621,15 @@ public final class SysInfoManager extends PreferenceActivity
 			prefAuto.setSummary( R.string.auto_start_sum );
 			pc.addPreference( prefAuto );
 
+			Preference perfEmail = new Preference( this );
+			perfEmail.setKey( PREF_KEY_DEFAULT_EMAIL );
+			perfEmail.setTitle( R.string.default_email );
+			pc.addPreference( perfEmail );
+
 			refreshBooleanOption( PREF_KEY_SHOW_INFO_ICON, true );
 			refreshBooleanOption( PREF_KEY_SHOW_TASK_ICON, true );
 			refreshBooleanOption( PREF_KEY_AUTO_START_ICON, false );
+			refreshEmail( );
 
 			setResult( RESULT_OK, getIntent( ) );
 		}
@@ -2618,6 +2639,20 @@ public final class SysInfoManager extends PreferenceActivity
 			boolean val = getIntent( ).getBooleanExtra( key, defValue );
 
 			( (CheckBoxPreference) findPreference( key ) ).setChecked( val );
+		}
+
+		private void refreshEmail( )
+		{
+			String email = getIntent( ).getStringExtra( PREF_KEY_DEFAULT_EMAIL );
+
+			if ( email == null )
+			{
+				findPreference( PREF_KEY_DEFAULT_EMAIL ).setSummary( R.string.none );
+			}
+			else
+			{
+				findPreference( PREF_KEY_DEFAULT_EMAIL ).setSummary( email );
+			}
 		}
 
 		@Override
@@ -2650,6 +2685,44 @@ public final class SysInfoManager extends PreferenceActivity
 			{
 				it.putExtra( PREF_KEY_AUTO_START_ICON,
 						( (CheckBoxPreference) findPreference( PREF_KEY_AUTO_START_ICON ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_DEFAULT_EMAIL.equals( preference.getKey( ) ) )
+			{
+				final EditText txt = new EditText( this );
+				txt.setText( it.getStringExtra( PREF_KEY_DEFAULT_EMAIL ) );
+
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						String email = txt.getText( ).toString( );
+
+						if ( email != null )
+						{
+							email = email.trim( );
+
+							if ( email.length( ) == 0 )
+							{
+								email = null;
+							}
+						}
+
+						it.putExtra( PREF_KEY_DEFAULT_EMAIL, email );
+
+						dialog.dismiss( );
+
+						refreshEmail( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.default_email )
+						.setPositiveButton( android.R.string.ok, listener )
+						.setNegativeButton( android.R.string.cancel, null )
+						.setView( txt )
+						.create( )
+						.show( );
 
 				return true;
 			}
