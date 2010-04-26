@@ -58,6 +58,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageStats;
 import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -105,6 +106,7 @@ public final class ApplicationManager extends ListActivity
 	private static final int MSG_REFRESH_PKG_SIZE = 11;
 	private static final int MSG_REFRESH_PKG_LABEL = 12;
 	private static final int MSG_REFRESH_PKG_ICON = 13;
+	private static final int MSG_REFRESH_BACKUP_STATE = 14;
 
 	private static final int APP_TYPE_ALL = 0;
 	private static final int APP_TYPE_SYS = 1;
@@ -116,6 +118,7 @@ public final class ApplicationManager extends ListActivity
 	private static final int ORDER_TYPE_CACHE_SIZE = 3;
 	private static final int ORDER_TYPE_TOTAL_SIZE = 4;
 	private static final int ORDER_TYPE_INSTALL_DATE = 5;
+	private static final int ORDER_TYPE_BACKUP_STATE = 6;
 
 	private static final int ORDER_ASC = 1;
 	private static final int ORDER_DESC = -1;
@@ -129,6 +132,7 @@ public final class ApplicationManager extends ListActivity
 	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_SIZE = "show_size"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_DATE = "show_date"; //$NON-NLS-1$
+	private static final String PREF_KEY_SHOW_BACKUP_STATE = "show_backup_state"; //$NON-NLS-1$
 
 	static final String KEY_RESTORE_PATH = "restore_path"; //$NON-NLS-1$
 
@@ -227,10 +231,12 @@ public final class ApplicationManager extends ListActivity
 					break;
 				case MSG_COPING_FINISHED :
 
+					final List<ApplicationInfo> apps = (List<ApplicationInfo>) msg.obj;
+
 					if ( progress != null )
 					{
 						progress.setMessage( getString( R.string.exported,
-								msg.obj ) );
+								apps.size( ) ) );
 						progress.setProgress( progress.getMax( ) );
 						progress.dismiss( );
 						progress = null;
@@ -238,7 +244,7 @@ public final class ApplicationManager extends ListActivity
 
 					Util.shortToast( ApplicationManager.this,
 							getString( R.string.exported_to,
-									msg.obj,
+									apps.size( ),
 									Util.getStringOption( ApplicationManager.this,
 											PREF_KEY_APP_EXPORT_DIR,
 											DEFAULT_EXPORT_FOLDER ) ) );
@@ -255,11 +261,24 @@ public final class ApplicationManager extends ListActivity
 					nc.flags |= Notification.FLAG_AUTO_CANCEL;
 					nc.setLatestEventInfo( ApplicationManager.this,
 							getResources( ).getString( R.string.export_complete ),
-							getString( R.string.exported, msg.obj ),
+							getString( R.string.exported, apps.size( ) ),
 							pit );
 
 					( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).notify( MSG_COPING_FINISHED,
 							nc );
+
+					if ( Util.getBooleanOption( ApplicationManager.this,
+							PREF_KEY_SHOW_BACKUP_STATE ) )
+					{
+						// reload backup state
+						new Thread( new Runnable( ) {
+
+							public void run( )
+							{
+								reloadBackupState( getPackageManager( ), apps );
+							}
+						} ).start( );
+					}
 					break;
 				case MSG_DISMISS_PROGRESS :
 
@@ -270,24 +289,8 @@ public final class ApplicationManager extends ListActivity
 					}
 					break;
 				case MSG_REFRESH_PKG_SIZE :
-
-					adapter = (ArrayAdapter<AppInfoHolder>) lstApps.getAdapter( );
-
-					if ( msg.arg1 == 1 )
-					{
-						adapter.setNotifyOnChange( false );
-
-						adapter.clear( );
-
-						for ( AppInfoHolder info : appCache.appList )
-						{
-							adapter.add( info );
-						}
-					}
-
-					adapter.notifyDataSetChanged( );
-					break;
 				case MSG_REFRESH_PKG_LABEL :
+				case MSG_REFRESH_BACKUP_STATE :
 
 					adapter = (ArrayAdapter<AppInfoHolder>) lstApps.getAdapter( );
 
@@ -307,7 +310,7 @@ public final class ApplicationManager extends ListActivity
 					break;
 				case MSG_REFRESH_PKG_ICON :
 
-					( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
+					( (ArrayAdapter<AppInfoHolder>) lstApps.getAdapter( ) ).notifyDataSetChanged( );
 					break;
 			}
 		}
@@ -444,6 +447,30 @@ public final class ApplicationManager extends ListActivity
 					txt_name.setText( itm.appInfo.packageName );
 				}
 
+				if ( Util.getBooleanOption( ApplicationManager.this,
+						PREF_KEY_SHOW_BACKUP_STATE ) )
+				{
+					switch ( itm.backupState )
+					{
+						case 1 :
+							txt_name.setTextColor( Color.YELLOW );
+							break;
+						case 2 :
+							txt_name.setTextColor( 0xff00bb00 );
+							break;
+						case 3 :
+							txt_name.setTextColor( 0xffF183BD );
+							break;
+						default :
+							txt_name.setTextColor( Color.WHITE );
+							break;
+					}
+				}
+				else
+				{
+					txt_name.setTextColor( Color.WHITE );
+				}
+
 				txt_ver = (TextView) view.findViewById( R.id.app_version );
 				if ( itm.version != null )
 				{
@@ -576,6 +603,8 @@ public final class ApplicationManager extends ListActivity
 
 						holder.version = pi.versionName == null ? String.valueOf( pi.versionCode )
 								: pi.versionName;
+
+						holder.versionCode = pi.versionCode;
 					}
 					catch ( NameNotFoundException e )
 					{
@@ -638,8 +667,10 @@ public final class ApplicationManager extends ListActivity
 											PREF_KEY_SORT_ORDER_TYPE,
 											ORDER_TYPE_NAME );
 
-									if ( type != ORDER_TYPE_NAME
-											&& type != ORDER_TYPE_INSTALL_DATE )
+									if ( type == ORDER_TYPE_CODE_SIZE
+											|| type == ORDER_TYPE_DATA_SIZE
+											|| type == ORDER_TYPE_CACHE_SIZE
+											|| type == ORDER_TYPE_TOTAL_SIZE )
 									{
 										appCache.reOrder( type,
 												Util.getIntOption( ApplicationManager.this,
@@ -654,7 +685,9 @@ public final class ApplicationManager extends ListActivity
 									}
 								}
 
-								handler.sendEmptyMessage( MSG_REFRESH_PKG_SIZE );
+								handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_SIZE,
+										0,
+										0 ) );
 							}
 							catch ( InterruptedException e )
 							{
@@ -725,8 +758,138 @@ public final class ApplicationManager extends ListActivity
 						handler.sendEmptyMessage( MSG_REFRESH_PKG_ICON );
 					}
 				} ).start( );
+
+				if ( Util.getBooleanOption( ApplicationManager.this,
+						PREF_KEY_SHOW_BACKUP_STATE ) )
+				{
+					new Thread( new Runnable( ) {
+
+						public void run( )
+						{
+							reloadBackupState( pm, filteredApps );
+						}
+					} ).start( );
+				}
 			}
 		} ).start( );
+	}
+
+	private void reloadBackupState( final PackageManager pm,
+			final List<ApplicationInfo> apps )
+	{
+		if ( apps == null || apps.size( ) == 0 )
+		{
+			return;
+		}
+
+		String exportFolder = Util.getStringOption( ApplicationManager.this,
+				PREF_KEY_APP_EXPORT_DIR,
+				DEFAULT_EXPORT_FOLDER );
+
+		File sysoutput = null;
+		File useroutput = null;
+
+		File output = new File( exportFolder );
+
+		if ( output.exists( ) )
+		{
+			sysoutput = new File( output, SYS_APP );
+
+			if ( !sysoutput.exists( ) )
+			{
+				sysoutput = null;
+			}
+
+			useroutput = new File( output, USER_APP );
+
+			if ( !useroutput.exists( ) )
+			{
+				useroutput = null;
+			}
+		}
+
+		ApplicationInfo ai;
+		AppInfoHolder holder;
+		PackageInfo pi;
+
+		for ( int i = 0; i < apps.size( ); i++ )
+		{
+			ai = apps.get( i );
+
+			holder = appCache.appLookup.get( ai.packageName );
+
+			if ( holder != null )
+			{
+				File targetOutput = useroutput;
+
+				if ( ( ai.flags & ApplicationInfo.FLAG_SYSTEM ) != 0 )
+				{
+					targetOutput = sysoutput;
+				}
+
+				if ( targetOutput != null )
+				{
+					String src = ai.sourceDir;
+
+					if ( src != null )
+					{
+						String appName = getFileName( src );
+
+						if ( appName != null )
+						{
+							File destFile = new File( targetOutput, appName );
+
+							if ( destFile.exists( ) )
+							{
+								pi = pm.getPackageArchiveInfo( destFile.getAbsolutePath( ),
+										0 );
+
+								if ( pi != null )
+								{
+									if ( pi.versionCode < holder.versionCode )
+									{
+										holder.backupState = 1;
+									}
+									else if ( pi.versionCode == holder.versionCode )
+									{
+										holder.backupState = 2;
+									}
+									else
+									{
+										holder.backupState = 3;
+									}
+
+									continue;
+								}
+							}
+						}
+					}
+				}
+
+				holder.backupState = 0;
+			}
+		}
+
+		// reorder by backup state
+		if ( Util.getIntOption( ApplicationManager.this,
+				PREF_KEY_SORT_ORDER_TYPE,
+				ORDER_TYPE_NAME ) == ORDER_TYPE_BACKUP_STATE )
+		{
+			appCache.reOrder( ORDER_TYPE_BACKUP_STATE,
+					Util.getIntOption( ApplicationManager.this,
+							PREF_KEY_SORT_DIRECTION,
+							ORDER_ASC ) );
+
+			handler.sendMessage( handler.obtainMessage( MSG_REFRESH_BACKUP_STATE,
+					1,
+					0 ) );
+		}
+		else
+		{
+			handler.sendMessage( handler.obtainMessage( MSG_REFRESH_BACKUP_STATE,
+					0,
+					0 ) );
+		}
 	}
 
 	private List<ApplicationInfo> filterApps( List<ApplicationInfo> apps )
@@ -937,7 +1100,7 @@ public final class ApplicationManager extends ListActivity
 
 				handler.sendMessage( Message.obtain( handler,
 						MSG_COPING_FINISHED,
-						apps.size( ) ) );
+						apps ) );
 			}
 		} ).start( );
 	}
@@ -1000,6 +1163,7 @@ public final class ApplicationManager extends ListActivity
 
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_SIZE );
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_DATE );
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_BACKUP_STATE );
 		}
 	}
 
@@ -1032,40 +1196,41 @@ public final class ApplicationManager extends ListActivity
 	{
 		if ( item.getItemId( ) == R.id.mi_preference )
 		{
-			Intent intent = new Intent( this, AppSettings.class );
+			Intent it = new Intent( this, AppSettings.class );
 
-			intent.putExtra( PREF_KEY_FILTER_APP_TYPE, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_FILTER_APP_TYPE, Util.getIntOption( this,
 					PREF_KEY_FILTER_APP_TYPE,
 					APP_TYPE_ALL ) );
-			intent.putExtra( PREF_KEY_APP_EXPORT_DIR,
-					Util.getStringOption( this,
-							PREF_KEY_APP_EXPORT_DIR,
-							DEFAULT_EXPORT_FOLDER ) );
-			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_APP_EXPORT_DIR, Util.getStringOption( this,
+					PREF_KEY_APP_EXPORT_DIR,
+					DEFAULT_EXPORT_FOLDER ) );
+			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			intent.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
 					PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC ) );
-			intent.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
+			it.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
 					PREF_KEY_SHOW_SIZE ) );
-			intent.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
+			it.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
 					PREF_KEY_SHOW_DATE ) );
+			it.putExtra( PREF_KEY_SHOW_BACKUP_STATE,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_BACKUP_STATE ) );
 
-			startActivityForResult( intent, REQUEST_SETTINGS );
+			startActivityForResult( it, REQUEST_SETTINGS );
 
 			return true;
 		}
 		else if ( item.getItemId( ) == R.id.mi_preference + 1 )
 		{
-			Intent intent = new Intent( this, RestoreAppActivity.class );
+			Intent it = new Intent( this, RestoreAppActivity.class );
 
-			intent.putExtra( KEY_RESTORE_PATH,
+			it.putExtra( KEY_RESTORE_PATH,
 					new File( Util.getStringOption( this,
 							PREF_KEY_APP_EXPORT_DIR,
 							DEFAULT_EXPORT_FOLDER ), USER_APP ).getAbsolutePath( ) );
 
-			startActivityForResult( intent, REQUEST_RESTORE );
+			startActivityForResult( it, REQUEST_RESTORE );
 
 			return true;
 		}
@@ -1341,6 +1506,10 @@ public final class ApplicationManager extends ListActivity
 
 		long codeSize, dataSize, cacheSize;
 
+		int backupState;
+
+		int versionCode;
+
 		boolean checked;
 
 		@Override
@@ -1455,6 +1624,7 @@ public final class ApplicationManager extends ListActivity
 					oai.appInfo = ai.appInfo;
 					oai.version = ai.version;
 					oai.checked = ai.checked;
+					oai.versionCode = ai.versionCode;
 				}
 
 				if ( !appList.contains( oai ) )
@@ -1502,6 +1672,18 @@ public final class ApplicationManager extends ListActivity
 								}
 							} );
 					break;
+				case ORDER_TYPE_BACKUP_STATE :
+					Collections.sort( appList,
+							new Comparator<AppInfoHolder>( ) {
+
+								public int compare( AppInfoHolder obj1,
+										AppInfoHolder obj2 )
+								{
+									return ( obj1.backupState - obj2.backupState )
+											* direction;
+								}
+							} );
+					break;
 			}
 		}
 	}
@@ -1527,6 +1709,7 @@ public final class ApplicationManager extends ListActivity
 			refreshSortDirection( );
 			refreshBooleanOption( PREF_KEY_SHOW_SIZE );
 			refreshBooleanOption( PREF_KEY_SHOW_DATE );
+			refreshBooleanOption( PREF_KEY_SHOW_BACKUP_STATE );
 
 			setResult( RESULT_OK, getIntent( ) );
 		}
@@ -1587,6 +1770,8 @@ public final class ApplicationManager extends ListActivity
 				case ORDER_TYPE_INSTALL_DATE :
 					label = getString( R.string.installed_date );
 					break;
+				case ORDER_TYPE_BACKUP_STATE :
+					label = getString( R.string.backup_state );
 			}
 
 			findPreference( "sort_type" ).setSummary( label ); //$NON-NLS-1$
@@ -1695,6 +1880,13 @@ public final class ApplicationManager extends ListActivity
 
 				return true;
 			}
+			else if ( PREF_KEY_SHOW_BACKUP_STATE.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_BACKUP_STATE,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_BACKUP_STATE ) ).isChecked( ) );
+
+				return true;
+			}
 			else if ( "sort_type".equals( preference.getKey( ) ) ) //$NON-NLS-1$
 			{
 				OnClickListener listener = new OnClickListener( ) {
@@ -1718,6 +1910,7 @@ public final class ApplicationManager extends ListActivity
 								getString( R.string.cache_size ),
 								getString( R.string.total_size ),
 								getString( R.string.installed_date ),
+								getString( R.string.backup_state ),
 						},
 								it.getIntExtra( PREF_KEY_SORT_ORDER_TYPE,
 										ORDER_TYPE_NAME ),

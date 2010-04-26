@@ -9,6 +9,8 @@
 			android:summary="@string/show_app_size_sum" android:title="@string/show_app_size"></CheckBoxPreference>
 		<CheckBoxPreference android:key="show_date"
 			android:title="@string/show_app_date" android:summary="@string/show_app_date_sum"></CheckBoxPreference>
+		<CheckBoxPreference android:key="show_backup_state"
+			android:title="@string/show_backup_state" android:summary="@string/show_backup_state_sum"></CheckBoxPreference>
 	</PreferenceCategory>
 
 	<PreferenceCategory android:title="@string/sort">

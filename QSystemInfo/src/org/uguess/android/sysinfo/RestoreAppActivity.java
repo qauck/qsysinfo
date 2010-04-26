@@ -481,28 +481,29 @@ public final class RestoreAppActivity extends ListActivity
 	{
 		if ( item.getItemId( ) == R.id.mi_preference )
 		{
-			Intent intent = new Intent( this, RestoreAppSettings.class );
+			Intent it = new Intent( this, RestoreAppSettings.class );
 
-			intent.putExtra( PREF_KEY_DEFAULT_RESTORE_DIR,
+			it.putExtra( PREF_KEY_DEFAULT_RESTORE_DIR,
 					getIntent( ).getStringExtra( ApplicationManager.KEY_RESTORE_PATH ) );
-			intent.putExtra( PREF_KEY_APP_RESTORE_DIR,
-					Util.getStringOption( this, PREF_KEY_APP_RESTORE_DIR, null ) );
-			intent.putExtra( PREF_KEY_SEARCH_SUB_DIR,
-					Util.getBooleanOption( this, PREF_KEY_SEARCH_SUB_DIR ) );
-			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_APP_RESTORE_DIR, Util.getStringOption( this,
+					PREF_KEY_APP_RESTORE_DIR,
+					null ) );
+			it.putExtra( PREF_KEY_SEARCH_SUB_DIR, Util.getBooleanOption( this,
+					PREF_KEY_SEARCH_SUB_DIR ) );
+			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			intent.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
 					PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC ) );
-			intent.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
+			it.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
 					PREF_KEY_SHOW_SIZE ) );
-			intent.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
+			it.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
 					PREF_KEY_SHOW_DATE ) );
-			intent.putExtra( PREF_KEY_SHOW_PATH, Util.getBooleanOption( this,
+			it.putExtra( PREF_KEY_SHOW_PATH, Util.getBooleanOption( this,
 					PREF_KEY_SHOW_PATH ) );
 
-			startActivityForResult( intent, 1 );
+			startActivityForResult( it, 1 );
 
 			return true;
 		}

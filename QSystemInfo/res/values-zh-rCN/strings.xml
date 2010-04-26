@@ -241,5 +241,8 @@
     <string name="task_icon_hint">点击以结束所有正在运行的任务.</string>
     <string name="info_icon_hint">点击以显示系统信息.</string>
     <string name="default_email">默认电子邮件地址</string>
+    <string name="backup_state">备份状态</string>
+    <string name="show_backup_state">显示备份状态</string>
+    <string name="show_backup_state_sum">检查每个应用程序的备份状态并用不同颜色显示</string>
 
 </resources>

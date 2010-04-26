@@ -443,29 +443,27 @@ public final class ProcessManager extends ListActivity
 	{
 		if ( item.getItemId( ) == R.id.mi_preference )
 		{
-			Intent intent = new Intent( this, ProcessSettings.class );
+			Intent it = new Intent( this, ProcessSettings.class );
 
-			intent.putExtra( PREF_KEY_REFRESH_INTERVAL,
-					Util.getIntOption( this,
-							PREF_KEY_REFRESH_INTERVAL,
-							REFRESH_LOW ) );
-			intent.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_REFRESH_INTERVAL, Util.getIntOption( this,
+					PREF_KEY_REFRESH_INTERVAL,
+					REFRESH_LOW ) );
+			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			intent.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
 					PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC ) );
-			intent.putExtra( PREF_KEY_IGNORE_ACTION, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_IGNORE_ACTION, Util.getIntOption( this,
 					PREF_KEY_IGNORE_ACTION,
 					IGNORE_ACTION_HIDDEN ) );
-			intent.putStringArrayListExtra( PREF_KEY_IGNORE_LIST,
-					getIgnoreList( ) );
-			intent.putExtra( PREF_KEY_SHOW_MEM, Util.getBooleanOption( this,
+			it.putStringArrayListExtra( PREF_KEY_IGNORE_LIST, getIgnoreList( ) );
+			it.putExtra( PREF_KEY_SHOW_MEM, Util.getBooleanOption( this,
 					PREF_KEY_SHOW_MEM ) );
-			intent.putExtra( PREF_KEY_SHOW_CPU, Util.getBooleanOption( this,
+			it.putExtra( PREF_KEY_SHOW_CPU, Util.getBooleanOption( this,
 					PREF_KEY_SHOW_CPU ) );
 
-			startActivityForResult( intent, 1 );
+			startActivityForResult( it, 1 );
 
 			return true;
 		}
