@@ -31,8 +31,6 @@
 			android:name=".BatteryInfoActivity" android:theme="@android:style/Theme.Dialog"></activity>
 		<activity android:configChanges="keyboardHidden|orientation"
 			android:name=".SensorInfoActivity" android:theme="@android:style/Theme.Dialog"></activity>
-		<activity android:configChanges="keyboardHidden|orientation"
-			android:name=".GpsInfoActivity" android:theme="@android:style/Theme.Dialog"></activity>
 		<activity android:name=".NetworkInfoActivity"
 			android:configChanges="keyboardHidden|orientation" android:theme="@android:style/Theme.Dialog"></activity>
 		<activity android:name=".RestoreAppActivity"

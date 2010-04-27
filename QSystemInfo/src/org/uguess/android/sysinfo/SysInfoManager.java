@@ -1,22 +1,18 @@
 /********************************************************************************
- * (C) Copyright 2000-2009, by Shawn Qualia.
+ * (C) Copyright 2000-2010, by Shawn Qualia.
  *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License 
- * along with this library; if not, write to the Free Software Foundation, 
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************************/
 
 package org.uguess.android.sysinfo;
@@ -34,7 +30,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
@@ -60,9 +55,6 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
-import android.location.GpsSatellite;
-import android.location.GpsStatus;
-import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -78,7 +70,6 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
-import android.provider.Settings;
 import android.text.Html;
 import android.text.TextUtils;
 import android.text.format.Formatter;
@@ -643,82 +634,6 @@ public final class SysInfoManager extends PreferenceActivity
 		return -1;
 	}
 
-	private String getGpsInfo( int[] state )
-	{
-		if ( state == null )
-		{
-			return getString( R.string.info_not_available );
-		}
-
-		if ( state[1] == -1 )
-		{
-			return getString( R.string.disabled );
-		}
-
-		return getString( R.string.enabled ) + " (" //$NON-NLS-1$
-				+ state[0]
-				+ '/'
-				+ state[1]
-				+ ')';
-	}
-
-	private int[] getGpsState( )
-	{
-		LocationManager lm = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
-
-		if ( lm != null )
-		{
-			boolean gpsEnabled = false;
-
-			String allowedProviders = Settings.Secure.getString( getContentResolver( ),
-					Settings.Secure.LOCATION_PROVIDERS_ALLOWED );
-
-			if ( allowedProviders != null )
-			{
-				gpsEnabled = ( allowedProviders.equals( LocationManager.GPS_PROVIDER )
-						|| allowedProviders.contains( "," //$NON-NLS-1$
-								+ LocationManager.GPS_PROVIDER
-								+ "," ) //$NON-NLS-1$
-						|| allowedProviders.startsWith( LocationManager.GPS_PROVIDER
-								+ "," ) || allowedProviders.endsWith( "," //$NON-NLS-1$ //$NON-NLS-2$
-						+ LocationManager.GPS_PROVIDER ) );
-			}
-
-			if ( gpsEnabled )
-			{
-				GpsStatus gs = lm.getGpsStatus( null );
-
-				Iterable<GpsSatellite> sats = gs.getSatellites( );
-
-				int c = 0;
-
-				if ( sats != null )
-				{
-					Iterator<GpsSatellite> itr = sats.iterator( );
-
-					if ( itr != null )
-					{
-						while ( itr.hasNext( ) )
-						{
-							itr.next( );
-							c++;
-						}
-					}
-				}
-
-				return new int[]{
-						c, gs.getMaxSatellites( )
-				};
-			}
-
-			return new int[]{
-					0, -1
-			};
-		}
-
-		return null;
-	}
-
 	private String[] getExternalStorageInfo( )
 	{
 		String state = Environment.getExternalStorageState( );
@@ -916,26 +831,6 @@ public final class SysInfoManager extends PreferenceActivity
 		{
 			Intent it = new Intent( this, SensorInfoActivity.class );
 			startActivityForResult( it, 1 );
-
-			return true;
-		}
-		else if ( "gps".equals( preference.getKey( ) ) ) //$NON-NLS-1$
-		{
-			int[] gs = getGpsState( );
-
-			if ( gs != null )
-			{
-				if ( gs[1] == -1 )
-				{
-					Intent it = new Intent( "android.settings.LOCATION_SOURCE_SETTINGS" ); //$NON-NLS-1$
-					startActivityForResult( it, 1 );
-				}
-				else
-				{
-					Intent it = new Intent( this, GpsInfoActivity.class );
-					startActivityForResult( it, 1 );
-				}
-			}
 
 			return true;
 		}
