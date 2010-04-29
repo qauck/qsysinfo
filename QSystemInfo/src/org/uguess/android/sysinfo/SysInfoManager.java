@@ -86,6 +86,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 /**
@@ -1070,9 +1071,13 @@ public final class SysInfoManager extends PreferenceActivity
 		}
 		if ( item.getItemId( ) == R.id.mi_about )
 		{
+			ScrollView sv = new ScrollView( this );
+
 			TextView txt = new TextView( this );
 			txt.setGravity( Gravity.CENTER_HORIZONTAL );
 			txt.setTextAppearance( this, android.R.style.TextAppearance_Medium );
+
+			sv.addView( txt );
 
 			String href = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=qauck%2eaa%40gmail%2ecom&lc=US&item_name=Support%20Quick%20System%20Info&item_number=qsysinfo&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted"; //$NON-NLS-1$
 
@@ -1083,7 +1088,7 @@ public final class SysInfoManager extends PreferenceActivity
 
 			new AlertDialog.Builder( this ).setTitle( R.string.app_name )
 					.setIcon( R.drawable.icon_m )
-					.setView( txt )
+					.setView( sv )
 					.setNegativeButton( R.string.close, null )
 					.create( )
 					.show( );
