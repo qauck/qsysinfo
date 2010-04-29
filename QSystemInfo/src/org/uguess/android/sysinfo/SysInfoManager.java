@@ -1082,7 +1082,7 @@ public final class SysInfoManager extends PreferenceActivity
 			txt.setMovementMethod( LinkMovementMethod.getInstance( ) );
 
 			new AlertDialog.Builder( this ).setTitle( R.string.app_name )
-					.setIcon( R.drawable.icon )
+					.setIcon( R.drawable.icon_m )
 					.setView( txt )
 					.setNegativeButton( R.string.close, null )
 					.create( )
