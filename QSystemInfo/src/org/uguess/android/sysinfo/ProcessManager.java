@@ -620,15 +620,22 @@ public final class ProcessManager extends ListActivity
 						.append( rap.procInfo.lru )
 						.append( "<br>" ) //$NON-NLS-1$
 						.append( getString( R.string.pkg_name ) )
-						.append( ":" ); //$NON-NLS-1$
+						.append( ": " ); //$NON-NLS-1$
 
 				if ( rap.procInfo.pkgList != null )
 				{
+					int i = 0;
+
 					for ( String pkg : rap.procInfo.pkgList )
 					{
 						if ( pkg != null )
 						{
-							sb.append( "<br>" + pkg ); //$NON-NLS-1$
+							if ( i > 0 )
+							{
+								sb.append( ", " ); //$NON-NLS-1$
+							}
+							sb.append( pkg );
+							i++;
 						}
 					}
 				}

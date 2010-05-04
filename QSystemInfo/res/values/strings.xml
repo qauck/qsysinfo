@@ -255,5 +255,6 @@
     <string name="backup_state">Backup State</string>
     <string name="show_backup_state">Show Backup State</string>
     <string name="show_backup_state_sum">Check application backup state and display in differnt colors</string>
+    <string name="search_market">Search in Market</string>
 
 </resources>

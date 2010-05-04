@@ -94,6 +94,9 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 public final class ApplicationManager extends ListActivity
 {
 
+	private static final int MI_LAUNCH = 1;
+	private static final int MI_SEARCH = 2;
+
 	private static final int MSG_COPING = 1;
 	private static final int MSG_COPING_ERROR = 2;
 	private static final int MSG_COPING_FINISHED = 3;
@@ -1239,7 +1242,8 @@ public final class ApplicationManager extends ListActivity
 			ContextMenuInfo menuInfo )
 	{
 		menu.setHeaderTitle( R.string.actions );
-		menu.add( R.string.run );
+		menu.add( Menu.NONE, MI_LAUNCH, MI_LAUNCH, R.string.run );
+		menu.add( Menu.NONE, MI_SEARCH, MI_SEARCH, R.string.search_market );
 	}
 
 	@Override
@@ -1251,45 +1255,60 @@ public final class ApplicationManager extends ListActivity
 		{
 			final AppInfoHolder ai = (AppInfoHolder) lstApps.getItemAtPosition( pos );
 
-			String pkgName = ai.appInfo.packageName;
+			final String pkgName = ai.appInfo.packageName;
 
-			if ( !pkgName.equals( this.getPackageName( ) ) )
+			if ( item.getItemId( ) == MI_LAUNCH )
 			{
-				Intent it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
-				it.addCategory( Intent.CATEGORY_LAUNCHER );
-
-				List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
-						0 );
-
-				if ( acts != null )
+				if ( !pkgName.equals( this.getPackageName( ) ) )
 				{
-					boolean started = false;
+					Intent it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
+					it.addCategory( Intent.CATEGORY_LAUNCHER );
 
-					for ( ResolveInfo ri : acts )
+					List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
+							0 );
+
+					if ( acts != null )
 					{
-						if ( pkgName.equals( ri.activityInfo.packageName ) )
+						boolean started = false;
+
+						for ( ResolveInfo ri : acts )
 						{
-							it.setClassName( ri.activityInfo.packageName,
-									ri.activityInfo.name );
+							if ( pkgName.equals( ri.activityInfo.packageName ) )
+							{
+								it.setClassName( ri.activityInfo.packageName,
+										ri.activityInfo.name );
 
-							it.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK )
-									.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
+								it.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK )
+										.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
 
-							startActivity( it );
+								startActivity( it );
 
-							started = true;
-							break;
+								started = true;
+								break;
+							}
+						}
+
+						if ( !started )
+						{
+							Util.shortToast( this, R.string.run_failed );
 						}
 					}
-
-					if ( !started )
-					{
-						Util.shortToast( this, R.string.run_failed );
-					}
 				}
-			}
 
-			return true;
+				return true;
+			}
+			else if ( item.getItemId( ) == MI_SEARCH )
+			{
+				Intent it = new Intent( Intent.ACTION_VIEW );
+
+				it.setData( Uri.parse( "market://search?q=pname:" + pkgName ) ); //$NON-NLS-1$
+
+				it = Intent.createChooser( it, null );
+
+				startActivity( it );
+
+				return true;
+			}
 		}
 
 		return false;

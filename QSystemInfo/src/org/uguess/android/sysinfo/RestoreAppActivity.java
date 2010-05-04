@@ -76,6 +76,9 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 public final class RestoreAppActivity extends ListActivity
 {
 
+	private static final int MI_DELETE = 1;
+	private static final int MI_SEARCH = 2;
+
 	private static final int MSG_INIT_OK = 9;
 	private static final int MSG_DISMISS_PROGRESS = 10;
 	private static final int MSG_SCAN = 11;
@@ -571,7 +574,8 @@ public final class RestoreAppActivity extends ListActivity
 			ContextMenuInfo menuInfo )
 	{
 		menu.setHeaderTitle( R.string.actions );
-		menu.add( R.string.delete_file );
+		menu.add( Menu.NONE, MI_DELETE, MI_DELETE, R.string.delete_file );
+		menu.add( Menu.NONE, MI_SEARCH, MI_SEARCH, R.string.search_market );
 	}
 
 	@Override
@@ -583,39 +587,54 @@ public final class RestoreAppActivity extends ListActivity
 		{
 			final ApkInfo ai = (ApkInfo) lstApps.getItemAtPosition( pos );
 
-			OnClickListener listener = new OnClickListener( ) {
+			if ( item.getItemId( ) == MI_DELETE )
+			{
+				OnClickListener listener = new OnClickListener( ) {
 
-				public void onClick( DialogInterface dialog, int which )
-				{
-					boolean deleted = ai.file.delete( );
-
-					if ( deleted )
+					public void onClick( DialogInterface dialog, int which )
 					{
-						( (ArrayAdapter) lstApps.getAdapter( ) ).remove( ai );
+						boolean deleted = ai.file.delete( );
 
-						if ( getSelectedCount( ) == 0 )
+						if ( deleted )
 						{
-							hideButtons( );
+							( (ArrayAdapter) lstApps.getAdapter( ) ).remove( ai );
+
+							if ( getSelectedCount( ) == 0 )
+							{
+								hideButtons( );
+							}
+						}
+						else
+						{
+							Util.shortToast( RestoreAppActivity.this,
+									getString( R.string.delete_file_failed,
+											ai.file.getAbsolutePath( ) ) );
 						}
 					}
-					else
-					{
-						Util.shortToast( RestoreAppActivity.this,
-								getString( R.string.delete_file_failed,
-										ai.file.getAbsolutePath( ) ) );
-					}
-				}
-			};
+				};
 
-			new AlertDialog.Builder( this ).setTitle( R.string.warning )
-					.setMessage( getString( R.string.delete_file_warn,
-							ai.file.getName( ) ) )
-					.setPositiveButton( android.R.string.yes, listener )
-					.setNegativeButton( android.R.string.no, null )
-					.create( )
-					.show( );
+				new AlertDialog.Builder( this ).setTitle( R.string.warning )
+						.setMessage( getString( R.string.delete_file_warn,
+								ai.file.getName( ) ) )
+						.setPositiveButton( android.R.string.yes, listener )
+						.setNegativeButton( android.R.string.no, null )
+						.create( )
+						.show( );
 
-			return true;
+				return true;
+			}
+			else if ( item.getItemId( ) == MI_SEARCH )
+			{
+				Intent it = new Intent( Intent.ACTION_VIEW );
+
+				it.setData( Uri.parse( "market://search?q=pname:" + ai.pkgName ) ); //$NON-NLS-1$
+
+				it = Intent.createChooser( it, null );
+
+				startActivity( it );
+
+				return true;
+			}
 		}
 
 		return false;
@@ -726,6 +745,7 @@ public final class RestoreAppActivity extends ListActivity
 							ApkInfo holder = new ApkInfo( );
 
 							holder.file = f;
+							holder.pkgName = pi.packageName;
 							holder.size = f.length( );
 							holder.sizeString = Formatter.formatFileSize( RestoreAppActivity.this,
 									holder.size );
@@ -977,6 +997,7 @@ public final class RestoreAppActivity extends ListActivity
 
 		File file;
 		CharSequence label;
+		String pkgName;
 		String version;
 		String sizeString;
 		long size;
