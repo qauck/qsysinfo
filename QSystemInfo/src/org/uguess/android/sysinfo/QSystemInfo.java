@@ -213,6 +213,8 @@ public final class QSystemInfo extends TabActivity
 						.exec( "logcat -d -v time *:V" ); //$NON-NLS-1$
 
 				SysInfoManager.readRawText( msg, proc.getInputStream( ) );
+
+				msg.append( "\n-----LOGCAT-END-----\n" ); //$NON-NLS-1$
 			}
 			catch ( Throwable e )
 			{
@@ -220,6 +222,7 @@ public final class QSystemInfo extends TabActivity
 				{
 					msg.append( "\n\n-----ERROR-COLLECT-REPORT-----\n" ); //$NON-NLS-1$
 					msg.append( Log.getStackTraceString( e ) );
+					msg.append( "\n-----ERROR-END-----\n" ); //$NON-NLS-1$
 				}
 				catch ( Throwable t )
 				{
