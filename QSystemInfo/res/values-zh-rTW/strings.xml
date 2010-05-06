@@ -245,5 +245,7 @@
     <string name="show_backup_state">顯示備份狀態</string>
     <string name="show_backup_state_sum">查詢每個應用程式的備份狀態並以不同顏色顯示</string>
     <string name="search_market">搜尋市場</string>
+	<string name="exported_skip">%s 個應用程式已被匯出, 跳過 %s 個受保護程式.</string>
+	<string name="exported_to_skip">%s 個應用程式被匯出到 ''%s'', 跳過 %s 個受保護程式.</string>
 
 </resources>

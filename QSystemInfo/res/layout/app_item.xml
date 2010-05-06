@@ -35,6 +35,10 @@
 			android:text="path" android:visibility="gone"></TextView>
 	</LinearLayout>
 
+	<ImageView android:id="@+id/img_lock" android:background="@android:drawable/ic_lock_lock"
+		android:layout_gravity="center_vertical" android:layout_height="20dip"
+		android:layout_width="20dip" android:visibility="gone"></ImageView>
+		
 	<CheckBox android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:id="@+id/ckb_app"
 		android:layout_gravity="center_vertical" android:focusable="false"

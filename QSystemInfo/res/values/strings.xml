@@ -256,5 +256,7 @@
     <string name="show_backup_state">Show Backup State</string>
     <string name="show_backup_state_sum">Check application backup state and display in differnt colors</string>
     <string name="search_market">Search in Market</string>
+	<string name="exported_skip">%s applications exported, %s protected been skipped.</string>
+	<string name="exported_to_skip">%s applications exported to ''%s'', %s protected been skipped.</string>
 
 </resources>

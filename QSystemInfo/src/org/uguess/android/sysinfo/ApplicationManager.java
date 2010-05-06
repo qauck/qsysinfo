@@ -218,15 +218,14 @@ public final class ApplicationManager extends ListActivity
 					break;
 				case MSG_COPING_ERROR :
 
-					if ( progress != null )
+					if ( msg.arg1 == 0 && progress != null )
 					{
 						progress.dismiss( );
 						progress = null;
 					}
 
 					Util.shortToast( ApplicationManager.this,
-							getString( R.string.copy_error,
-									( (Exception) msg.obj ).getLocalizedMessage( ) ) );
+							getString( R.string.copy_error, msg.obj ) );
 					break;
 				case MSG_COPING_FINISHED :
 
@@ -234,19 +233,27 @@ public final class ApplicationManager extends ListActivity
 
 					if ( progress != null )
 					{
-						progress.setMessage( getString( R.string.exported,
-								apps.size( ) ) );
+						progress.setMessage( msg.arg2 > 0 ? getString( R.string.exported_skip,
+								msg.arg1,
+								msg.arg2 )
+								: getString( R.string.exported, msg.arg1 ) );
 						progress.setProgress( progress.getMax( ) );
 						progress.dismiss( );
 						progress = null;
 					}
 
 					Util.shortToast( ApplicationManager.this,
-							getString( R.string.exported_to,
-									apps.size( ),
+							msg.arg2 > 0 ? getString( R.string.exported_to_skip,
+									msg.arg1,
 									Util.getStringOption( ApplicationManager.this,
 											PREF_KEY_APP_EXPORT_DIR,
-											DEFAULT_EXPORT_FOLDER ) ) );
+											DEFAULT_EXPORT_FOLDER ),
+									msg.arg2 )
+									: getString( R.string.exported_to,
+											msg.arg1,
+											Util.getStringOption( ApplicationManager.this,
+													PREF_KEY_APP_EXPORT_DIR,
+													DEFAULT_EXPORT_FOLDER ) ) );
 
 					Notification nc = new Notification( R.drawable.icon,
 							getResources( ).getString( R.string.export_complete ),
@@ -260,11 +267,16 @@ public final class ApplicationManager extends ListActivity
 					nc.flags |= Notification.FLAG_AUTO_CANCEL;
 					nc.setLatestEventInfo( ApplicationManager.this,
 							getResources( ).getString( R.string.export_complete ),
-							getString( R.string.exported, apps.size( ) ),
+							msg.arg2 > 0 ? getString( R.string.exported_skip,
+									msg.arg1,
+									msg.arg2 ) : getString( R.string.exported,
+									msg.arg1 ),
 							pit );
 
 					( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).notify( MSG_COPING_FINISHED,
 							nc );
+
+					toggleAllSelection( false );
 
 					if ( Util.getBooleanOption( ApplicationManager.this,
 							PREF_KEY_SHOW_BACKUP_STATE ) )
@@ -529,6 +541,9 @@ public final class ApplicationManager extends ListActivity
 				ckb_app.setChecked( itm.checked );
 				ckb_app.setOnCheckedChangeListener( checkListener );
 
+				View imgLock = view.findViewById( R.id.img_lock );
+				imgLock.setVisibility( itm.isPrivate ? View.VISIBLE : View.GONE );
+
 				return view;
 			}
 		};
@@ -598,6 +613,12 @@ public final class ApplicationManager extends ListActivity
 										: pi.versionName );
 
 						holder.versionCode = pi.versionCode;
+
+						if ( info.sourceDir != null
+								&& info.sourceDir.contains( "/data/app-private" ) ) //$NON-NLS-1$
+						{
+							holder.isPrivate = true;
+						}
 					}
 					catch ( NameNotFoundException e )
 					{
@@ -1008,8 +1029,10 @@ public final class ApplicationManager extends ListActivity
 					{
 						handler.sendMessage( Message.obtain( handler,
 								MSG_COPING_ERROR,
-								new IOException( getString( R.string.error_create_folder,
-										output.getAbsolutePath( ) ) ) ) );
+								0,
+								0,
+								getString( R.string.error_create_folder,
+										output.getAbsolutePath( ) ) ) );
 
 						return;
 					}
@@ -1023,8 +1046,10 @@ public final class ApplicationManager extends ListActivity
 					{
 						handler.sendMessage( Message.obtain( handler,
 								MSG_COPING_ERROR,
-								new IOException( getString( R.string.error_create_folder,
-										sysoutput.getAbsolutePath( ) ) ) ) );
+								0,
+								0,
+								getString( R.string.error_create_folder,
+										sysoutput.getAbsolutePath( ) ) ) );
 
 						return;
 					}
@@ -1038,12 +1063,17 @@ public final class ApplicationManager extends ListActivity
 					{
 						handler.sendMessage( Message.obtain( handler,
 								MSG_COPING_ERROR,
-								new IOException( getString( R.string.error_create_folder,
-										useroutput.getAbsolutePath( ) ) ) ) );
+								0,
+								0,
+								getString( R.string.error_create_folder,
+										useroutput.getAbsolutePath( ) ) ) );
 
 						return;
 					}
 				}
+
+				int skipped = 0;
+				int succeed = 0;
 
 				for ( int i = 0; i < apps.size( ); i++ )
 				{
@@ -1054,6 +1084,14 @@ public final class ApplicationManager extends ListActivity
 					if ( src != null )
 					{
 						File srcFile = new File( src );
+
+						if ( src.contains( "/data/app-private" ) //$NON-NLS-1$
+								|| !srcFile.canRead( ) )
+						{
+							skipped++;
+
+							continue;
+						}
 
 						String appName = getFileName( src );
 
@@ -1075,6 +1113,8 @@ public final class ApplicationManager extends ListActivity
 							try
 							{
 								copyFile( srcFile, destFile );
+
+								succeed++;
 							}
 							catch ( Exception e )
 							{
@@ -1084,8 +1124,11 @@ public final class ApplicationManager extends ListActivity
 
 								handler.sendMessage( Message.obtain( handler,
 										MSG_COPING_ERROR,
-										e ) );
-								return;
+										1,
+										0,
+										e.getLocalizedMessage( ) ) );
+
+								continue;
 							}
 						}
 					}
@@ -1093,6 +1136,8 @@ public final class ApplicationManager extends ListActivity
 
 				handler.sendMessage( Message.obtain( handler,
 						MSG_COPING_FINISHED,
+						succeed,
+						skipped,
 						apps ) );
 			}
 		} ).start( );
@@ -1519,6 +1564,8 @@ public final class ApplicationManager extends ListActivity
 
 		int versionCode;
 
+		boolean isPrivate;
+
 		boolean checked;
 
 		@Override
@@ -1632,6 +1679,7 @@ public final class ApplicationManager extends ListActivity
 				{
 					oai.appInfo = ai.appInfo;
 					oai.version = ai.version;
+					oai.isPrivate = ai.isPrivate;
 					oai.checked = ai.checked;
 					oai.versionCode = ai.versionCode;
 				}
