@@ -258,5 +258,8 @@
     <string name="search_market">Search in Market</string>
 	<string name="exported_skip">%s applications exported, %s protected been skipped.</string>
 	<string name="exported_to_skip">%s applications exported to ''%s'', %s protected been skipped.</string>
+    <string name="threads">Threads</string>
+    <string name="gid">Group ID</string>
+    <string name="uid">User ID</string>
 
 </resources>

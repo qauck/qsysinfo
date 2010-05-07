@@ -247,5 +247,8 @@
     <string name="search_market">搜索市场</string>
 	<string name="exported_skip">%s 个应用程序已被导出, 跳过 %s 个受保护程序.</string>
 	<string name="exported_to_skip">%s 个应用程序被导出到 ''%s'', 跳过 %s 个受保护程序.</string>
+    <string name="threads">线程数</string>
+    <string name="gid">组 ID</string>
+    <string name="uid">用户 ID</string>
 
 </resources>

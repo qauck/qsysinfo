@@ -608,10 +608,28 @@ public final class ProcessManager extends ListActivity
 			{
 				ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
 
+				String[] status = readProcStatus( rap.procInfo.pid );
+
 				StringBuffer sb = new StringBuffer( ).append( "<small>" ) //$NON-NLS-1$
 						.append( getString( R.string.pid ) )
 						.append( ": " ) //$NON-NLS-1$
 						.append( rap.procInfo.pid )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.uid ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( status == null ? "" : status[1] ) //$NON-NLS-1$
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.gid ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( status == null ? "" : status[2] ) //$NON-NLS-1$
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.state ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( status == null ? "" : status[0] ) //$NON-NLS-1$
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.threads ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( status == null ? "" : status[3] ) //$NON-NLS-1$
 						.append( "<br>" ) //$NON-NLS-1$
 						.append( getString( R.string.importance ) )
 						.append( ": " ) //$NON-NLS-1$
@@ -1012,6 +1030,114 @@ public final class ProcessManager extends ListActivity
 				}
 			}
 		}
+	}
+
+	/**
+	 * @return [State, UID, GID, Threads]
+	 */
+	private static String[] readProcStatus( int pid )
+	{
+		BufferedReader reader = null;
+
+		try
+		{
+			reader = new BufferedReader( new InputStreamReader( new FileInputStream( "/proc/" //$NON-NLS-1$
+					+ pid
+					+ "/status" ) ), //$NON-NLS-1$
+					1024 );
+
+			String line;
+			String stateMsg = ""; //$NON-NLS-1$
+			String uidMsg = ""; //$NON-NLS-1$
+			String gidMsg = ""; //$NON-NLS-1$
+			String threadsMsg = ""; //$NON-NLS-1$
+
+			while ( ( line = reader.readLine( ) ) != null )
+			{
+				if ( line.startsWith( "State:" ) ) //$NON-NLS-1$
+				{
+					if ( line.length( ) > 6 )
+					{
+						stateMsg = line.substring( 6 ).trim( );
+					}
+				}
+				else if ( line.startsWith( "Uid:" ) ) //$NON-NLS-1$
+				{
+					if ( line.length( ) > 4 )
+					{
+						uidMsg = line.substring( 4 ).trim( );
+
+						int idx = uidMsg.indexOf( '\t' );
+						if ( idx != -1 )
+						{
+							uidMsg = uidMsg.substring( 0, idx );
+						}
+						else
+						{
+							idx = uidMsg.indexOf( ' ' );
+							if ( idx != -1 )
+							{
+								uidMsg = uidMsg.substring( 0, idx );
+							}
+						}
+					}
+				}
+				else if ( line.startsWith( "Gid:" ) ) //$NON-NLS-1$
+				{
+					if ( line.length( ) > 4 )
+					{
+						gidMsg = line.substring( 4 ).trim( );
+
+						int idx = gidMsg.indexOf( '\t' );
+						if ( idx != -1 )
+						{
+							gidMsg = gidMsg.substring( 0, idx );
+						}
+						else
+						{
+							idx = gidMsg.indexOf( ' ' );
+							if ( idx != -1 )
+							{
+								gidMsg = gidMsg.substring( 0, idx );
+							}
+						}
+					}
+				}
+				else if ( line.startsWith( "Threads:" ) ) //$NON-NLS-1$
+				{
+					if ( line.length( ) > 8 )
+					{
+						threadsMsg = line.substring( 8 ).trim( );
+					}
+				}
+			}
+
+			return new String[]{
+					stateMsg, uidMsg, gidMsg, threadsMsg
+			};
+		}
+		catch ( IOException e )
+		{
+			Log.e( ProcessManager.class.getName( ), e.getLocalizedMessage( ), e );
+		}
+		finally
+		{
+			if ( reader != null )
+			{
+				try
+				{
+					reader.close( );
+				}
+				catch ( IOException ie )
+				{
+					Log.e( ProcessManager.class.getName( ),
+							ie.getLocalizedMessage( ),
+							ie );
+				}
+			}
+		}
+
+		return null;
 	}
 
 	private void readProcessInfo( ProcessItem proc, PackageManager pm,
