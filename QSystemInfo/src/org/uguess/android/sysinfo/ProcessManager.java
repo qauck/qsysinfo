@@ -95,6 +95,7 @@ public final class ProcessManager extends ListActivity
 	private static final String PREF_KEY_IGNORE_LIST = "ignore_list"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_MEM = "show_mem"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_CPU = "show_cpu"; //$NON-NLS-1$
+	private static final String PREF_KEY_SHOW_SYS_PROC = "show_sys_proc"; //$NON-NLS-1$
 
 	private static final int REFRESH_HIGH = 0;
 	private static final int REFRESH_NORMAL = 1;
@@ -209,7 +210,8 @@ public final class ProcessManager extends ListActivity
 				{
 					endAll( );
 				}
-				else if ( !ignoreList.contains( rap.procInfo.processName ) )
+				else if ( !ignoreList.contains( rap.procInfo.processName )
+						&& !rap.sys )
 				{
 					ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
 
@@ -292,8 +294,13 @@ public final class ProcessManager extends ListActivity
 				}
 				else
 				{
-					txt_name.setText( itm.label == null ? itm.procInfo.processName
-							: itm.label );
+					String lb = itm.label == null ? itm.procInfo.processName
+							: itm.label;
+					if ( itm.sys )
+					{
+						lb += " *"; //$NON-NLS-1$
+					}
+					txt_name.setText( lb );
 
 					txt_name.setTypeface( Typeface.DEFAULT, Typeface.NORMAL );
 
@@ -408,6 +415,7 @@ public final class ProcessManager extends ListActivity
 
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_MEM );
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_CPU );
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_SYS_PROC );
 
 			ArrayList<String> list = data.getStringArrayListExtra( PREF_KEY_IGNORE_LIST );
 
@@ -458,6 +466,8 @@ public final class ProcessManager extends ListActivity
 					PREF_KEY_SHOW_MEM ) );
 			it.putExtra( PREF_KEY_SHOW_CPU, Util.getBooleanOption( this,
 					PREF_KEY_SHOW_CPU ) );
+			it.putExtra( PREF_KEY_SHOW_SYS_PROC, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_SYS_PROC ) );
 
 			startActivityForResult( it, 1 );
 
@@ -481,7 +491,7 @@ public final class ProcessManager extends ListActivity
 			menu.setHeaderTitle( R.string.actions );
 			menu.add( Menu.NONE, MI_DISPLAY, MI_DISPLAY, R.string.switch_to );
 
-			if ( ignoreList.contains( rap.procInfo.processName ) )
+			if ( ignoreList.contains( rap.procInfo.processName ) || rap.sys )
 			{
 				menu.add( Menu.NONE, MI_ENDTASK, MI_ENDTASK, R.string.end_task )
 						.setEnabled( false );
@@ -763,7 +773,8 @@ public final class ProcessManager extends ListActivity
 			ProcessItem rap = (ProcessItem) lstProcs.getItemAtPosition( i );
 
 			if ( !ignoreList.contains( rap.procInfo.processName )
-					&& !self.equals( rap.procInfo.processName ) )
+					&& !self.equals( rap.procInfo.processName )
+					&& !rap.sys )
 			{
 				endProcess( am, rap.procInfo.pkgList );
 			}
@@ -806,18 +817,23 @@ public final class ProcessManager extends ListActivity
 					PREF_KEY_IGNORE_ACTION,
 					IGNORE_ACTION_HIDDEN );
 			boolean showMem = Util.getBooleanOption( this, PREF_KEY_SHOW_MEM );
+			boolean showSys = Util.getBooleanOption( this,
+					PREF_KEY_SHOW_SYS_PROC );
 
 			String name;
+			boolean isSys;
 			for ( RunningAppProcessInfo rap : list )
 			{
 				name = rap.processName;
 
-				if ( name.startsWith( "com.google.process" ) //$NON-NLS-1$
+				isSys = name.startsWith( "com.google.process" ) //$NON-NLS-1$
 						|| name.startsWith( "com.android.phone" ) //$NON-NLS-1$
 						|| name.startsWith( "android.process" ) //$NON-NLS-1$
 						|| name.startsWith( "system" ) //$NON-NLS-1$
 						|| name.startsWith( "com.android.inputmethod" ) //$NON-NLS-1$
-						|| name.startsWith( "com.android.alarmclock" ) ) //$NON-NLS-1$
+						|| name.startsWith( "com.android.alarmclock" ); //$NON-NLS-1$
+
+				if ( isSys && !showSys )
 				{
 					continue;
 				}
@@ -834,6 +850,7 @@ public final class ProcessManager extends ListActivity
 				{
 					pi = new ProcessItem( );
 					pi.procInfo = rap;
+					pi.sys = isSys;
 
 					readProcessInfo( pi, pm, true, buf, showMem, showCpu );
 
@@ -842,6 +859,7 @@ public final class ProcessManager extends ListActivity
 				else
 				{
 					pi.procInfo = rap;
+					pi.sys = isSys;
 					pi.lastcputime = pi.cputime;
 
 					readProcessInfo( pi, pm, false, buf, showMem, showCpu );
@@ -1242,6 +1260,12 @@ public final class ProcessManager extends ListActivity
 			perfShowCpu.setSummary( R.string.show_cpu_summary );
 			pc.addPreference( perfShowCpu );
 
+			CheckBoxPreference perfShowSys = new CheckBoxPreference( this );
+			perfShowSys.setKey( PREF_KEY_SHOW_SYS_PROC );
+			perfShowSys.setTitle( R.string.show_sys_process );
+			perfShowSys.setSummary( R.string.show_sys_process_sum );
+			pc.addPreference( perfShowSys );
+
 			pc = new PreferenceCategory( this );
 			pc.setTitle( R.string.sort );
 			getPreferenceScreen( ).addPreference( pc );
@@ -1273,6 +1297,7 @@ public final class ProcessManager extends ListActivity
 			refreshInterval( );
 			refreshBooleanOption( PREF_KEY_SHOW_MEM );
 			refreshBooleanOption( PREF_KEY_SHOW_CPU );
+			refreshBooleanOption( PREF_KEY_SHOW_SYS_PROC );
 			refreshSortType( );
 			refreshSortDirection( );
 			refreshIgnoreAction( );
@@ -1485,6 +1510,13 @@ public final class ProcessManager extends ListActivity
 
 				return true;
 			}
+			else if ( PREF_KEY_SHOW_SYS_PROC.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_SYS_PROC,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_SYS_PROC ) ).isChecked( ) );
+
+				return true;
+			}
 			else if ( PREF_KEY_SORT_ORDER_TYPE.equals( preference.getKey( ) ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
@@ -1657,6 +1689,8 @@ public final class ProcessManager extends ListActivity
 		String label;
 
 		Drawable icon;
+
+		boolean sys;
 
 		long rss;
 

@@ -251,5 +251,7 @@
     <string name="gid">組 ID</string>
     <string name="uid">使用者 ID</string>
     <string name="no_mount_info">沒有找到 MOUNT 資訊.</string>
+    <string name="show_sys_process_sum">系統進程始終為保護, 不可終結</string>
+    <string name="show_sys_process">顯示系統進程</string>
 
 </resources>

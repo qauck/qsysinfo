@@ -262,5 +262,7 @@
     <string name="gid">Group ID</string>
     <string name="uid">User ID</string>
     <string name="no_mount_info">MOUNT info not found.</string>
+    <string name="show_sys_process_sum">System process is always protected and cannot be ended</string>
+    <string name="show_sys_process">Show System Process</string>
 
 </resources>
