@@ -250,5 +250,6 @@
     <string name="threads">執行緒數</string>
     <string name="gid">組 ID</string>
     <string name="uid">使用者 ID</string>
+    <string name="no_mount_info">沒有找到 MOUNT 資訊.</string>
 
 </resources>

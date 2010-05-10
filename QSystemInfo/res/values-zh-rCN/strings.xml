@@ -250,5 +250,6 @@
     <string name="threads">线程数</string>
     <string name="gid">组 ID</string>
     <string name="uid">用户 ID</string>
+    <string name="no_mount_info">没有找到 MOUNT 信息.</string>
 
 </resources>

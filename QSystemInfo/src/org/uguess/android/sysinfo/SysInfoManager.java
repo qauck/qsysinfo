@@ -106,6 +106,7 @@ public final class SysInfoManager extends PreferenceActivity
 	private static final String F_MEM_INFO = "/proc/meminfo"; //$NON-NLS-1$
 	private static final String F_CPU_INFO = "/proc/cpuinfo"; //$NON-NLS-1$
 	private static final String F_VERSION = "/proc/version"; //$NON-NLS-1$
+	private static final String F_MOUNT_INFO = "/proc/mounts"; //$NON-NLS-1$
 
 	private static final String HEADER_SPLIT = "========================================================================================\n"; //$NON-NLS-1$
 	private static final String openFullRow = "<tr align=\"left\" valign=\"top\"><td colspan=5><small>"; //$NON-NLS-1$
@@ -667,7 +668,7 @@ public final class SysInfoManager extends PreferenceActivity
 
 				try
 				{
-					reader = new BufferedReader( new InputStreamReader( new FileInputStream( "/proc/mounts" ) ), //$NON-NLS-1$
+					reader = new BufferedReader( new InputStreamReader( new FileInputStream( F_MOUNT_INFO ) ),
 							1024 );
 
 					String line;
@@ -1317,6 +1318,19 @@ public final class SysInfoManager extends PreferenceActivity
 				}
 
 				sb.append( '\n' );
+
+				f = new File( F_MOUNT_INFO );
+				if ( f.exists( ) )
+				{
+					readRawText( sb, new FileInputStream( f ) );
+				}
+				else
+				{
+					sb.append( getString( R.string.no_mount_info ) )
+							.append( '\n' );
+				}
+
+				sb.append( '\n' );
 			}
 			catch ( Exception e )
 			{
@@ -1642,6 +1656,20 @@ public final class SysInfoManager extends PreferenceActivity
 				{
 					sb.append( openFullRow )
 							.append( getString( R.string.no_mem_info ) )
+							.append( closeRow );
+				}
+
+				sb.append( emptyRow );
+
+				f = new File( F_MOUNT_INFO );
+				if ( f.exists( ) )
+				{
+					readRawHTML( sb, new FileInputStream( f ) );
+				}
+				else
+				{
+					sb.append( openFullRow )
+							.append( getString( R.string.no_mount_info ) )
 							.append( closeRow );
 				}
 

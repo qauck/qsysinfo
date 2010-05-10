@@ -261,5 +261,6 @@
     <string name="threads">Threads</string>
     <string name="gid">Group ID</string>
     <string name="uid">User ID</string>
+    <string name="no_mount_info">MOUNT info not found.</string>
 
 </resources>
