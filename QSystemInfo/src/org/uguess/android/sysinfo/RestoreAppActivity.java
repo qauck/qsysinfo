@@ -787,7 +787,18 @@ public final class RestoreAppActivity extends ListActivity
 							if ( pi.applicationInfo != null )
 							{
 								holder.label = pm.getApplicationLabel( pi.applicationInfo );
-								holder.icon = pm.getApplicationIcon( pi.applicationInfo );
+
+								try
+								{
+									holder.icon = pm.getApplicationIcon( pi.applicationInfo );
+								}
+								catch ( OutOfMemoryError oom )
+								{
+									Log.e( RestoreAppActivity.class.getName( ),
+											"OOM when loading icon: " //$NON-NLS-1$
+													+ pi.packageName,
+											oom );
+								}
 							}
 
 							dataList.add( holder );
