@@ -264,5 +264,13 @@
     <string name="no_mount_info">MOUNT info not found.</string>
     <string name="show_sys_process_sum">System process is always protected and cannot be ended</string>
     <string name="show_sys_process">Show System Process</string>
+    <string name="target_sdk">Target SDK</string>
+    <string name="public_source">Public Source</string>
+    <string name="data">Data</string>
+    <string name="process">Process</string>
+    <string name="app_class">Application Class</string>
+    <string name="task_affinity">Task Affinity</string>
+    <string name="permission">Permission</string>
+    <string name="manage_space_ac">Manage Space Activity</string>
 
 </resources>

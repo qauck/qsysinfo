@@ -253,5 +253,13 @@
     <string name="no_mount_info">沒有找到 MOUNT 資訊.</string>
     <string name="show_sys_process_sum">系統進程始終為保護, 不可終結</string>
     <string name="show_sys_process">顯示系統進程</string>
+    <string name="target_sdk">目標 SDK</string>
+    <string name="public_source">公共源地址</string>
+    <string name="data">數據</string>
+    <string name="process">進程</string>
+    <string name="app_class">應用程式類</string>
+    <string name="task_affinity">任務關聯</string>
+    <string name="permission">權限</string>
+    <string name="manage_space_ac">空間管理類</string>
 
 </resources>

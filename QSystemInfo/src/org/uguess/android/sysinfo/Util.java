@@ -17,6 +17,8 @@
 
 package org.uguess.android.sysinfo;
 
+import java.lang.reflect.Field;
+
 import org.uguess.android.sysinfo.WidgetProvider.EndTaskService;
 
 import android.app.Activity;
@@ -27,7 +29,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.ApplicationInfo;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -35,6 +39,38 @@ import android.widget.Toast;
  */
 final class Util
 {
+
+	private static Field fdTargetSdkVersion = null;
+
+	static
+	{
+		try
+		{
+			fdTargetSdkVersion = ApplicationInfo.class.getDeclaredField( "targetSdkVersion" ); //$NON-NLS-1$
+		}
+		catch ( Exception e )
+		{
+			Log.d( Util.class.getName( ),
+					"Current SDK version do not support 'targetSdkVersion' property." ); //$NON-NLS-1$
+		}
+	}
+
+	static String getTargetSdkVersion( Context ctx, ApplicationInfo ai )
+	{
+		if ( fdTargetSdkVersion != null )
+		{
+			try
+			{
+				return String.valueOf( fdTargetSdkVersion.get( ai ) );
+			}
+			catch ( Exception e )
+			{
+				Log.e( Util.class.getName( ), e.getLocalizedMessage( ), e );
+			}
+		}
+
+		return ctx.getString( R.string.unknown );
+	}
 
 	static int getIntOption( Activity ac, String key, int defValue )
 	{

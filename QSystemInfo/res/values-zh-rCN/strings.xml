@@ -253,5 +253,13 @@
     <string name="no_mount_info">没有找到 MOUNT 信息.</string>
     <string name="show_sys_process_sum">系统进程始终为保护, 不可终止</string>
     <string name="show_sys_process">显示系统进程</string>
+    <string name="target_sdk">目标 SDK</string>
+    <string name="public_source">公共源地址</string>
+    <string name="data">数据</string>
+    <string name="process">进程</string>
+    <string name="app_class">应用程序类</string>
+    <string name="task_affinity">任务关联</string>
+    <string name="permission">权限</string>
+    <string name="manage_space_ac">空间管理类</string>
 
 </resources>

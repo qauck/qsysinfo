@@ -66,6 +66,7 @@ import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
+import android.text.Html;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -96,6 +97,7 @@ public final class ApplicationManager extends ListActivity
 
 	private static final int MI_LAUNCH = 1;
 	private static final int MI_SEARCH = 2;
+	private static final int MI_DETAILS = 3;
 
 	private static final int MSG_COPING = 1;
 	private static final int MSG_COPING_ERROR = 2;
@@ -1299,6 +1301,7 @@ public final class ApplicationManager extends ListActivity
 		menu.setHeaderTitle( R.string.actions );
 		menu.add( Menu.NONE, MI_LAUNCH, MI_LAUNCH, R.string.run );
 		menu.add( Menu.NONE, MI_SEARCH, MI_SEARCH, R.string.search_market );
+		menu.add( Menu.NONE, MI_DETAILS, MI_DETAILS, R.string.details );
 	}
 
 	@Override
@@ -1361,6 +1364,72 @@ public final class ApplicationManager extends ListActivity
 				it = Intent.createChooser( it, null );
 
 				startActivity( it );
+
+				return true;
+			}
+			else if ( item.getItemId( ) == MI_DETAILS )
+			{
+				ApplicationInfo appInfo = ai.appInfo;
+
+				StringBuffer sb = new StringBuffer( ).append( "<small>" ) //$NON-NLS-1$
+						.append( getString( R.string.target_sdk ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( Util.getTargetSdkVersion( this, appInfo ) )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.uid ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( appInfo.uid )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.public_source ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( appInfo.publicSourceDir )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.source ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( appInfo.sourceDir )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.data ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( appInfo.dataDir )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.process ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( appInfo.processName )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.app_class ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( appInfo.className == null ? "" //$NON-NLS-1$
+								: appInfo.className )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.task_affinity ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( appInfo.taskAffinity )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.permission ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( appInfo.permission == null ? "" //$NON-NLS-1$
+								: appInfo.permission )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.flags ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( appInfo.flags )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.enabled ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( appInfo.enabled )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.manage_space_ac ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( appInfo.manageSpaceActivityName == null ? "" //$NON-NLS-1$
+								: appInfo.manageSpaceActivityName )
+						.append( "</small>" ); //$NON-NLS-1$
+
+				new AlertDialog.Builder( this ).setTitle( ai.label == null ? appInfo.packageName
+						: ai.label )
+						.setNeutralButton( R.string.close, null )
+						.setMessage( Html.fromHtml( sb.toString( ) ) )
+						.create( )
+						.show( );
 
 				return true;
 			}
