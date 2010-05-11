@@ -759,13 +759,23 @@ public final class ApplicationManager extends ListActivity
 						{
 							ai = filteredApps.get( i );
 
-							Drawable icon = ai.loadIcon( pm );
-
-							holder = appCache.appLookup.get( ai.packageName );
-
-							if ( holder != null )
+							try
 							{
-								holder.icon = icon;
+								Drawable icon = ai.loadIcon( pm );
+
+								holder = appCache.appLookup.get( ai.packageName );
+
+								if ( holder != null )
+								{
+									holder.icon = icon;
+								}
+							}
+							catch ( OutOfMemoryError oom )
+							{
+								Log.e( ApplicationManager.class.getName( ),
+										"OOM when loading icon: " //$NON-NLS-1$
+												+ ai.packageName,
+										oom );
 							}
 						}
 

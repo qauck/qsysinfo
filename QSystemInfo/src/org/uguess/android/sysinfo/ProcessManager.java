@@ -1177,14 +1177,24 @@ public final class ProcessManager extends ListActivity
 						proc.label = label.toString( );
 					}
 
-					Drawable icon = pm.getApplicationIcon( ai );
-
-					if ( icon == null )
+					try
 					{
-						icon = pm.getDefaultActivityIcon( );
-					}
+						Drawable icon = pm.getApplicationIcon( ai );
 
-					proc.icon = icon;
+						if ( icon == null )
+						{
+							icon = pm.getDefaultActivityIcon( );
+						}
+
+						proc.icon = icon;
+					}
+					catch ( OutOfMemoryError oom )
+					{
+						Log.e( ProcessManager.class.getName( ),
+								"OOM when loading icon: " //$NON-NLS-1$
+										+ ai.packageName,
+								oom );
+					}
 				}
 			}
 			catch ( NameNotFoundException e )
