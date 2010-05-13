@@ -216,10 +216,11 @@ final class Util
 			PendingIntent pi = PendingIntent.getActivity( ctx, 0, it, 0 );
 
 			Notification nc = new Notification( R.drawable.icon,
-					ctx.getString( R.string.app_name ),
+					null,
 					System.currentTimeMillis( ) );
 
-			nc.flags = Notification.FLAG_NO_CLEAR;
+			nc.flags = Notification.FLAG_NO_CLEAR
+					| Notification.FLAG_ONGOING_EVENT;
 			nc.setLatestEventInfo( ctx,
 					ctx.getString( R.string.app_name ),
 					ctx.getString( R.string.info_icon_hint ),
@@ -243,10 +244,11 @@ final class Util
 			PendingIntent pi = PendingIntent.getService( ctx, 0, it, 0 );
 
 			Notification nc = new Notification( R.drawable.end,
-					ctx.getString( R.string.task_widget_name ),
+					null,
 					System.currentTimeMillis( ) );
 
-			nc.flags = Notification.FLAG_NO_CLEAR;
+			nc.flags = Notification.FLAG_NO_CLEAR
+					| Notification.FLAG_ONGOING_EVENT;
 			nc.setLatestEventInfo( ctx,
 					ctx.getString( R.string.task_widget_name ),
 					ctx.getString( R.string.task_icon_hint ),
