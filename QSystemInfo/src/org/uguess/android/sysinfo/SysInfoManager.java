@@ -92,7 +92,8 @@ import android.widget.TextView;
 /**
  * SysInfoManager
  */
-public final class SysInfoManager extends PreferenceActivity
+public final class SysInfoManager extends PreferenceActivity implements
+		Constants
 {
 
 	private static final char[] CSV_SEARCH_CHARS = new char[]{
@@ -119,12 +120,6 @@ public final class SysInfoManager extends PreferenceActivity
 	static final String nextColumn = "</small></td><td><small>"; //$NON-NLS-1$
 	static final String nextColumn4 = "</small></td><td colspan=4><small>"; //$NON-NLS-1$
 	static final String emptyRow = "<tr><td>&nbsp;</td></tr>\n"; //$NON-NLS-1$
-
-	static final int MSG_INIT_OK = 1;
-	static final int MSG_DISMISS_PROGRESS = 2;
-	static final int MSG_CONTENT_READY = 3;
-	static final int MSG_CHECK_FORCE_COMPRESSION = 4;
-	static final int MSG_TOAST = 5;
 
 	static final int PLAINTEXT = 0;
 	static final int HTML = 1;

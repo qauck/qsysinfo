@@ -92,22 +92,16 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 /**
  * ApplicationManager
  */
-public final class ApplicationManager extends ListActivity
+public final class ApplicationManager extends ListActivity implements Constants
 {
 
-	private static final int MI_LAUNCH = 1;
-	private static final int MI_SEARCH = 2;
-	private static final int MI_DETAILS = 3;
-
-	private static final int MSG_COPING = 1;
-	private static final int MSG_COPING_ERROR = 2;
-	private static final int MSG_COPING_FINISHED = 3;
-	private static final int MSG_INIT_OK = 9;
-	private static final int MSG_DISMISS_PROGRESS = 10;
-	private static final int MSG_REFRESH_PKG_SIZE = 11;
-	private static final int MSG_REFRESH_PKG_LABEL = 12;
-	private static final int MSG_REFRESH_PKG_ICON = 13;
-	private static final int MSG_REFRESH_BACKUP_STATE = 14;
+	private static final int MSG_COPING = MSG_PRIVATE + 1;
+	private static final int MSG_COPING_ERROR = MSG_PRIVATE + 2;
+	private static final int MSG_COPING_FINISHED = MSG_PRIVATE + 3;
+	private static final int MSG_REFRESH_PKG_SIZE = MSG_PRIVATE + 4;
+	private static final int MSG_REFRESH_PKG_LABEL = MSG_PRIVATE + 5;
+	private static final int MSG_REFRESH_PKG_ICON = MSG_PRIVATE + 6;
+	private static final int MSG_REFRESH_BACKUP_STATE = MSG_PRIVATE + 7;
 
 	private static final int APP_TYPE_ALL = 0;
 	private static final int APP_TYPE_SYS = 1;
@@ -121,18 +115,11 @@ public final class ApplicationManager extends ListActivity
 	private static final int ORDER_TYPE_INSTALL_DATE = 5;
 	private static final int ORDER_TYPE_BACKUP_STATE = 6;
 
-	private static final int ORDER_ASC = 1;
-	private static final int ORDER_DESC = -1;
-
 	private static final int REQUEST_SETTINGS = 1;
 	private static final int REQUEST_RESTORE = 2;
 
 	private static final String PREF_KEY_FILTER_APP_TYPE = "filter_app_type"; //$NON-NLS-1$
 	private static final String PREF_KEY_APP_EXPORT_DIR = "app_export_dir"; //$NON-NLS-1$
-	private static final String PREF_KEY_SORT_ORDER_TYPE = "sort_order_type"; //$NON-NLS-1$
-	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
-	private static final String PREF_KEY_SHOW_SIZE = "show_size"; //$NON-NLS-1$
-	private static final String PREF_KEY_SHOW_DATE = "show_date"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_BACKUP_STATE = "show_backup_state"; //$NON-NLS-1$
 
 	static final String KEY_RESTORE_PATH = "restore_path"; //$NON-NLS-1$
@@ -164,8 +151,6 @@ public final class ApplicationManager extends ListActivity
 	private ListView lstApps;
 
 	private ProgressDialog progress;
-
-	private Drawable defaultIcon;
 
 	private String versionPrefix;
 
@@ -275,7 +260,7 @@ public final class ApplicationManager extends ListActivity
 									msg.arg1 ),
 							pit );
 
-					( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).notify( MSG_COPING_FINISHED,
+					( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).notify( NOTIFY_EXPORT_FINISHED,
 							nc );
 
 					toggleAllSelection( false );
@@ -359,8 +344,6 @@ public final class ApplicationManager extends ListActivity
 	protected void onCreate( Bundle savedInstanceState )
 	{
 		super.onCreate( savedInstanceState );
-
-		defaultIcon = getResources( ).getDrawable( R.drawable.icon );
 
 		versionPrefix = getResources( ).getString( R.string.version );
 
@@ -535,7 +518,7 @@ public final class ApplicationManager extends ListActivity
 				}
 				else
 				{
-					img_type.setImageDrawable( defaultIcon );
+					img_type.setImageDrawable( getResources( ).getDrawable( R.drawable.icon ) );
 				}
 
 				ckb_app = (CheckBox) view.findViewById( R.id.ckb_app );
@@ -573,7 +556,7 @@ public final class ApplicationManager extends ListActivity
 	@Override
 	protected void onStop( )
 	{
-		( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).cancel( MSG_COPING_FINISHED );
+		( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).cancel( NOTIFY_EXPORT_FINISHED );
 
 		super.onStop( );
 	}
@@ -1221,15 +1204,12 @@ public final class ApplicationManager extends ListActivity
 	public boolean onCreateOptionsMenu( Menu menu )
 	{
 		MenuItem mi = menu.add( Menu.NONE,
-				R.id.mi_preference + 2,
+				MI_DELETE,
 				Menu.NONE,
 				R.string.uninstall );
 		mi.setIcon( android.R.drawable.ic_menu_delete );
 
-		mi = menu.add( Menu.NONE,
-				R.id.mi_preference + 1,
-				Menu.NONE,
-				R.string.restore );
+		mi = menu.add( Menu.NONE, MI_REVERT, Menu.NONE, R.string.restore );
 		mi.setIcon( android.R.drawable.ic_menu_revert );
 
 		mi = menu.add( Menu.NONE,
@@ -1271,7 +1251,7 @@ public final class ApplicationManager extends ListActivity
 
 			return true;
 		}
-		else if ( item.getItemId( ) == R.id.mi_preference + 1 )
+		else if ( item.getItemId( ) == MI_REVERT )
 		{
 			Intent it = new Intent( this, RestoreAppActivity.class );
 
@@ -1284,7 +1264,7 @@ public final class ApplicationManager extends ListActivity
 
 			return true;
 		}
-		else if ( item.getItemId( ) == R.id.mi_preference + 2 )
+		else if ( item.getItemId( ) == MI_DELETE )
 		{
 			doUninstall( );
 

@@ -78,29 +78,14 @@ import android.widget.AdapterView.OnItemClickListener;
 /**
  * ProcessManager
  */
-public final class ProcessManager extends ListActivity
+public final class ProcessManager extends ListActivity implements Constants
 {
 
-	private static final int MI_DISPLAY = 1;
-	private static final int MI_ENDTASK = 2;
-	private static final int MI_IGNORE = 3;
-	private static final int MI_DETAIL = 4;
-
-	private static final int MSG_UPDATE = 1;
-
-	private static final String PREF_KEY_REFRESH_INTERVAL = "refresh_interval"; //$NON-NLS-1$
-	private static final String PREF_KEY_SORT_ORDER_TYPE = "sort_order_type"; //$NON-NLS-1$
-	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
 	private static final String PREF_KEY_IGNORE_ACTION = "ignore_action"; //$NON-NLS-1$
 	private static final String PREF_KEY_IGNORE_LIST = "ignore_list"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_MEM = "show_mem"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_CPU = "show_cpu"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_SYS_PROC = "show_sys_proc"; //$NON-NLS-1$
-
-	private static final int REFRESH_HIGH = 0;
-	private static final int REFRESH_NORMAL = 1;
-	private static final int REFRESH_LOW = 2;
-	private static final int REFRESH_PAUSED = 3;
 
 	private static final int ORDER_TYPE_NAME = 0;
 	private static final int ORDER_TYPE_IMPORTANCE = 1;
@@ -109,9 +94,6 @@ public final class ProcessManager extends ListActivity
 
 	private static final int IGNORE_ACTION_HIDDEN = 0;
 	private static final int IGNORE_ACTION_PROTECTED = 1;
-
-	private static final int ORDER_ASC = 1;
-	private static final int ORDER_DESC = -1;
 
 	private ProcessItem dummyInfo;
 
@@ -127,7 +109,7 @@ public final class ProcessManager extends ListActivity
 
 		public void handleMessage( android.os.Message msg )
 		{
-			if ( msg.what == MSG_UPDATE )
+			if ( msg.what == MSG_INIT_OK )
 			{
 				ArrayAdapter<ProcessItem> adapter = (ArrayAdapter<ProcessItem>) getListView( ).getAdapter( );
 
@@ -174,7 +156,7 @@ public final class ProcessManager extends ListActivity
 
 			updateProcess( raps );
 
-			handler.sendEmptyMessage( MSG_UPDATE );
+			handler.sendEmptyMessage( MSG_INIT_OK );
 		}
 	};
 
@@ -382,7 +364,7 @@ public final class ProcessManager extends ListActivity
 	protected void onPause( )
 	{
 		handler.removeCallbacks( task );
-		handler.removeMessages( MSG_UPDATE );
+		handler.removeMessages( MSG_INIT_OK );
 
 		procCache.resCache.clear( );
 		procCache.procList.clear( );
@@ -504,7 +486,7 @@ public final class ProcessManager extends ListActivity
 				menu.add( Menu.NONE, MI_IGNORE, MI_IGNORE, R.string.ignore );
 			}
 
-			menu.add( Menu.NONE, MI_DETAIL, MI_DETAIL, R.string.details );
+			menu.add( Menu.NONE, MI_DETAILS, MI_DETAILS, R.string.details );
 		}
 	}
 
@@ -610,7 +592,7 @@ public final class ProcessManager extends ListActivity
 
 			return true;
 		}
-		else if ( item.getItemId( ) == MI_DETAIL )
+		else if ( item.getItemId( ) == MI_DETAILS )
 		{
 			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
 

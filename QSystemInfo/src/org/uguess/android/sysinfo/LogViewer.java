@@ -64,7 +64,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 /**
  * LogViewer
  */
-public final class LogViewer extends ListActivity
+public final class LogViewer extends ListActivity implements Constants
 {
 
 	private static final Pattern DMESG_TIME_PATTERN = Pattern.compile( "\\d+\\.\\d+" ); //$NON-NLS-1$
@@ -94,7 +94,7 @@ public final class LogViewer extends ListActivity
 		{
 			switch ( msg.what )
 			{
-				case SysInfoManager.MSG_INIT_OK :
+				case MSG_INIT_OK :
 
 					ArrayAdapter<LogItem> adapter = (ArrayAdapter<LogItem>) getListView( ).getAdapter( );
 
@@ -114,7 +114,7 @@ public final class LogViewer extends ListActivity
 
 					adapter.notifyDataSetChanged( );
 
-					sendEmptyMessage( SysInfoManager.MSG_DISMISS_PROGRESS );
+					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
 					if ( adapter.getCount( ) == 0 )
 					{
@@ -126,9 +126,9 @@ public final class LogViewer extends ListActivity
 					}
 
 					break;
-				case SysInfoManager.MSG_CONTENT_READY :
+				case MSG_CONTENT_READY :
 
-					sendEmptyMessage( SysInfoManager.MSG_DISMISS_PROGRESS );
+					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
 					String content = (String) msg.obj;
 
@@ -157,9 +157,9 @@ public final class LogViewer extends ListActivity
 					}
 
 					break;
-				case SysInfoManager.MSG_CHECK_FORCE_COMPRESSION :
+				case MSG_CHECK_FORCE_COMPRESSION :
 
-					sendEmptyMessage( SysInfoManager.MSG_DISMISS_PROGRESS );
+					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
 					SysInfoManager.checkForceCompression( this,
 							LogViewer.this,
@@ -168,7 +168,7 @@ public final class LogViewer extends ListActivity
 							"android_log" ); //$NON-NLS-1$
 
 					break;
-				case SysInfoManager.MSG_DISMISS_PROGRESS :
+				case MSG_DISMISS_PROGRESS :
 
 					if ( progress != null )
 					{
@@ -176,7 +176,7 @@ public final class LogViewer extends ListActivity
 						progress = null;
 					}
 					break;
-				case SysInfoManager.MSG_TOAST :
+				case MSG_TOAST :
 
 					Util.shortToast( LogViewer.this, (String) msg.obj );
 					break;
@@ -433,14 +433,14 @@ public final class LogViewer extends ListActivity
 
 				if ( content != null && !compressed )
 				{
-					handler.sendMessage( handler.obtainMessage( SysInfoManager.MSG_CHECK_FORCE_COMPRESSION,
+					handler.sendMessage( handler.obtainMessage( MSG_CHECK_FORCE_COMPRESSION,
 							format,
 							compressed ? 1 : 0,
 							content ) );
 				}
 				else
 				{
-					handler.sendMessage( handler.obtainMessage( SysInfoManager.MSG_CONTENT_READY,
+					handler.sendMessage( handler.obtainMessage( MSG_CONTENT_READY,
 							format,
 							compressed ? 1 : 0,
 							content ) );
@@ -764,8 +764,7 @@ public final class LogViewer extends ListActivity
 										PREF_KEY_PID_FILTER,
 										0 ) );
 
-				handler.sendMessage( handler.obtainMessage( SysInfoManager.MSG_INIT_OK,
-						logs ) );
+				handler.sendMessage( handler.obtainMessage( MSG_INIT_OK, logs ) );
 			}
 		} ).start( );
 	}

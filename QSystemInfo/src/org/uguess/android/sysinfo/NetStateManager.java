@@ -72,34 +72,20 @@ import android.widget.AdapterView.OnItemClickListener;
 /**
  * NetStateManager
  */
-public final class NetStateManager extends ListActivity
+public final class NetStateManager extends ListActivity implements Constants
 {
 
-	private static final String PREF_KEY_REFRESH_INTERVAL = "refresh_interval"; //$NON-NLS-1$
 	private static final String PREF_KEY_REMOTE_QUERY = "remote_query"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_REMOTE_NAME = "show_remote_name"; //$NON-NLS-1$
-	private static final String PREF_KEY_SORT_ORDER_TYPE = "sort_order_type"; //$NON-NLS-1$
-	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
-
-	private static final int REFRESH_HIGH = 0;
-	private static final int REFRESH_NORMAL = 1;
-	private static final int REFRESH_LOW = 2;
-	private static final int REFRESH_PAUSED = 3;
 
 	private static final int ORDER_TYPE_PROTO = 0;
 	private static final int ORDER_TYPE_LOCAL = 1;
 	private static final int ORDER_TYPE_REMOTE = 2;
 	private static final int ORDER_TYPE_STATE = 3;
 
-	private static final int ORDER_ASC = 1;
-	private static final int ORDER_DESC = -1;
-
 	private static final int ENABLED = 0;
 	private static final int DISABLED = 1;
 	private static final int WIFI_ONLY = 2;
-
-	private static final int MSG_IP_READY = 1;
-	private static final int MSG_DISMISS_PROGRESS = 2;
 
 	private static final String[] SOCKET_STATES = new String[]{
 			"ESTABLISHED", //$NON-NLS-1$
@@ -129,7 +115,7 @@ public final class NetStateManager extends ListActivity
 		{
 			switch ( msg.what )
 			{
-				case MSG_IP_READY :
+				case MSG_CONTENT_READY :
 
 					if ( aborted )
 					{
@@ -314,7 +300,7 @@ public final class NetStateManager extends ListActivity
 		aborted = true;
 
 		handler.removeCallbacks( task );
-		handler.removeMessages( MSG_IP_READY );
+		handler.removeMessages( MSG_CONTENT_READY );
 
 		super.onPause( );
 	}
@@ -448,7 +434,7 @@ public final class NetStateManager extends ListActivity
 
 		if ( info != null )
 		{
-			handler.sendMessage( handler.obtainMessage( MSG_IP_READY, info ) );
+			handler.sendMessage( handler.obtainMessage( MSG_CONTENT_READY, info ) );
 			return;
 		}
 
@@ -473,7 +459,8 @@ public final class NetStateManager extends ListActivity
 
 				handler.sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
-				handler.sendMessage( handler.obtainMessage( MSG_IP_READY, info ) );
+				handler.sendMessage( handler.obtainMessage( MSG_CONTENT_READY,
+						info ) );
 			}
 		} ).start( );
 	}

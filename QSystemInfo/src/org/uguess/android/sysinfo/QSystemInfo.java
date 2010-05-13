@@ -97,7 +97,9 @@ public final class QSystemInfo extends TabActivity
 	/**
 	 * ErrorHandler
 	 */
-	private static final class ErrorHandler implements UncaughtExceptionHandler
+	private static final class ErrorHandler implements
+			UncaughtExceptionHandler,
+			Constants
 	{
 
 		private UncaughtExceptionHandler parentHandler;
@@ -130,7 +132,7 @@ public final class QSystemInfo extends TabActivity
 					ctx.getString( R.string.oops_msg ),
 					pi );
 
-			( (NotificationManager) ctx.getSystemService( NOTIFICATION_SERVICE ) ).notify( (int) System.currentTimeMillis( ),
+			( (NotificationManager) ctx.getSystemService( NOTIFICATION_SERVICE ) ).notify( NOTIFY_ERROR_REPORT,
 					nc );
 
 			if ( parentHandler != null )

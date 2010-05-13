@@ -73,24 +73,15 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 /**
  * RestoreAppActivity
  */
-public final class RestoreAppActivity extends ListActivity
+public final class RestoreAppActivity extends ListActivity implements Constants
 {
 
-	private static final int MI_DELETE = 1;
-	private static final int MI_SEARCH = 2;
-
-	private static final int MSG_INIT_OK = 9;
-	private static final int MSG_DISMISS_PROGRESS = 10;
-	private static final int MSG_SCAN = 11;
-	private static final int MSG_PRE_SCAN = 12;
+	private static final int MSG_SCAN = MSG_PRIVATE + 1;
+	private static final int MSG_PRE_SCAN = MSG_PRIVATE + 2;
 
 	private static final String PREF_KEY_DEFAULT_RESTORE_DIR = "default_restore_dir"; //$NON-NLS-1$
 	private static final String PREF_KEY_APP_RESTORE_DIR = "app_restore_dir"; //$NON-NLS-1$
 	private static final String PREF_KEY_SEARCH_SUB_DIR = "search_sub_dir"; //$NON-NLS-1$
-	private static final String PREF_KEY_SORT_ORDER_TYPE = "sort_order_type"; //$NON-NLS-1$
-	private static final String PREF_KEY_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
-	private static final String PREF_KEY_SHOW_SIZE = "show_size"; //$NON-NLS-1$
-	private static final String PREF_KEY_SHOW_DATE = "show_date"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_PATH = "show_path"; //$NON-NLS-1$
 
 	private static final int ORDER_TYPE_NAME = 0;
@@ -99,14 +90,10 @@ public final class RestoreAppActivity extends ListActivity
 	private static final int ORDER_TYPE_DATE = 3;
 	private static final int ORDER_TYPE_PATH = 4;
 
-	private static final int ORDER_ASC = 1;
-	private static final int ORDER_DESC = -1;
-
 	private ListView lstApps;
 	private ProgressDialog progress;
 
 	private String versionPrefix;
-	private Drawable defaultIcon;
 
 	private boolean skipUpdate;
 
@@ -219,7 +206,6 @@ public final class RestoreAppActivity extends ListActivity
 	{
 		super.onCreate( savedInstanceState );
 
-		defaultIcon = getResources( ).getDrawable( R.drawable.icon );
 		versionPrefix = getResources( ).getString( R.string.version );
 
 		setContentView( R.layout.app_view );
@@ -379,7 +365,7 @@ public final class RestoreAppActivity extends ListActivity
 				}
 				else
 				{
-					img_type.setImageDrawable( defaultIcon );
+					img_type.setImageDrawable( getResources( ).getDrawable( R.drawable.icon ) );
 				}
 
 				ckb_app = (CheckBox) view.findViewById( R.id.ckb_app );
@@ -461,7 +447,7 @@ public final class RestoreAppActivity extends ListActivity
 	public boolean onCreateOptionsMenu( Menu menu )
 	{
 		MenuItem mi = menu.add( Menu.NONE,
-				R.id.mi_preference + 1,
+				MI_DELETE,
 				Menu.NONE,
 				R.string.delete_file );
 		mi.setIcon( android.R.drawable.ic_menu_delete );
@@ -506,7 +492,7 @@ public final class RestoreAppActivity extends ListActivity
 
 			return true;
 		}
-		else if ( item.getItemId( ) == R.id.mi_preference + 1 )
+		else if ( item.getItemId( ) == MI_DELETE )
 		{
 			final List<ApkInfo> apks = getSelected( );
 
