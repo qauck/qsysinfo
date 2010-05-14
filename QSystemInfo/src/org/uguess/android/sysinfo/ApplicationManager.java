@@ -45,15 +45,15 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.IPackageStatsObserver;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PackageStats;
 import android.content.pm.ResolveInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -70,24 +70,24 @@ import android.text.Html;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 
 /**
  * ApplicationManager
@@ -130,7 +130,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 	private static final String USER_APP = "user/"; //$NON-NLS-1$
 
-	private static Method mdGetPackageSizeInfo;
+	static Method mdGetPackageSizeInfo;
 
 	static
 	{
@@ -148,22 +148,23 @@ public final class ApplicationManager extends ListActivity implements Constants
 		}
 	}
 
-	private ListView lstApps;
+	ListView lstApps;
 
-	private ProgressDialog progress;
+	ProgressDialog progress;
 
-	private String versionPrefix;
+	String versionPrefix;
 
-	private AppCache appCache;
+	AppCache appCache;
 
-	private DateFormat dateFormatter = DateFormat.getDateTimeInstance( );
+	DateFormat dateFormatter = DateFormat.getDateTimeInstance( );
 
-	private Handler handler = new Handler( ) {
+	Handler handler = new Handler( ) {
 
 		@Override
 		public void handleMessage( Message msg )
 		{
 			ArrayAdapter<AppInfoHolder> adapter;
+			ArrayList<AppInfoHolder> localList;
 
 			switch ( msg.what )
 			{
@@ -175,9 +176,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 					adapter.clear( );
 
-					for ( AppInfoHolder info : appCache.appList )
+					localList = appCache.appList;
+
+					for ( int i = 0, size = localList.size( ); i < size; i++ )
 					{
-						adapter.add( info );
+						adapter.add( localList.get( i ) );
 					}
 
 					// should always no selection at this stage
@@ -298,9 +301,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 						adapter.clear( );
 
-						for ( AppInfoHolder info : appCache.appList )
+						localList = appCache.appList;
+
+						for ( int i = 0, size = localList.size( ); i < size; i++ )
 						{
-							adapter.add( info );
+							adapter.add( localList.get( i ) );
 						}
 					}
 
@@ -314,7 +319,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		}
 	};
 
-	private OnCheckedChangeListener checkListener = new OnCheckedChangeListener( ) {
+	OnCheckedChangeListener checkListener = new OnCheckedChangeListener( ) {
 
 		public void onCheckedChanged( CompoundButton buttonView,
 				boolean isChecked )
@@ -333,7 +338,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 							R.anim.footer_appear ) );
 				}
 			}
-			else if ( getSelectedCount( ) == 0 )
+			else if ( getSelectedCount( lstApps ) == 0 )
 			{
 				hideButtons( );
 			}
@@ -582,9 +587,9 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 				ArrayList<AppInfoHolder> dataList = new ArrayList<AppInfoHolder>( );
 
-				for ( Iterator<ApplicationInfo> itr = filteredApps.iterator( ); itr.hasNext( ); )
+				for ( int i = 0, size = filteredApps.size( ); i < size; i++ )
 				{
-					ApplicationInfo info = itr.next( );
+					ApplicationInfo info = filteredApps.get( i );
 
 					AppInfoHolder holder = new AppInfoHolder( );
 					holder.appInfo = info;
@@ -593,7 +598,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 					{
 						PackageInfo pi = pm.getPackageInfo( info.packageName, 0 );
 
-						holder.version = versionPrefix + " " //$NON-NLS-1$
+						holder.version = versionPrefix
+								+ " " //$NON-NLS-1$
 								+ ( pi.versionName == null ? String.valueOf( pi.versionCode )
 										: pi.versionName );
 
@@ -653,7 +659,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 							{
 								observer.invokeGetPkgSize( filteredApps.get( k
 										* secSize
-										+ i ).packageName, pm );
+										+ i ).packageName,
+										pm );
 							}
 
 							try
@@ -705,7 +712,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 						ApplicationInfo ai;
 						AppInfoHolder holder;
 
-						for ( int i = 0; i < filteredApps.size( ); i++ )
+						for ( int i = 0, size = filteredApps.size( ); i < size; i++ )
 						{
 							ai = filteredApps.get( i );
 
@@ -740,7 +747,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 									0 ) );
 						}
 
-						for ( int i = 0; i < filteredApps.size( ); i++ )
+						for ( int i = 0, size = filteredApps.size( ); i < size; i++ )
 						{
 							ai = filteredApps.get( i );
 
@@ -783,7 +790,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		} ).start( );
 	}
 
-	private void reloadBackupState( final PackageManager pm,
+	void reloadBackupState( final PackageManager pm,
 			final List<ApplicationInfo> apps )
 	{
 		if ( apps == null || apps.size( ) == 0 )
@@ -821,7 +828,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		AppInfoHolder holder;
 		PackageInfo pi;
 
-		for ( int i = 0; i < apps.size( ); i++ )
+		for ( int i = 0, size = apps.size( ); i < size; i++ )
 		{
 			ai = apps.get( i );
 
@@ -901,7 +908,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		}
 	}
 
-	private List<ApplicationInfo> filterApps( List<ApplicationInfo> apps )
+	List<ApplicationInfo> filterApps( List<ApplicationInfo> apps )
 	{
 		if ( apps == null || apps.size( ) == 0 )
 		{
@@ -916,8 +923,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 		{
 			List<ApplicationInfo> sysApps = new ArrayList<ApplicationInfo>( );
 
-			for ( ApplicationInfo ai : apps )
+			for ( int i = 0, size = apps.size( ); i < size; i++ )
 			{
+				ApplicationInfo ai = apps.get( i );
+
 				if ( ( ai.flags & ApplicationInfo.FLAG_SYSTEM ) != 0 )
 				{
 					sysApps.add( ai );
@@ -930,8 +939,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 		{
 			List<ApplicationInfo> userApps = new ArrayList<ApplicationInfo>( );
 
-			for ( ApplicationInfo ai : apps )
+			for ( int i = 0, size = apps.size( ); i < size; i++ )
 			{
+				ApplicationInfo ai = apps.get( i );
+
 				if ( ( ai.flags & ApplicationInfo.FLAG_SYSTEM ) == 0 )
 				{
 					userApps.add( ai );
@@ -944,14 +955,14 @@ public final class ApplicationManager extends ListActivity implements Constants
 		return apps;
 	}
 
-	private boolean ensureSDCard( )
+	private static boolean ensureSDCard( )
 	{
 		String state = Environment.getExternalStorageState( );
 
 		return Environment.MEDIA_MOUNTED.equals( state );
 	}
 
-	private List<ApplicationInfo> getSelected( )
+	private static List<ApplicationInfo> getSelected( ListView lstApps )
 	{
 		int count = lstApps.getCount( );
 
@@ -970,7 +981,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		return apps;
 	}
 
-	private int getSelectedCount( )
+	int getSelectedCount( ListView lstApps )
 	{
 		int count = lstApps.getCount( );
 
@@ -989,7 +1000,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		return s;
 	}
 
-	private void export( final List<ApplicationInfo> apps )
+	void export( final List<ApplicationInfo> apps )
 	{
 		if ( apps == null || apps.isEmpty( ) )
 		{
@@ -1070,7 +1081,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 				int skipped = 0;
 				int succeed = 0;
 
-				for ( int i = 0; i < apps.size( ); i++ )
+				for ( int i = 0, size = apps.size( ); i < size; i++ )
 				{
 					ApplicationInfo app = apps.get( i );
 
@@ -1138,7 +1149,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		} ).start( );
 	}
 
-	private String getFileName( String fullName )
+	static String getFileName( String fullName )
 	{
 		if ( fullName == null )
 		{
@@ -1154,7 +1165,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		return fullName.substring( idx + 1 );
 	}
 
-	private void copyFile( File src, File dest ) throws IOException
+	static void copyFile( File src, File dest ) throws IOException
 	{
 		InputStream fis = new BufferedInputStream( new FileInputStream( src ),
 				8192 * 4 );
@@ -1237,13 +1248,12 @@ public final class ApplicationManager extends ListActivity implements Constants
 			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
-					PREF_KEY_SORT_DIRECTION,
-					ORDER_ASC ) );
-			it.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_SIZE ) );
-			it.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_DATE ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION,
+					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SHOW_SIZE,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_SIZE ) );
+			it.putExtra( PREF_KEY_SHOW_DATE,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_DATE ) );
 			it.putExtra( PREF_KEY_SHOW_BACKUP_STATE,
 					Util.getBooleanOption( this, PREF_KEY_SHOW_BACKUP_STATE ) );
 
@@ -1309,8 +1319,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 					{
 						boolean started = false;
 
-						for ( ResolveInfo ri : acts )
+						for ( int i = 0, size = acts.size( ); i < size; i++ )
 						{
+							ResolveInfo ri = acts.get( i );
+
 							if ( pkgName.equals( ri.activityInfo.packageName ) )
 							{
 								it.setClassName( ri.activityInfo.packageName,
@@ -1420,7 +1432,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 	private void doUninstall( )
 	{
-		final List<ApplicationInfo> sels = getSelected( );
+		final List<ApplicationInfo> sels = getSelected( lstApps );
 
 		if ( sels == null || sels.size( ) == 0 )
 		{
@@ -1434,7 +1446,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 				{
 					boolean canUninstall = false;
 
-					for ( int i = 0; i < sels.size( ); i++ )
+					for ( int i = 0, size = sels.size( ); i < size; i++ )
 					{
 						ApplicationInfo app = sels.get( i );
 
@@ -1476,9 +1488,9 @@ public final class ApplicationManager extends ListActivity implements Constants
 		}
 	}
 
-	private void doExport( )
+	void doExport( )
 	{
-		final List<ApplicationInfo> sels = getSelected( );
+		final List<ApplicationInfo> sels = getSelected( lstApps );
 
 		if ( sels == null || sels.size( ) == 0 )
 		{
@@ -1513,9 +1525,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 		}
 	}
 
-	private void toggleAllSelection( boolean selected )
+	void toggleAllSelection( boolean selected )
 	{
 		int totalCount = lstApps.getCount( );
+
 		for ( int i = 0; i < totalCount; i++ )
 		{
 			AppInfoHolder holder = (AppInfoHolder) lstApps.getItemAtPosition( i );
@@ -1531,7 +1544,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
 	}
 
-	private void hideButtons( )
+	void hideButtons( )
 	{
 		View v = findViewById( R.id.app_footer );
 
@@ -1552,12 +1565,12 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 		private CountDownLatch count;
 
-		private PkgSizeObserver( CountDownLatch count )
+		PkgSizeObserver( CountDownLatch count )
 		{
 			this.count = count;
 		}
 
-		private void invokeGetPkgSize( String pkgName, PackageManager pm )
+		void invokeGetPkgSize( String pkgName, PackageManager pm )
 		{
 			if ( mdGetPackageSizeInfo != null )
 			{
@@ -1626,6 +1639,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 		boolean isPrivate;
 
 		boolean checked;
+
+		AppInfoHolder( )
+		{
+
+		}
 
 		@Override
 		public boolean equals( Object o )
@@ -1716,16 +1734,24 @@ public final class ApplicationManager extends ListActivity implements Constants
 	private static final class AppCache
 	{
 
-		ArrayList<AppInfoHolder> appList = new ArrayList<AppInfoHolder>( );
+		ArrayList<AppInfoHolder> appList;
 
-		HashMap<String, AppInfoHolder> appLookup = new HashMap<String, AppInfoHolder>( );
+		HashMap<String, AppInfoHolder> appLookup;
+
+		AppCache( )
+		{
+			appList = new ArrayList<AppInfoHolder>( );
+			appLookup = new HashMap<String, AppInfoHolder>( );
+		}
 
 		synchronized void update( ArrayList<AppInfoHolder> apps )
 		{
 			appList.retainAll( apps );
 
-			for ( AppInfoHolder ai : apps )
+			for ( int i = 0, size = apps.size( ); i < size; i++ )
 			{
+				AppInfoHolder ai = apps.get( i );
+
 				AppInfoHolder oai = appLookup.get( ai.appInfo.packageName );
 
 				if ( oai == null )
@@ -1830,19 +1856,19 @@ public final class ApplicationManager extends ListActivity implements Constants
 			setResult( RESULT_OK, getIntent( ) );
 		}
 
-		private void refreshBooleanOption( String key )
+		void refreshBooleanOption( String key )
 		{
 			boolean val = getIntent( ).getBooleanExtra( key, true );
 
 			( (CheckBoxPreference) findPreference( key ) ).setChecked( val );
 		}
 
-		private void refreshBackupFolder( )
+		void refreshBackupFolder( )
 		{
 			findPreference( "export_dir" ).setSummary( getIntent( ).getStringExtra( PREF_KEY_APP_EXPORT_DIR ) ); //$NON-NLS-1$
 		}
 
-		private void refreshAppType( )
+		void refreshAppType( )
 		{
 			int type = getIntent( ).getIntExtra( PREF_KEY_FILTER_APP_TYPE,
 					APP_TYPE_ALL );
@@ -1860,7 +1886,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			findPreference( "app_filter" ).setSummary( res ); //$NON-NLS-1$
 		}
 
-		private void refreshSortType( )
+		void refreshSortType( )
 		{
 			int type = getIntent( ).getIntExtra( PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME );
@@ -1893,7 +1919,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			findPreference( "sort_type" ).setSummary( label ); //$NON-NLS-1$
 		}
 
-		private void refreshSortDirection( )
+		void refreshSortDirection( )
 		{
 			int type = getIntent( ).getIntExtra( PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC );

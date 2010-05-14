@@ -37,7 +37,7 @@ import android.widget.TextView;
 public final class BatteryInfoActivity extends SysInfoManager.PopActivity
 {
 
-	private ListView contentView;
+	ListView contentView;
 
 	private BroadcastReceiver mBatteryInfoReceiver = new BroadcastReceiver( ) {
 

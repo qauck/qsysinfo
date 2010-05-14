@@ -38,7 +38,7 @@ import android.widget.TextView;
 public final class SensorInfoActivity extends PopActivity
 {
 
-	private ListView contentView;
+	ListView contentView;
 
 	private Runnable task = new Runnable( ) {
 

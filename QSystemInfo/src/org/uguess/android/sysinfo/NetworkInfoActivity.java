@@ -28,8 +28,8 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -42,7 +42,7 @@ import android.widget.TextView;
 public class NetworkInfoActivity extends PopActivity
 {
 
-	private ListView contentView;
+	ListView contentView;
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState )

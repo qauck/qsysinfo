@@ -32,9 +32,9 @@ import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.DialogInterface.OnClickListener;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -49,17 +49,17 @@ import android.text.TextUtils;
 import android.text.method.DigitsKeyListener;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.ContextMenu.ContextMenuInfo;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.TextView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
 
 /**
  * LogViewer
@@ -85,10 +85,10 @@ public final class LogViewer extends ListActivity implements Constants
 
 	static final String DMESG_MODE = "dmesgMode"; //$NON-NLS-1$
 
-	private boolean dmesgMode;
-	private ProgressDialog progress;
+	boolean dmesgMode;
+	ProgressDialog progress;
 
-	private Handler handler = new Handler( ) {
+	Handler handler = new Handler( ) {
 
 		public void handleMessage( android.os.Message msg )
 		{
@@ -106,9 +106,9 @@ public final class LogViewer extends ListActivity implements Constants
 
 					if ( data != null )
 					{
-						for ( LogItem log : data )
+						for ( int i = 0, size = data.size( ); i < size; i++ )
 						{
-							adapter.add( log );
+							adapter.add( data.get( i ) );
 						}
 					}
 
@@ -337,19 +337,16 @@ public final class LogViewer extends ListActivity implements Constants
 
 			it.putExtra( DMESG_MODE, dmesgMode );
 
-			it.putExtra( PREF_KEY_CLOG_LEVL, Util.getIntOption( this,
-					PREF_KEY_CLOG_LEVL,
-					Log.VERBOSE ) );
+			it.putExtra( PREF_KEY_CLOG_LEVL,
+					Util.getIntOption( this, PREF_KEY_CLOG_LEVL, Log.VERBOSE ) );
 			it.putExtra( PREF_KEY_TAG_FILTER,
 					Util.getStringOption( LogViewer.this,
 							PREF_KEY_TAG_FILTER,
 							null ) );
-			it.putExtra( PREF_KEY_PID_FILTER, Util.getIntOption( this,
-					PREF_KEY_PID_FILTER,
-					0 ) );
-			it.putExtra( PREF_KEY_DLOG_LEVL, Util.getIntOption( this,
-					PREF_KEY_DLOG_LEVL,
-					DM_LVL_DEBUG ) );
+			it.putExtra( PREF_KEY_PID_FILTER,
+					Util.getIntOption( this, PREF_KEY_PID_FILTER, 0 ) );
+			it.putExtra( PREF_KEY_DLOG_LEVL,
+					Util.getIntOption( this, PREF_KEY_DLOG_LEVL, DM_LVL_DEBUG ) );
 
 			startActivityForResult( it, 1 );
 
@@ -393,7 +390,7 @@ public final class LogViewer extends ListActivity implements Constants
 		return false;
 	}
 
-	private void sendLog( final boolean compressed, final int format )
+	void sendLog( final boolean compressed, final int format )
 	{
 		if ( progress == null )
 		{
@@ -490,7 +487,7 @@ public final class LogViewer extends ListActivity implements Constants
 		}
 	}
 
-	private String collectTextLogContent( )
+	String collectTextLogContent( )
 	{
 		StringBuffer sb = new StringBuffer( );
 
@@ -515,9 +512,11 @@ public final class LogViewer extends ListActivity implements Constants
 				}
 				else
 				{
-					for ( String s : log.msgList )
+					for ( int k = 0, size = log.msgList.size( ); k < size; k++ )
 					{
-						sb.append( head ).append( s ).append( '\n' );
+						sb.append( head )
+								.append( log.msgList.get( k ) )
+								.append( '\n' );
 					}
 				}
 			}
@@ -537,9 +536,11 @@ public final class LogViewer extends ListActivity implements Constants
 				}
 				else
 				{
-					for ( String s : log.msgList )
+					for ( int k = 0, size = log.msgList.size( ); k < size; k++ )
 					{
-						sb.append( head ).append( s ).append( '\n' );
+						sb.append( head )
+								.append( log.msgList.get( k ) )
+								.append( '\n' );
 					}
 				}
 			}
@@ -548,7 +549,7 @@ public final class LogViewer extends ListActivity implements Constants
 		return sb.toString( );
 	}
 
-	private String collectCSVLogContent( )
+	String collectCSVLogContent( )
 	{
 		StringBuffer sb = new StringBuffer( );
 
@@ -578,7 +579,7 @@ public final class LogViewer extends ListActivity implements Constants
 				}
 				else
 				{
-					for ( String s : log.msgList )
+					for ( int k = 0, size = log.msgList.size( ); k < size; k++ )
 					{
 						sb.append( log.level ).append( ',' );
 
@@ -588,7 +589,7 @@ public final class LogViewer extends ListActivity implements Constants
 						}
 
 						sb.append( ',' )
-								.append( SysInfoManager.escapeCsv( s ) )
+								.append( SysInfoManager.escapeCsv( log.msgList.get( k ) ) )
 								.append( '\n' );
 					}
 				}
@@ -617,7 +618,7 @@ public final class LogViewer extends ListActivity implements Constants
 				}
 				else
 				{
-					for ( String s : log.msgList )
+					for ( int k = 0, size = log.msgList.size( ); k < size; k++ )
 					{
 						sb.append( SysInfoManager.escapeCsv( log.time ) )
 								.append( ',' )
@@ -627,7 +628,7 @@ public final class LogViewer extends ListActivity implements Constants
 								.append( ',' )
 								.append( log.pid )
 								.append( ',' )
-								.append( SysInfoManager.escapeCsv( s ) )
+								.append( SysInfoManager.escapeCsv( log.msgList.get( k ) ) )
 								.append( '\n' );
 					}
 				}
@@ -637,7 +638,7 @@ public final class LogViewer extends ListActivity implements Constants
 		return sb.toString( );
 	}
 
-	private String collectHtmlLogContent( )
+	String collectHtmlLogContent( )
 	{
 		StringBuffer sb = new StringBuffer( );
 
@@ -866,18 +867,18 @@ public final class LogViewer extends ListActivity implements Constants
 		return log;
 	}
 
-	private static String formatDLog( LogItem log )
+	static String formatDLog( LogItem log )
 	{
 		return "<" + log.level + "> " //$NON-NLS-1$ //$NON-NLS-2$
 				+ ( log.time == null ? "" : ( "[" + log.time + "] " ) ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
-	private static String formatCLog( LogItem log )
+	static String formatCLog( LogItem log )
 	{
 		return log.time + ' ' + log.level + '/' + log.tag + '(' + log.pid + ')';
 	}
 
-	private static ArrayList<LogItem> collectDLog( int logLevel )
+	static ArrayList<LogItem> collectDLog( int logLevel )
 	{
 		char dl = (char) ( logLevel + 0x30 );
 
@@ -936,8 +937,8 @@ public final class LogViewer extends ListActivity implements Constants
 		return null;
 	}
 
-	private static ArrayList<LogItem> collectCLog( int logLevel,
-			String tagFilter, int pidFilter )
+	static ArrayList<LogItem> collectCLog( int logLevel, String tagFilter,
+			int pidFilter )
 	{
 		char cl = 'V';
 
@@ -1022,7 +1023,7 @@ public final class LogViewer extends ListActivity implements Constants
 	public static final class LogSettings extends PreferenceActivity
 	{
 
-		private boolean dmesgMode;
+		boolean dmesgMode;
 
 		@Override
 		protected void onCreate( Bundle savedInstanceState )
@@ -1051,7 +1052,7 @@ public final class LogViewer extends ListActivity implements Constants
 			setResult( RESULT_OK, getIntent( ) );
 		}
 
-		private void refreshLevelFilter( )
+		void refreshLevelFilter( )
 		{
 			if ( dmesgMode )
 			{
@@ -1115,7 +1116,7 @@ public final class LogViewer extends ListActivity implements Constants
 			}
 		}
 
-		private void refreshTagFilter( )
+		void refreshTagFilter( )
 		{
 			String tag = getIntent( ).getStringExtra( PREF_KEY_TAG_FILTER );
 
@@ -1129,7 +1130,7 @@ public final class LogViewer extends ListActivity implements Constants
 			}
 		}
 
-		private void refreshPidFilter( )
+		void refreshPidFilter( )
 		{
 			int pid = getIntent( ).getIntExtra( PREF_KEY_PID_FILTER, 0 );
 
@@ -1346,15 +1347,20 @@ public final class LogViewer extends ListActivity implements Constants
 		String msg;
 		ArrayList<String> msgList;
 
+		LogItem( )
+		{
+
+		}
+
 		String getMsg( )
 		{
 			if ( msg == null && msgList != null )
 			{
 				StringBuffer sb = new StringBuffer( );
 
-				for ( String s : msgList )
+				for ( int k = 0, size = msgList.size( ); k < size; k++ )
 				{
-					sb.append( s ).append( '\n' );
+					sb.append( msgList.get( k ) ).append( '\n' );
 				}
 
 				msg = sb.toString( ).trim( );

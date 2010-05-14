@@ -37,22 +37,22 @@ import java.util.zip.ZipOutputStream;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.app.ActivityManager.MemoryInfo;
 import android.app.ActivityManager.RunningAppProcessInfo;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
@@ -137,8 +137,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 	private static final int DMESG_LOG = 4;
 	private static final int LOGCAT_LOG = 5;
 
-	private Preference prefBatteryLevel;
-	private ProgressDialog progress;
+	Preference prefBatteryLevel;
+	ProgressDialog progress;
 
 	private BroadcastReceiver mBatteryInfoReceiver = new BroadcastReceiver( ) {
 
@@ -182,7 +182,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 		}
 	};
 
-	private Handler handler = new Handler( ) {
+	Handler handler = new Handler( ) {
 
 		public void handleMessage( android.os.Message msg )
 		{
@@ -346,8 +346,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 			String[] mem = new String[3];
 
-			mem[0] = extractMemCount( totalMsg );
-			mem[1] = extractMemCount( freeMsg );
+			mem[0] = extractMemCount( this, totalMsg );
+			mem[1] = extractMemCount( this, freeMsg );
 
 			ActivityManager am = (ActivityManager) getSystemService( Context.ACTIVITY_SERVICE );
 			MemoryInfo mi = new MemoryInfo( );
@@ -380,7 +380,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 		return null;
 	}
 
-	private String extractMemCount( String line )
+	private static String extractMemCount( Context ctx, String line )
 	{
 		if ( line != null )
 		{
@@ -419,7 +419,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 									"Unexpected mem unit format: " + line ); //$NON-NLS-1$
 						}
 
-						return Formatter.formatFileSize( this, size );
+						return Formatter.formatFileSize( ctx, size );
 					}
 					catch ( Exception e )
 					{
@@ -441,7 +441,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 			}
 		}
 
-		return getResources( ).getString( R.string.info_not_available );
+		return ctx.getResources( ).getString( R.string.info_not_available );
 	}
 
 	private String getCpuInfo( )
@@ -1027,16 +1027,15 @@ public final class SysInfoManager extends PreferenceActivity implements
 		{
 			Intent it = new Intent( this, InfoSettings.class );
 
-			it.putExtra( PREF_KEY_SHOW_INFO_ICON, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_INFO_ICON ) );
-			it.putExtra( PREF_KEY_SHOW_TASK_ICON, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_TASK_ICON ) );
+			it.putExtra( PREF_KEY_SHOW_INFO_ICON,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_INFO_ICON ) );
+			it.putExtra( PREF_KEY_SHOW_TASK_ICON,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_TASK_ICON ) );
 			it.putExtra( PREF_KEY_AUTO_START_ICON, Util.getBooleanOption( this,
 					PREF_KEY_AUTO_START_ICON,
 					false ) );
-			it.putExtra( PREF_KEY_DEFAULT_EMAIL, Util.getStringOption( this,
-					PREF_KEY_DEFAULT_EMAIL,
-					null ) );
+			it.putExtra( PREF_KEY_DEFAULT_EMAIL,
+					Util.getStringOption( this, PREF_KEY_DEFAULT_EMAIL, null ) );
 
 			startActivityForResult( it, 2 );
 
@@ -1095,7 +1094,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 		return false;
 	}
 
-	private void showLog( boolean dmesg )
+	void showLog( boolean dmesg )
 	{
 		Intent it = new Intent( this, LogViewer.class );
 		it.putExtra( LogViewer.DMESG_MODE, dmesg );
@@ -1103,7 +1102,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 		startActivityForResult( it, 1 );
 	}
 
-	private void sendReport( final boolean[] items, final int format,
+	void sendReport( final boolean[] items, final int format,
 			final boolean compressed )
 	{
 		if ( progress == null )
@@ -1157,7 +1156,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 		} ).start( );
 	}
 
-	private String generateTextReport( boolean[] items )
+	String generateTextReport( boolean[] items )
 	{
 		StringBuffer sb = new StringBuffer( );
 
@@ -1250,8 +1249,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 			{
 				sb.append( getString( R.string.storage_summary,
 						info[0],
-						info[2] )
-						+ getString( R.string.idle_info, info[1] ) );
+						info[2] ) + getString( R.string.idle_info, info[1] ) );
 			}
 			sb.append( "\n\n" ); //$NON-NLS-1$
 
@@ -1345,8 +1343,10 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 			if ( pkgs != null )
 			{
-				for ( PackageInfo pkg : pkgs )
+				for ( int i = 0, size = pkgs.size( ); i < size; i++ )
 				{
+					PackageInfo pkg = pkgs.get( i );
+
 					sb.append( pkg.packageName ).append( " <" ) //$NON-NLS-1$
 							.append( pkg.versionName )
 							.append( " (" ) //$NON-NLS-1$
@@ -1382,8 +1382,10 @@ public final class SysInfoManager extends PreferenceActivity implements
 			{
 				PackageManager pm = getPackageManager( );
 
-				for ( RunningAppProcessInfo proc : procs )
+				for ( int i = 0, size = procs.size( ); i < size; i++ )
 				{
+					RunningAppProcessInfo proc = procs.get( i );
+
 					sb.append( '<' )
 							.append( getImportance( proc ) )
 							.append( "> [" ) //$NON-NLS-1$
@@ -1491,7 +1493,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 		return sb.toString( );
 	}
 
-	private String generateHtmlReport( boolean[] items )
+	String generateHtmlReport( boolean[] items )
 	{
 		StringBuffer sb = new StringBuffer( );
 
@@ -1586,8 +1588,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 			{
 				sb.append( getString( R.string.storage_summary,
 						info[0],
-						info[2] )
-						+ getString( R.string.idle_info, info[1] ) );
+						info[2] ) + getString( R.string.idle_info, info[1] ) );
 			}
 			sb.append( closeRow );
 
@@ -1710,8 +1711,10 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 			if ( pkgs != null )
 			{
-				for ( PackageInfo pkg : pkgs )
+				for ( int i = 0, size = pkgs.size( ); i < size; i++ )
 				{
+					PackageInfo pkg = pkgs.get( i );
+
 					sb.append( openRow )
 							.append( escapeHtml( pkg.packageName ) )
 							.append( nextColumn )
@@ -1768,8 +1771,10 @@ public final class SysInfoManager extends PreferenceActivity implements
 			{
 				PackageManager pm = getPackageManager( );
 
-				for ( RunningAppProcessInfo proc : procs )
+				for ( int i = 0, size = procs.size( ); i < size; i++ )
 				{
+					RunningAppProcessInfo proc = procs.get( i );
+
 					sb.append( openRow )
 							.append( getImportance( proc ) )
 							.append( nextColumn )
@@ -2315,7 +2320,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 		StringBuffer sb = new StringBuffer( );
 
 		sb.append( '"' );
-		for ( int i = 0; i < str.length( ); i++ )
+		for ( int i = 0, size = str.length( ); i < size; i++ )
 		{
 			char c = str.charAt( i );
 			if ( c == '"' )
@@ -2345,7 +2350,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 		StringBuffer sb = new StringBuffer( );
 		char c;
-		for ( int i = 0; i < str.length( ); i++ )
+		for ( int i = 0, size = str.length( ); i < size; i++ )
 		{
 			c = str.charAt( i );
 
@@ -2404,7 +2409,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 	static final class FormatArrayAdapter extends ArrayAdapter<FormatItem>
 	{
 
-		private Activity context;
+		Activity context;
 
 		FormatArrayAdapter( Activity context, int textViewResourceId,
 				FormatItem[] objects )
@@ -2557,14 +2562,14 @@ public final class SysInfoManager extends PreferenceActivity implements
 			setResult( RESULT_OK, getIntent( ) );
 		}
 
-		private void refreshBooleanOption( String key, boolean defValue )
+		void refreshBooleanOption( String key, boolean defValue )
 		{
 			boolean val = getIntent( ).getBooleanExtra( key, defValue );
 
 			( (CheckBoxPreference) findPreference( key ) ).setChecked( val );
 		}
 
-		private void refreshEmail( )
+		void refreshEmail( )
 		{
 			String email = getIntent( ).getStringExtra( PREF_KEY_DEFAULT_EMAIL );
 

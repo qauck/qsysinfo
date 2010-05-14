@@ -34,20 +34,20 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import android.app.ActivityManager;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.AlertDialog;
 import android.app.ListActivity;
-import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -62,18 +62,18 @@ import android.text.Html;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
 
 /**
  * ProcessManager
@@ -95,17 +95,17 @@ public final class ProcessManager extends ListActivity implements Constants
 	private static final int IGNORE_ACTION_HIDDEN = 0;
 	private static final int IGNORE_ACTION_PROTECTED = 1;
 
-	private ProcessItem dummyInfo;
+	ProcessItem dummyInfo;
 
-	private ProcessCache procCache;
+	ProcessCache procCache;
 
-	private long totalLoad, totalDelta;
+	long totalLoad, totalDelta;
 
-	private LinkedHashSet<String> ignoreList;
+	LinkedHashSet<String> ignoreList;
 
 	private byte[] buf = new byte[512];
 
-	private Handler handler = new Handler( ) {
+	Handler handler = new Handler( ) {
 
 		public void handleMessage( android.os.Message msg )
 		{
@@ -119,9 +119,11 @@ public final class ProcessManager extends ListActivity implements Constants
 
 				adapter.add( dummyInfo );
 
-				for ( ProcessItem pi : procCache.procList )
+				ArrayList<ProcessItem> localList = procCache.procList;
+
+				for ( int i = 0, size = localList.size( ); i < size; i++ )
 				{
-					adapter.add( pi );
+					adapter.add( localList.get( i ) );
 				}
 
 				adapter.notifyDataSetChanged( );
@@ -146,7 +148,7 @@ public final class ProcessManager extends ListActivity implements Constants
 		};
 	};
 
-	private Runnable task = new Runnable( ) {
+	Runnable task = new Runnable( ) {
 
 		public void run( )
 		{
@@ -174,7 +176,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 		ignoreList = new LinkedHashSet<String>( );
 
-		ArrayList<String> list = getIgnoreList( );
+		ArrayList<String> list = getIgnoreList( getPreferences( Context.MODE_PRIVATE ) );
 
 		if ( list != null )
 		{
@@ -437,19 +439,19 @@ public final class ProcessManager extends ListActivity implements Constants
 			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
-					PREF_KEY_SORT_DIRECTION,
-					ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION,
+					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
 			it.putExtra( PREF_KEY_IGNORE_ACTION, Util.getIntOption( this,
 					PREF_KEY_IGNORE_ACTION,
 					IGNORE_ACTION_HIDDEN ) );
-			it.putStringArrayListExtra( PREF_KEY_IGNORE_LIST, getIgnoreList( ) );
-			it.putExtra( PREF_KEY_SHOW_MEM, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_MEM ) );
-			it.putExtra( PREF_KEY_SHOW_CPU, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_CPU ) );
-			it.putExtra( PREF_KEY_SHOW_SYS_PROC, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_SYS_PROC ) );
+			it.putStringArrayListExtra( PREF_KEY_IGNORE_LIST,
+					getIgnoreList( getPreferences( Context.MODE_PRIVATE ) ) );
+			it.putExtra( PREF_KEY_SHOW_MEM,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_MEM ) );
+			it.putExtra( PREF_KEY_SHOW_CPU,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_CPU ) );
+			it.putExtra( PREF_KEY_SHOW_SYS_PROC,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_SYS_PROC ) );
 
 			startActivityForResult( it, 1 );
 
@@ -515,8 +517,10 @@ public final class ProcessManager extends ListActivity implements Constants
 					{
 						boolean started = false;
 
-						for ( ResolveInfo ri : acts )
+						for ( int i = 0, size = acts.size( ); i < size; i++ )
 						{
+							ResolveInfo ri = acts.get( i );
+
 							if ( pkgName.equals( ri.activityInfo.packageName ) )
 							{
 								it.setClassName( ri.activityInfo.packageName,
@@ -692,11 +696,6 @@ public final class ProcessManager extends ListActivity implements Constants
 		return list.size( ) == 0 ? null : list;
 	}
 
-	private ArrayList<String> getIgnoreList( )
-	{
-		return getIgnoreList( getPreferences( Context.MODE_PRIVATE ) );
-	}
-
 	private void setIgnoreList( Collection<String> list )
 	{
 		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
@@ -727,7 +726,7 @@ public final class ProcessManager extends ListActivity implements Constants
 		et.commit( );
 	}
 
-	private void endProcess( ActivityManager am, String[] pkgs )
+	void endProcess( ActivityManager am, String[] pkgs )
 	{
 		if ( pkgs != null )
 		{
@@ -741,7 +740,7 @@ public final class ProcessManager extends ListActivity implements Constants
 		}
 	}
 
-	private void endAll( )
+	void endAll( )
 	{
 		ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
 
@@ -750,7 +749,7 @@ public final class ProcessManager extends ListActivity implements Constants
 		ListView lstProcs = getListView( );
 
 		// skip the dummy info
-		for ( int i = 1; i < lstProcs.getCount( ); i++ )
+		for ( int i = 1, size = lstProcs.getCount( ); i < size; i++ )
 		{
 			ProcessItem rap = (ProcessItem) lstProcs.getItemAtPosition( i );
 
@@ -773,7 +772,7 @@ public final class ProcessManager extends ListActivity implements Constants
 		}
 	}
 
-	private void updateProcess( List<RunningAppProcessInfo> list )
+	void updateProcess( List<RunningAppProcessInfo> list )
 	{
 		boolean showCpu = Util.getBooleanOption( this, PREF_KEY_SHOW_CPU );
 
@@ -804,8 +803,11 @@ public final class ProcessManager extends ListActivity implements Constants
 
 			String name;
 			boolean isSys;
-			for ( RunningAppProcessInfo rap : list )
+
+			for ( int i = 0, size = list.size( ); i < size; i++ )
 			{
+				RunningAppProcessInfo rap = list.get( i );
+
 				name = rap.processName;
 
 				isSys = name.startsWith( "com.google.process" ) //$NON-NLS-1$
@@ -834,7 +836,7 @@ public final class ProcessManager extends ListActivity implements Constants
 					pi.procInfo = rap;
 					pi.sys = isSys;
 
-					readProcessInfo( pi, pm, true, buf, showMem, showCpu );
+					readProcessInfo( this, pi, pm, true, buf, showMem, showCpu );
 
 					procCache.resCache.put( name, pi );
 				}
@@ -844,7 +846,7 @@ public final class ProcessManager extends ListActivity implements Constants
 					pi.sys = isSys;
 					pi.lastcputime = pi.cputime;
 
-					readProcessInfo( pi, pm, false, buf, showMem, showCpu );
+					readProcessInfo( this, pi, pm, false, buf, showMem, showCpu );
 				}
 
 				procCache.procList.add( pi );
@@ -1140,8 +1142,9 @@ public final class ProcessManager extends ListActivity implements Constants
 		return null;
 	}
 
-	private void readProcessInfo( ProcessItem proc, PackageManager pm,
-			boolean isNew, byte[] buf, boolean showMem, boolean showCpu )
+	private static void readProcessInfo( Context ctx, ProcessItem proc,
+			PackageManager pm, boolean isNew, byte[] buf, boolean showMem,
+			boolean showCpu )
 	{
 		if ( isNew && pm != null )
 		{
@@ -1212,7 +1215,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 		if ( proc.procInfo.pid != 0 && ( showMem || showCpu ) )
 		{
-			readProcessStat( ProcessManager.this, buf, proc, showMem, showCpu );
+			readProcessStat( ctx, buf, proc, showMem, showCpu );
 		}
 	}
 
@@ -1298,7 +1301,7 @@ public final class ProcessManager extends ListActivity implements Constants
 			setResult( RESULT_OK, getIntent( ) );
 		}
 
-		private void refreshInterval( )
+		void refreshInterval( )
 		{
 			int interval = getIntent( ).getIntExtra( PREF_KEY_REFRESH_INTERVAL,
 					REFRESH_NORMAL );
@@ -1320,14 +1323,14 @@ public final class ProcessManager extends ListActivity implements Constants
 			findPreference( PREF_KEY_REFRESH_INTERVAL ).setSummary( label );
 		}
 
-		private void refreshBooleanOption( String key )
+		void refreshBooleanOption( String key )
 		{
 			boolean val = getIntent( ).getBooleanExtra( key, true );
 
 			( (CheckBoxPreference) findPreference( key ) ).setChecked( val );
 		}
 
-		private void refreshSortType( )
+		void refreshSortType( )
 		{
 			int type = getIntent( ).getIntExtra( PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME );
@@ -1352,7 +1355,7 @@ public final class ProcessManager extends ListActivity implements Constants
 			findPreference( PREF_KEY_SORT_ORDER_TYPE ).setSummary( label );
 		}
 
-		private void refreshSortDirection( )
+		void refreshSortDirection( )
 		{
 			int type = getIntent( ).getIntExtra( PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC );
@@ -1363,7 +1366,7 @@ public final class ProcessManager extends ListActivity implements Constants
 			findPreference( PREF_KEY_SORT_DIRECTION ).setSummary( label );
 		}
 
-		private void refreshIgnoreAction( )
+		void refreshIgnoreAction( )
 		{
 			int action = getIntent( ).getIntExtra( PREF_KEY_IGNORE_ACTION,
 					IGNORE_ACTION_HIDDEN );
@@ -1372,7 +1375,7 @@ public final class ProcessManager extends ListActivity implements Constants
 					: R.string.protect );
 		}
 
-		private void refreshIgnoreList( )
+		void refreshIgnoreList( )
 		{
 			ArrayList<String> list = getIntent( ).getStringArrayListExtra( PREF_KEY_IGNORE_LIST );
 
@@ -1399,7 +1402,7 @@ public final class ProcessManager extends ListActivity implements Constants
 			}
 		}
 
-		private String getProcessLabel( String name, PackageManager pm )
+		private static String getProcessLabel( String name, PackageManager pm )
 		{
 			if ( pm != null )
 			{
@@ -1607,7 +1610,7 @@ public final class ProcessManager extends ListActivity implements Constants
 					{
 						ArrayList<String> nlist = new ArrayList<String>( );
 
-						for ( int i = 0; i < list.size( ); i++ )
+						for ( int i = 0, size = list.size( ); i < size; i++ )
 						{
 							if ( !state[i] )
 							{
@@ -1651,7 +1654,7 @@ public final class ProcessManager extends ListActivity implements Constants
 				final PackageManager pm = getPackageManager( );
 				final String[] labels = new String[list.size( )];
 
-				for ( int i = 0; i < list.size( ); i++ )
+				for ( int i = 0, size = list.size( ); i < size; i++ )
 				{
 					labels[i] = getProcessLabel( list.get( i ), pm );
 				}
@@ -1692,6 +1695,11 @@ public final class ProcessManager extends ListActivity implements Constants
 
 		long lastcputime;
 
+		ProcessItem( )
+		{
+
+		}
+
 		@Override
 		public boolean equals( Object o )
 		{
@@ -1710,9 +1718,15 @@ public final class ProcessManager extends ListActivity implements Constants
 	private static final class ProcessCache
 	{
 
-		HashMap<String, ProcessItem> resCache = new HashMap<String, ProcessItem>( );
+		HashMap<String, ProcessItem> resCache;
 
-		ArrayList<ProcessItem> procList = new ArrayList<ProcessItem>( );
+		ArrayList<ProcessItem> procList;
+
+		ProcessCache( )
+		{
+			resCache = new HashMap<String, ProcessItem>( );
+			procList = new ArrayList<ProcessItem>( );
+		}
 
 		synchronized void reOrder( int type, final int direction )
 		{

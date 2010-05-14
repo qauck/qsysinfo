@@ -29,9 +29,9 @@ import android.app.TabActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.DialogInterface.OnClickListener;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -184,7 +184,7 @@ public final class QSystemInfo extends TabActivity
 					.show( );
 		}
 
-		private void sendBugReport( )
+		void sendBugReport( )
 		{
 			StringBuffer msg = new StringBuffer( );
 			Intent it = new Intent( Intent.ACTION_SENDTO );

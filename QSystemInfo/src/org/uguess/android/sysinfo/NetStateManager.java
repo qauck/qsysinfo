@@ -38,8 +38,8 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
@@ -58,16 +58,16 @@ import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.TextView;
 
 /**
  * NetStateManager
@@ -101,15 +101,15 @@ public final class NetStateManager extends ListActivity implements Constants
 			"CLOSING" //$NON-NLS-1$
 	};
 
-	private ConnectionItem dummyInfo;
+	ConnectionItem dummyInfo;
 
-	private HashMap<String, IpInfo> queryCache;
+	HashMap<String, IpInfo> queryCache;
 
-	private ProgressDialog progress;
+	ProgressDialog progress;
 
-	private volatile boolean aborted;
+	volatile boolean aborted;
 
-	private Handler handler = new Handler( ) {
+	Handler handler = new Handler( ) {
 
 		public void handleMessage( android.os.Message msg )
 		{
@@ -139,7 +139,7 @@ public final class NetStateManager extends ListActivity implements Constants
 		};
 	};
 
-	private Runnable task = new Runnable( ) {
+	Runnable task = new Runnable( ) {
 
 		public void run( )
 		{
@@ -327,17 +327,15 @@ public final class NetStateManager extends ListActivity implements Constants
 			it.putExtra( PREF_KEY_REFRESH_INTERVAL, Util.getIntOption( this,
 					PREF_KEY_REFRESH_INTERVAL,
 					REFRESH_LOW ) );
-			it.putExtra( PREF_KEY_REMOTE_QUERY, Util.getIntOption( this,
-					PREF_KEY_REMOTE_QUERY,
-					ENABLED ) );
+			it.putExtra( PREF_KEY_REMOTE_QUERY,
+					Util.getIntOption( this, PREF_KEY_REMOTE_QUERY, ENABLED ) );
 			it.putExtra( PREF_KEY_SHOW_REMOTE_NAME,
 					Util.getBooleanOption( this, PREF_KEY_SHOW_REMOTE_NAME ) );
 			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_PROTO ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
-					PREF_KEY_SORT_DIRECTION,
-					ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION,
+					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
 
 			startActivityForResult( it, 1 );
 
@@ -408,7 +406,7 @@ public final class NetStateManager extends ListActivity implements Constants
 		}
 	}
 
-	private String getValidIP( String ip )
+	static String getValidIP( String ip )
 	{
 		if ( ip != null )
 		{
@@ -428,7 +426,7 @@ public final class NetStateManager extends ListActivity implements Constants
 		return null;
 	}
 
-	private void queryIPInfo( final String ip )
+	void queryIPInfo( final String ip )
 	{
 		IpInfo info = queryCache.get( ip );
 
@@ -465,7 +463,7 @@ public final class NetStateManager extends ListActivity implements Constants
 		} ).start( );
 	}
 
-	private void refresh( )
+	void refresh( )
 	{
 		ArrayList<ConnectionItem> data = new ArrayList<ConnectionItem>( );
 
@@ -544,9 +542,9 @@ public final class NetStateManager extends ListActivity implements Constants
 
 		adapter.clear( );
 
-		for ( ConnectionItem ci : data )
+		for ( int i = 0, size = data.size( ); i < size; i++ )
 		{
-			adapter.add( ci );
+			adapter.add( data.get( i ) );
 		}
 
 		adapter.notifyDataSetChanged( );
@@ -558,7 +556,7 @@ public final class NetStateManager extends ListActivity implements Constants
 		}
 	}
 
-	private void setFont( TextView txt, int type )
+	void setFont( TextView txt, int type )
 	{
 		if ( txt.getTypeface( ) == null
 				|| txt.getTypeface( ).getStyle( ) != type )
@@ -569,8 +567,12 @@ public final class NetStateManager extends ListActivity implements Constants
 
 	private ArrayList<ConnectionItem> readStatesRaw( )
 	{
-		ArrayList<ConnectionItem> tcp = parseRawData( "TCP", "/proc/net/tcp", false ); //$NON-NLS-1$ //$NON-NLS-2$
-		ArrayList<ConnectionItem> udp = parseRawData( "UDP", "/proc/net/udp", true ); //$NON-NLS-1$ //$NON-NLS-2$
+		ArrayList<ConnectionItem> tcp = parseRawData( this,
+				queryCache,
+				"TCP", "/proc/net/tcp", false ); //$NON-NLS-1$ //$NON-NLS-2$
+		ArrayList<ConnectionItem> udp = parseRawData( this,
+				queryCache,
+				"UDP", "/proc/net/udp", true ); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if ( tcp == null )
 		{
@@ -584,8 +586,9 @@ public final class NetStateManager extends ListActivity implements Constants
 		return tcp;
 	}
 
-	private ArrayList<ConnectionItem> parseRawData( String proto,
-			String source, boolean ignoreState )
+	private static ArrayList<ConnectionItem> parseRawData( Activity ac,
+			HashMap<String, IpInfo> queryCache, String proto, String source,
+			boolean ignoreState )
 	{
 		BufferedReader reader = null;
 		try
@@ -598,7 +601,7 @@ public final class NetStateManager extends ListActivity implements Constants
 			int localOffset = -1, remOffset = -1, stateOffset = -1, stateEndOffset = -1;
 			String line;
 
-			final boolean showRemoteName = Util.getBooleanOption( this,
+			final boolean showRemoteName = Util.getBooleanOption( ac,
 					PREF_KEY_SHOW_REMOTE_NAME );
 			String remoteIp;
 			int portIdx;
@@ -669,7 +672,8 @@ public final class NetStateManager extends ListActivity implements Constants
 					if ( !ignoreState )
 					{
 						int st = Integer.parseInt( line.substring( stateOffset,
-								stateEndOffset ).trim( ), 16 );
+								stateEndOffset ).trim( ),
+								16 );
 
 						ci.state = "Unknown"; //$NON-NLS-1$
 
@@ -711,7 +715,7 @@ public final class NetStateManager extends ListActivity implements Constants
 		return null;
 	}
 
-	private String parseRawIP( String raw )
+	private static String parseRawIP( String raw )
 	{
 		if ( !TextUtils.isEmpty( raw ) )
 		{
@@ -1010,7 +1014,7 @@ public final class NetStateManager extends ListActivity implements Constants
 			setResult( RESULT_OK, getIntent( ) );
 		}
 
-		private void refreshInterval( )
+		void refreshInterval( )
 		{
 			int interval = getIntent( ).getIntExtra( PREF_KEY_REFRESH_INTERVAL,
 					REFRESH_NORMAL );
@@ -1032,7 +1036,7 @@ public final class NetStateManager extends ListActivity implements Constants
 			findPreference( PREF_KEY_REFRESH_INTERVAL ).setSummary( label );
 		}
 
-		private void refreshRemoteQuery( )
+		void refreshRemoteQuery( )
 		{
 			int state = getIntent( ).getIntExtra( PREF_KEY_REMOTE_QUERY,
 					ENABLED );
@@ -1051,7 +1055,7 @@ public final class NetStateManager extends ListActivity implements Constants
 			findPreference( PREF_KEY_REMOTE_QUERY ).setSummary( label );
 		}
 
-		private void refreshRemoteName( )
+		void refreshRemoteName( )
 		{
 			boolean showName = getIntent( ).getBooleanExtra( PREF_KEY_SHOW_REMOTE_NAME,
 					true );
@@ -1059,7 +1063,7 @@ public final class NetStateManager extends ListActivity implements Constants
 			( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_REMOTE_NAME ) ).setChecked( showName );
 		}
 
-		private void refreshSortType( )
+		void refreshSortType( )
 		{
 			int type = getIntent( ).getIntExtra( PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_PROTO );
@@ -1084,7 +1088,7 @@ public final class NetStateManager extends ListActivity implements Constants
 			findPreference( PREF_KEY_SORT_ORDER_TYPE ).setSummary( label );
 		}
 
-		private void refreshSortDirection( )
+		void refreshSortDirection( )
 		{
 			int type = getIntent( ).getIntExtra( PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC );
@@ -1242,6 +1246,10 @@ public final class NetStateManager extends ListActivity implements Constants
 		String remoteName;
 		String state;
 
+		ConnectionItem( )
+		{
+
+		}
 	}
 
 	/**

@@ -31,12 +31,12 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -51,24 +51,24 @@ import android.preference.PreferenceScreen;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 
 /**
  * RestoreAppActivity
@@ -90,16 +90,16 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 	private static final int ORDER_TYPE_DATE = 3;
 	private static final int ORDER_TYPE_PATH = 4;
 
-	private ListView lstApps;
-	private ProgressDialog progress;
+	ListView lstApps;
+	ProgressDialog progress;
 
-	private String versionPrefix;
+	String versionPrefix;
 
 	private boolean skipUpdate;
 
-	private DateFormat dateFormatter = DateFormat.getDateTimeInstance( );
+	DateFormat dateFormatter = DateFormat.getDateTimeInstance( );
 
-	private Handler handler = new Handler( ) {
+	Handler handler = new Handler( ) {
 
 		@Override
 		public void handleMessage( Message msg )
@@ -120,9 +120,9 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 					if ( dataList != null )
 					{
-						for ( ApkInfo info : dataList )
+						for ( int i = 0, size = dataList.size( ); i < size; i++ )
 						{
-							adapter.add( info );
+							adapter.add( dataList.get( i ) );
 						}
 					}
 
@@ -175,7 +175,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		}
 	};
 
-	private OnCheckedChangeListener checkListener = new OnCheckedChangeListener( ) {
+	OnCheckedChangeListener checkListener = new OnCheckedChangeListener( ) {
 
 		public void onCheckedChanged( CompoundButton buttonView,
 				boolean isChecked )
@@ -470,23 +470,21 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 			it.putExtra( PREF_KEY_DEFAULT_RESTORE_DIR,
 					getIntent( ).getStringExtra( ApplicationManager.KEY_RESTORE_PATH ) );
-			it.putExtra( PREF_KEY_APP_RESTORE_DIR, Util.getStringOption( this,
-					PREF_KEY_APP_RESTORE_DIR,
-					null ) );
-			it.putExtra( PREF_KEY_SEARCH_SUB_DIR, Util.getBooleanOption( this,
-					PREF_KEY_SEARCH_SUB_DIR ) );
+			it.putExtra( PREF_KEY_APP_RESTORE_DIR,
+					Util.getStringOption( this, PREF_KEY_APP_RESTORE_DIR, null ) );
+			it.putExtra( PREF_KEY_SEARCH_SUB_DIR,
+					Util.getBooleanOption( this, PREF_KEY_SEARCH_SUB_DIR ) );
 			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
-					PREF_KEY_SORT_DIRECTION,
-					ORDER_ASC ) );
-			it.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_SIZE ) );
-			it.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_DATE ) );
-			it.putExtra( PREF_KEY_SHOW_PATH, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_PATH ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION,
+					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SHOW_SIZE,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_SIZE ) );
+			it.putExtra( PREF_KEY_SHOW_DATE,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_DATE ) );
+			it.putExtra( PREF_KEY_SHOW_PATH,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_PATH ) );
 
 			startActivityForResult( it, 1 );
 
@@ -509,8 +507,10 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 						ArrayAdapter adapter = ( (ArrayAdapter) lstApps.getAdapter( ) );
 						adapter.setNotifyOnChange( false );
 
-						for ( ApkInfo ai : apks )
+						for ( int i = 0, size = apks.size( ); i < size; i++ )
 						{
+							ApkInfo ai = apks.get( i );
+
 							boolean deleted = ai.file.delete( );
 
 							if ( deleted )
@@ -535,8 +535,10 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 				};
 
 				StringBuilder sb = new StringBuilder( );
-				for ( ApkInfo ai : apks )
+				for ( int i = 0, size = apks.size( ); i < size; i++ )
 				{
+					ApkInfo ai = apks.get( i );
+
 					sb.append( ai.file.getName( ) ).append( '\n' );
 				}
 
@@ -626,7 +628,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		return false;
 	}
 
-	private ArrayList<File> getFiles( File parent, final boolean recursive )
+	ArrayList<File> getFiles( File parent, final boolean recursive )
 	{
 		final ArrayList<File> files = new ArrayList<File>( );
 
@@ -719,8 +721,10 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 					PackageInfo pi;
 
-					for ( File f : files )
+					for ( int i = 0, size = files.size( ); i < size; i++ )
 					{
+						File f = files.get( i );
+						
 						handler.sendMessage( handler.obtainMessage( MSG_SCAN,
 								f.getName( ) ) );
 
@@ -810,7 +814,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		} ).start( );
 	}
 
-	private void hideButtons( )
+	void hideButtons( )
 	{
 		View v = findViewById( R.id.app_footer );
 
@@ -842,7 +846,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		return apps;
 	}
 
-	private int getSelectedCount( )
+	int getSelectedCount( )
 	{
 		int count = lstApps.getCount( );
 
@@ -861,7 +865,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		return s;
 	}
 
-	private void doRestore( )
+	void doRestore( )
 	{
 		List<ApkInfo> apps = getSelected( );
 
@@ -873,7 +877,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		{
 			boolean canInstall = false;
 
-			for ( int i = 0; i < apps.size( ); i++ )
+			for ( int i = 0, size = apps.size( ); i < size; i++ )
 			{
 				ApkInfo app = apps.get( i );
 
@@ -906,7 +910,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		}
 	}
 
-	private void toggleAllSelection( boolean selected )
+	void toggleAllSelection( boolean selected )
 	{
 		int totalCount = lstApps.getCount( );
 		for ( int i = 0; i < totalCount; i++ )
@@ -924,7 +928,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		( (ArrayAdapter) lstApps.getAdapter( ) ).notifyDataSetChanged( );
 	}
 
-	private Comparator<ApkInfo> getComparator( int type, final int direction )
+	Comparator<ApkInfo> getComparator( int type, final int direction )
 	{
 		switch ( type )
 		{
@@ -1001,6 +1005,11 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		Drawable icon;
 		int installed;
 		boolean checked;
+
+		ApkInfo( )
+		{
+
+		}
 	}
 
 	/**
@@ -1076,7 +1085,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 			setResult( RESULT_OK, getIntent( ) );
 		}
 
-		private void refreshRestoreFolder( )
+		void refreshRestoreFolder( )
 		{
 			String path = getIntent( ).getStringExtra( PREF_KEY_APP_RESTORE_DIR );
 			if ( path == null )
@@ -1087,14 +1096,14 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 			findPreference( PREF_KEY_APP_RESTORE_DIR ).setSummary( path );
 		}
 
-		private void refreshBooleanOption( String key )
+		void refreshBooleanOption( String key )
 		{
 			boolean val = getIntent( ).getBooleanExtra( key, true );
 
 			( (CheckBoxPreference) findPreference( key ) ).setChecked( val );
 		}
 
-		private void refreshSortType( )
+		void refreshSortType( )
 		{
 			int type = getIntent( ).getIntExtra( PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME );
@@ -1122,7 +1131,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 			findPreference( PREF_KEY_SORT_ORDER_TYPE ).setSummary( label );
 		}
 
-		private void refreshSortDirection( )
+		void refreshSortDirection( )
 		{
 			int type = getIntent( ).getIntExtra( PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC );

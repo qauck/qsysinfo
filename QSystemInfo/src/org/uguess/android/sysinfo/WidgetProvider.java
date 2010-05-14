@@ -21,9 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.app.ActivityManager;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.app.ActivityManager.RunningAppProcessInfo;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
@@ -45,9 +45,8 @@ public final class WidgetProvider extends AppWidgetProvider
 		update( context, appWidgetManager, appWidgetIds, true, true );
 	}
 
-	private static void update( Context context,
-			AppWidgetManager appWidgetManager, int[] appWidgetIds,
-			boolean hasTask, boolean hasInfo )
+	static void update( Context context, AppWidgetManager appWidgetManager,
+			int[] appWidgetIds, boolean hasTask, boolean hasInfo )
 	{
 		if ( appWidgetIds != null )
 		{
@@ -156,8 +155,10 @@ public final class WidgetProvider extends AppWidgetProvider
 			ArrayList<String> ignoreList = ProcessManager.getIgnoreList( getSharedPreferences( ProcessManager.class.getSimpleName( ),
 					Context.MODE_PRIVATE ) );
 
-			for ( RunningAppProcessInfo rap : raps )
+			for ( int i = 0, size = raps.size( ); i < size; i++ )
 			{
+				RunningAppProcessInfo rap = raps.get( i );
+				
 				name = rap.processName;
 
 				if ( name.equals( self )
@@ -188,8 +189,9 @@ public final class WidgetProvider extends AppWidgetProvider
 				}
 			}
 
-			Util.shortToast( this, getString( killed > 1 ? R.string.kill_info2
-					: R.string.kill_info, killed, ignored ) );
+			Util.shortToast( this,
+					getString( killed > 1 ? R.string.kill_info2
+							: R.string.kill_info, killed, ignored ) );
 		}
 	}
 }
