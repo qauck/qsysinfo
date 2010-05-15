@@ -607,6 +607,10 @@ public final class ProcessManager extends ListActivity implements Constants
 				String[] status = readProcStatus( rap.procInfo.pid );
 
 				StringBuffer sb = new StringBuffer( ).append( "<small>" ) //$NON-NLS-1$
+						.append( getString( R.string.proc_name ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( rap.procInfo.processName )
+						.append( "<br>" ) //$NON-NLS-1$
 						.append( getString( R.string.pid ) )
 						.append( ": " ) //$NON-NLS-1$
 						.append( rap.procInfo.pid )

@@ -1364,6 +1364,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 				ApplicationInfo appInfo = ai.appInfo;
 
 				StringBuffer sb = new StringBuffer( ).append( "<small>" ) //$NON-NLS-1$
+						.append( getString( R.string.pkg_name ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( appInfo.packageName )
+						.append( "<br>" ) //$NON-NLS-1$
 						.append( getString( R.string.target_sdk ) )
 						.append( ": " ) //$NON-NLS-1$
 						.append( Util.getTargetSdkVersion( this, appInfo ) )
