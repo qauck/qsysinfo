@@ -149,8 +149,6 @@ public final class ApplicationManager extends ListActivity implements Constants
 		}
 	}
 
-	ListView lstApps;
-
 	ProgressDialog progress;
 
 	String versionPrefix;
@@ -176,7 +174,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			{
 				case MSG_INIT_OK :
 
-					adapter = (ArrayAdapter<AppInfoHolder>) lstApps.getAdapter( );
+					adapter = (ArrayAdapter<AppInfoHolder>) getListAdapter( );
 
 					adapter.setNotifyOnChange( false );
 
@@ -196,7 +194,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
-					if ( lstApps.getCount( ) == 0 )
+					if ( getListView( ).getCount( ) == 0 )
 					{
 						Util.shortToast( ApplicationManager.this,
 								R.string.no_app_show );
@@ -302,7 +300,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 				case MSG_REFRESH_PKG_LABEL :
 				case MSG_REFRESH_BACKUP_STATE :
 
-					adapter = (ArrayAdapter<AppInfoHolder>) lstApps.getAdapter( );
+					adapter = (ArrayAdapter<AppInfoHolder>) getListAdapter( );
 
 					if ( msg.arg1 == 1 )
 					{
@@ -322,7 +320,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 					break;
 				case MSG_REFRESH_PKG_ICON :
 
-					( (ArrayAdapter<AppInfoHolder>) lstApps.getAdapter( ) ).notifyDataSetChanged( );
+					( (ArrayAdapter<AppInfoHolder>) getListAdapter( ) ).notifyDataSetChanged( );
 					break;
 				case MSG_TOAST :
 
@@ -382,7 +380,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		public void onCheckedChanged( CompoundButton buttonView,
 				boolean isChecked )
 		{
-			( (AppInfoHolder) lstApps.getItemAtPosition( (Integer) buttonView.getTag( ) ) ).checked = isChecked;
+			( (AppInfoHolder) getListView( ).getItemAtPosition( (Integer) buttonView.getTag( ) ) ).checked = isChecked;
 
 			View v = findViewById( R.id.app_footer );
 
@@ -396,7 +394,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 							R.anim.footer_appear ) );
 				}
 			}
-			else if ( getSelectedCount( lstApps ) == 0 )
+			else if ( getSelectedCount( getListView( ) ) == 0 )
 			{
 				hideButtons( );
 			}
@@ -438,7 +436,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			}
 		} );
 
-		lstApps = getListView( );
+		ListView lstApps = getListView( );
 
 		lstApps.setFastScrollEnabled( true );
 
@@ -596,7 +594,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			}
 		};
 
-		lstApps.setAdapter( adapter );
+		setListAdapter( adapter );
 	}
 
 	@Override
@@ -1083,9 +1081,9 @@ public final class ApplicationManager extends ListActivity implements Constants
 	{
 		int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
 
-		if ( pos >= 0 && pos < lstApps.getCount( ) )
+		if ( pos >= 0 && pos < getListView( ).getCount( ) )
 		{
-			final AppInfoHolder ai = (AppInfoHolder) lstApps.getItemAtPosition( pos );
+			final AppInfoHolder ai = (AppInfoHolder) getListView( ).getItemAtPosition( pos );
 
 			final String pkgName = ai.appInfo.packageName;
 
@@ -1220,7 +1218,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 	private void doUninstall( )
 	{
-		final List<ApplicationInfo> sels = getSelected( lstApps );
+		final List<ApplicationInfo> sels = getSelected( getListView( ) );
 
 		if ( sels == null || sels.size( ) == 0 )
 		{
@@ -1278,7 +1276,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 	void doExport( )
 	{
-		final List<ApplicationInfo> sels = getSelected( lstApps );
+		final List<ApplicationInfo> sels = getSelected( getListView( ) );
 
 		if ( sels == null || sels.size( ) == 0 )
 		{
@@ -1315,6 +1313,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 	void toggleAllSelection( boolean selected )
 	{
+		ListView lstApps = getListView( );
+
 		int totalCount = lstApps.getCount( );
 
 		for ( int i = 0; i < totalCount; i++ )

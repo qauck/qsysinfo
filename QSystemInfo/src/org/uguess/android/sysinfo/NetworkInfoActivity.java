@@ -28,8 +28,8 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -42,14 +42,14 @@ import android.widget.TextView;
 public class NetworkInfoActivity extends PopActivity
 {
 
-	ListView contentView;
-
 	@Override
 	protected void onCreate( Bundle savedInstanceState )
 	{
 		super.onCreate( savedInstanceState );
 
-		contentView = (ListView) findViewById( R.id.content_list );
+		final ListView contentView = (ListView) findViewById( R.id.content_list );
+
+		registerForContextMenu( contentView );
 
 		ArrayAdapter<String[]> adapter = new ArrayAdapter<String[]>( this,
 				R.layout.sensor_item ) {
@@ -177,6 +177,8 @@ public class NetworkInfoActivity extends PopActivity
 		data.add( new String[]{
 				getString( R.string.public_address ), null
 		} );
+
+		ListView contentView = (ListView) findViewById( R.id.content_list );
 
 		ArrayAdapter<String[]> adapter = (ArrayAdapter<String[]>) contentView.getAdapter( );
 

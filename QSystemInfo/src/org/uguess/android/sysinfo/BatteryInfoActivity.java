@@ -37,8 +37,6 @@ import android.widget.TextView;
 public final class BatteryInfoActivity extends SysInfoManager.PopActivity
 {
 
-	ListView contentView;
-
 	private BroadcastReceiver mBatteryInfoReceiver = new BroadcastReceiver( ) {
 
 		@Override
@@ -170,6 +168,8 @@ public final class BatteryInfoActivity extends SysInfoManager.PopActivity
 						getString( R.string.batt_plugged ), pStr
 				} );
 
+				ListView contentView = (ListView) findViewById( R.id.content_list );
+
 				ArrayAdapter<String[]> adapter = (ArrayAdapter<String[]>) contentView.getAdapter( );
 
 				adapter.setNotifyOnChange( false );
@@ -191,7 +191,9 @@ public final class BatteryInfoActivity extends SysInfoManager.PopActivity
 	{
 		super.onCreate( savedInstanceState );
 
-		contentView = (ListView) findViewById( R.id.content_list );
+		final ListView contentView = (ListView) findViewById( R.id.content_list );
+
+		registerForContextMenu( contentView );
 
 		ArrayAdapter<String[]> adapter = new ArrayAdapter<String[]>( this,
 				R.layout.battery_item ) {

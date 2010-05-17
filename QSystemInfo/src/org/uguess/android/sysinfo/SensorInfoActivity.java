@@ -38,8 +38,6 @@ import android.widget.TextView;
 public final class SensorInfoActivity extends PopActivity
 {
 
-	ListView contentView;
-
 	private Runnable task = new Runnable( ) {
 
 		public void run( )
@@ -52,6 +50,8 @@ public final class SensorInfoActivity extends PopActivity
 			{
 				ss = sm.getSensorList( Sensor.TYPE_ALL );
 			}
+
+			ListView contentView = (ListView) findViewById( R.id.content_list );
 
 			ArrayAdapter<Sensor> adapter = (ArrayAdapter<Sensor>) contentView.getAdapter( );
 
@@ -78,7 +78,9 @@ public final class SensorInfoActivity extends PopActivity
 	{
 		super.onCreate( savedInstanceState );
 
-		contentView = (ListView) findViewById( R.id.content_list );
+		final ListView contentView = (ListView) findViewById( R.id.content_list );
+
+		registerForContextMenu( contentView );
 
 		ArrayAdapter<Sensor> adapter = new ArrayAdapter<Sensor>( this,
 				R.layout.sensor_item ) {
@@ -127,12 +129,16 @@ public final class SensorInfoActivity extends PopActivity
 	{
 		super.onResume( );
 
+		ListView contentView = (ListView) findViewById( R.id.content_list );
+
 		contentView.post( task );
 	}
 
 	@Override
 	protected void onPause( )
 	{
+		ListView contentView = (ListView) findViewById( R.id.content_list );
+
 		contentView.removeCallbacks( task );
 
 		super.onPause( );

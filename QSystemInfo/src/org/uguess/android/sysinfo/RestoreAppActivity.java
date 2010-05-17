@@ -31,12 +31,12 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.DialogInterface.OnClickListener;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -51,24 +51,24 @@ import android.preference.PreferenceScreen;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 
 /**
  * RestoreAppActivity
@@ -90,7 +90,6 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 	private static final int ORDER_TYPE_DATE = 3;
 	private static final int ORDER_TYPE_PATH = 4;
 
-	ListView lstApps;
 	ProgressDialog progress;
 
 	String versionPrefix;
@@ -110,7 +109,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 			{
 				case MSG_INIT_OK :
 
-					adapter = (ArrayAdapter<ApkInfo>) lstApps.getAdapter( );
+					adapter = (ArrayAdapter<ApkInfo>) getListAdapter( );
 
 					adapter.setNotifyOnChange( false );
 
@@ -133,7 +132,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
-					if ( lstApps.getCount( ) == 0 )
+					if ( getListView( ).getCount( ) == 0 )
 					{
 						Util.shortToast( RestoreAppActivity.this,
 								R.string.no_apk_show );
@@ -180,7 +179,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		public void onCheckedChanged( CompoundButton buttonView,
 				boolean isChecked )
 		{
-			( (ApkInfo) lstApps.getItemAtPosition( (Integer) buttonView.getTag( ) ) ).checked = isChecked;
+			( (ApkInfo) getListView( ).getItemAtPosition( (Integer) buttonView.getTag( ) ) ).checked = isChecked;
 
 			View v = findViewById( R.id.app_footer );
 
@@ -236,7 +235,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 			}
 		} );
 
-		lstApps = getListView( );
+		ListView lstApps = getListView( );
 
 		lstApps.setFastScrollEnabled( true );
 
@@ -377,7 +376,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 			}
 		};
 
-		lstApps.setAdapter( adapter );
+		setListAdapter( adapter );
 	}
 
 	@Override
@@ -437,7 +436,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 				if ( comp != null )
 				{
-					( (ArrayAdapter<ApkInfo>) lstApps.getAdapter( ) ).sort( comp );
+					( (ArrayAdapter<ApkInfo>) getListAdapter( ) ).sort( comp );
 				}
 			}
 		}
@@ -470,21 +469,23 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 			it.putExtra( PREF_KEY_DEFAULT_RESTORE_DIR,
 					getIntent( ).getStringExtra( ApplicationManager.KEY_RESTORE_PATH ) );
-			it.putExtra( PREF_KEY_APP_RESTORE_DIR,
-					Util.getStringOption( this, PREF_KEY_APP_RESTORE_DIR, null ) );
-			it.putExtra( PREF_KEY_SEARCH_SUB_DIR,
-					Util.getBooleanOption( this, PREF_KEY_SEARCH_SUB_DIR ) );
+			it.putExtra( PREF_KEY_APP_RESTORE_DIR, Util.getStringOption( this,
+					PREF_KEY_APP_RESTORE_DIR,
+					null ) );
+			it.putExtra( PREF_KEY_SEARCH_SUB_DIR, Util.getBooleanOption( this,
+					PREF_KEY_SEARCH_SUB_DIR ) );
 			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION,
-					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
-			it.putExtra( PREF_KEY_SHOW_SIZE,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_SIZE ) );
-			it.putExtra( PREF_KEY_SHOW_DATE,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_DATE ) );
-			it.putExtra( PREF_KEY_SHOW_PATH,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_PATH ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_SIZE ) );
+			it.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_DATE ) );
+			it.putExtra( PREF_KEY_SHOW_PATH, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_PATH ) );
 
 			startActivityForResult( it, 1 );
 
@@ -504,7 +505,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 					public void onClick( DialogInterface dialog, int which )
 					{
-						ArrayAdapter adapter = ( (ArrayAdapter) lstApps.getAdapter( ) );
+						ArrayAdapter adapter = (ArrayAdapter) getListAdapter( );
 						adapter.setNotifyOnChange( false );
 
 						for ( int i = 0, size = apks.size( ); i < size; i++ )
@@ -570,6 +571,8 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 	public boolean onContextItemSelected( MenuItem item )
 	{
 		int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
+
+		final ListView lstApps = getListView( );
 
 		if ( pos >= 0 && pos < lstApps.getCount( ) )
 		{
@@ -724,7 +727,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 					for ( int i = 0, size = files.size( ); i < size; i++ )
 					{
 						File f = files.get( i );
-						
+
 						handler.sendMessage( handler.obtainMessage( MSG_SCAN,
 								f.getName( ) ) );
 
@@ -829,6 +832,8 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 	private List<ApkInfo> getSelected( )
 	{
+		ListView lstApps = getListView( );
+
 		int count = lstApps.getCount( );
 
 		ArrayList<ApkInfo> apps = new ArrayList<ApkInfo>( );
@@ -848,6 +853,8 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 	int getSelectedCount( )
 	{
+		ListView lstApps = getListView( );
+
 		int count = lstApps.getCount( );
 
 		int s = 0;
@@ -912,7 +919,10 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 	void toggleAllSelection( boolean selected )
 	{
+		ListView lstApps = getListView( );
+
 		int totalCount = lstApps.getCount( );
+
 		for ( int i = 0; i < totalCount; i++ )
 		{
 			ApkInfo holder = (ApkInfo) lstApps.getItemAtPosition( i );

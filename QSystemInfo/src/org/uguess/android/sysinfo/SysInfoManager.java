@@ -37,22 +37,22 @@ import java.util.zip.ZipOutputStream;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.ActivityManager.MemoryInfo;
-import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.app.ActivityManager.MemoryInfo;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
-import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.DialogInterface.OnClickListener;
+import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
@@ -137,7 +137,6 @@ public final class SysInfoManager extends PreferenceActivity implements
 	private static final int DMESG_LOG = 4;
 	private static final int LOGCAT_LOG = 5;
 
-	Preference prefBatteryLevel;
 	ProgressDialog progress;
 
 	private BroadcastReceiver mBatteryInfoReceiver = new BroadcastReceiver( ) {
@@ -177,7 +176,10 @@ public final class SysInfoManager extends PreferenceActivity implements
 						break;
 				}
 
-				prefBatteryLevel.setSummary( hStr + " (" + lStr + ")" ); //$NON-NLS-1$ //$NON-NLS-2$
+				findPreference( "battery_level" ).setSummary( hStr //$NON-NLS-1$
+						+ " (" //$NON-NLS-1$
+						+ lStr
+						+ ")" ); //$NON-NLS-1$
 			}
 		}
 	};
@@ -245,8 +247,6 @@ public final class SysInfoManager extends PreferenceActivity implements
 		super.onCreate( savedInstanceState );
 
 		addPreferencesFromResource( R.xml.main );
-
-		prefBatteryLevel = findPreference( "battery_level" ); //$NON-NLS-1$
 
 		Intent it = getAboutSettingsIntent( );
 
@@ -1027,15 +1027,16 @@ public final class SysInfoManager extends PreferenceActivity implements
 		{
 			Intent it = new Intent( this, InfoSettings.class );
 
-			it.putExtra( PREF_KEY_SHOW_INFO_ICON,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_INFO_ICON ) );
-			it.putExtra( PREF_KEY_SHOW_TASK_ICON,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_TASK_ICON ) );
+			it.putExtra( PREF_KEY_SHOW_INFO_ICON, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_INFO_ICON ) );
+			it.putExtra( PREF_KEY_SHOW_TASK_ICON, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_TASK_ICON ) );
 			it.putExtra( PREF_KEY_AUTO_START_ICON, Util.getBooleanOption( this,
 					PREF_KEY_AUTO_START_ICON,
 					false ) );
-			it.putExtra( PREF_KEY_DEFAULT_EMAIL,
-					Util.getStringOption( this, PREF_KEY_DEFAULT_EMAIL, null ) );
+			it.putExtra( PREF_KEY_DEFAULT_EMAIL, Util.getStringOption( this,
+					PREF_KEY_DEFAULT_EMAIL,
+					null ) );
 
 			startActivityForResult( it, 2 );
 
@@ -1249,7 +1250,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 			{
 				sb.append( getString( R.string.storage_summary,
 						info[0],
-						info[2] ) + getString( R.string.idle_info, info[1] ) );
+						info[2] )
+						+ getString( R.string.idle_info, info[1] ) );
 			}
 			sb.append( "\n\n" ); //$NON-NLS-1$
 
@@ -1588,7 +1590,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 			{
 				sb.append( getString( R.string.storage_summary,
 						info[0],
-						info[2] ) + getString( R.string.idle_info, info[1] ) );
+						info[2] )
+						+ getString( R.string.idle_info, info[1] ) );
 			}
 			sb.append( closeRow );
 
