@@ -272,5 +272,13 @@
     <string name="task_affinity">Task Affinity</string>
     <string name="permission">Permission</string>
     <string name="manage_space_ac">Manage Space Activity</string>
+    <string name="end_others">End Others</string>
+    <string name="show_menu">Show Menu</string>
+    <string name="default_tap_action">Default Tap Action</string>
+    <string name="end_task_warning_sum">Show warning message before end the task</string>
+    <string name="end_task_warning">End Task Warning</string>
+    <string name="end_other_prompt">Are you sure to end all other tasks?</string>
+    <string name="end_prompt">Are you sure to end this task?</string>
+    <string name="end_all_prompt">Are you sure to end all tasks?</string>
 
 </resources>

@@ -34,20 +34,20 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import android.app.ActivityManager;
-import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
-import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.DialogInterface.OnClickListener;
+import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -62,18 +62,18 @@ import android.text.Html;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 
 /**
  * ProcessManager
@@ -86,11 +86,20 @@ public final class ProcessManager extends ListActivity implements Constants
 	private static final String PREF_KEY_SHOW_MEM = "show_mem"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_CPU = "show_cpu"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_SYS_PROC = "show_sys_proc"; //$NON-NLS-1$
+	private static final String PREF_KEY_DEFAULT_TAP_ACTION = "default_tap_action"; //$NON-NLS-1$
+	private static final String PREF_KEY_SHOW_KILL_WARN = "show_kill_warn"; //$NON-NLS-1$
 
 	private static final int ORDER_TYPE_NAME = 0;
 	private static final int ORDER_TYPE_IMPORTANCE = 1;
 	private static final int ORDER_TYPE_MEM = 2;
 	private static final int ORDER_TYPE_CPU = 3;
+
+	private static final int ACTION_SWITCH = 0;
+	private static final int ACTION_END = 1;
+	private static final int ACTION_END_OTHERS = 2;
+	private static final int ACTION_IGNORE = 3;
+	private static final int ACTION_DETAILS = 4;
+	private static final int ACTION_MENU = 5;
 
 	private static final int IGNORE_ACTION_HIDDEN = 0;
 	private static final int IGNORE_ACTION_PROTECTED = 1;
@@ -188,29 +197,82 @@ public final class ProcessManager extends ListActivity implements Constants
 			public void onItemClick( AdapterView<?> parent, View view,
 					int position, long id )
 			{
-				ProcessItem rap = (ProcessItem) parent.getItemAtPosition( position );
+				final ProcessItem rap = (ProcessItem) parent.getItemAtPosition( position );
+
+				boolean showWarning = Util.getBooleanOption( ProcessManager.this,
+						PREF_KEY_SHOW_KILL_WARN,
+						false );
 
 				if ( rap == dummyInfo )
 				{
-					endAll( );
-				}
-				else if ( !ignoreList.contains( rap.procInfo.processName )
-						&& !rap.sys )
-				{
-					ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
-
-					String self = getPackageName( );
-
-					if ( self.equals( rap.procInfo.processName ) )
+					if ( showWarning )
 					{
-						am.restartPackage( self );
+						OnClickListener listener = new OnClickListener( ) {
+
+							public void onClick( DialogInterface dialog,
+									int which )
+							{
+								endAllExcept( null );
+							}
+						};
+
+						new AlertDialog.Builder( ProcessManager.this ).setTitle( R.string.warning )
+								.setMessage( R.string.end_all_prompt )
+								.setPositiveButton( android.R.string.ok,
+										listener )
+								.setNegativeButton( android.R.string.cancel,
+										null )
+								.create( )
+								.show( );
 					}
 					else
 					{
-						endProcess( am, rap.procInfo.pkgList );
+						endAllExcept( null );
+					}
+				}
+				else
+				{
+					final int action = Util.getIntOption( ProcessManager.this,
+							PREF_KEY_DEFAULT_TAP_ACTION,
+							ACTION_END );
 
-						handler.removeCallbacks( task );
-						handler.post( task );
+					if ( action == ACTION_END || action == ACTION_IGNORE )
+					{
+						boolean protect = ignoreList.contains( rap.procInfo.processName )
+								|| rap.sys;
+
+						if ( protect )
+						{
+							return;
+						}
+					}
+
+					if ( showWarning
+							&& ( action == ACTION_END || action == ACTION_END_OTHERS ) )
+					{
+
+						OnClickListener listener = new OnClickListener( ) {
+
+							public void onClick( DialogInterface dialog,
+									int which )
+							{
+								handleAction( rap, action );
+							}
+						};
+
+						new AlertDialog.Builder( ProcessManager.this ).setTitle( R.string.warning )
+								.setMessage( action == ACTION_END ? R.string.end_prompt
+										: R.string.end_other_prompt )
+								.setPositiveButton( android.R.string.ok,
+										listener )
+								.setNegativeButton( android.R.string.cancel,
+										null )
+								.create( )
+								.show( );
+					}
+					else
+					{
+						handleAction( rap, action );
 					}
 				}
 			}
@@ -396,10 +458,18 @@ public final class ProcessManager extends ListActivity implements Constants
 					this,
 					PREF_KEY_IGNORE_ACTION,
 					IGNORE_ACTION_HIDDEN );
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_DEFAULT_TAP_ACTION,
+					ACTION_END );
 
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_MEM );
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_CPU );
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_SYS_PROC );
+			Util.updateBooleanOption( data,
+					this,
+					PREF_KEY_SHOW_KILL_WARN,
+					false );
 
 			ArrayList<String> list = data.getStringArrayListExtra( PREF_KEY_IGNORE_LIST );
 
@@ -439,19 +509,26 @@ public final class ProcessManager extends ListActivity implements Constants
 			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION,
-					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
 			it.putExtra( PREF_KEY_IGNORE_ACTION, Util.getIntOption( this,
 					PREF_KEY_IGNORE_ACTION,
 					IGNORE_ACTION_HIDDEN ) );
+			it.putExtra( PREF_KEY_DEFAULT_TAP_ACTION, Util.getIntOption( this,
+					PREF_KEY_DEFAULT_TAP_ACTION,
+					ACTION_END ) );
 			it.putStringArrayListExtra( PREF_KEY_IGNORE_LIST,
 					getIgnoreList( getPreferences( Context.MODE_PRIVATE ) ) );
-			it.putExtra( PREF_KEY_SHOW_MEM,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_MEM ) );
-			it.putExtra( PREF_KEY_SHOW_CPU,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_CPU ) );
-			it.putExtra( PREF_KEY_SHOW_SYS_PROC,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_SYS_PROC ) );
+			it.putExtra( PREF_KEY_SHOW_MEM, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_MEM ) );
+			it.putExtra( PREF_KEY_SHOW_CPU, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_CPU ) );
+			it.putExtra( PREF_KEY_SHOW_SYS_PROC, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_SYS_PROC ) );
+			it.putExtra( PREF_KEY_SHOW_KILL_WARN, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_KILL_WARN,
+					false ) );
 
 			startActivityForResult( it, 1 );
 
@@ -473,35 +550,169 @@ public final class ProcessManager extends ListActivity implements Constants
 		if ( rap != dummyInfo )
 		{
 			menu.setHeaderTitle( R.string.actions );
-			menu.add( Menu.NONE, MI_DISPLAY, MI_DISPLAY, R.string.switch_to );
+			menu.add( Menu.NONE, MI_DISPLAY, Menu.NONE, R.string.switch_to );
 
-			if ( ignoreList.contains( rap.procInfo.processName ) || rap.sys )
+			boolean protect = ignoreList.contains( rap.procInfo.processName )
+					|| rap.sys;
+
+			if ( protect )
 			{
-				menu.add( Menu.NONE, MI_ENDTASK, MI_ENDTASK, R.string.end_task )
-						.setEnabled( false );
-				menu.add( Menu.NONE, MI_IGNORE, MI_IGNORE, R.string.ignore )
+				menu.add( Menu.NONE, MI_ENDTASK, Menu.NONE, R.string.end_task )
 						.setEnabled( false );
 			}
 			else
 			{
-				menu.add( Menu.NONE, MI_ENDTASK, MI_ENDTASK, R.string.end_task );
-				menu.add( Menu.NONE, MI_IGNORE, MI_IGNORE, R.string.ignore );
+				menu.add( Menu.NONE, MI_ENDTASK, Menu.NONE, R.string.end_task );
 			}
 
-			menu.add( Menu.NONE, MI_DETAILS, MI_DETAILS, R.string.details );
+			menu.add( Menu.NONE, MI_END_OTHERS, Menu.NONE, R.string.end_others );
+
+			if ( protect )
+			{
+				menu.add( Menu.NONE, MI_IGNORE, Menu.NONE, R.string.ignore )
+						.setEnabled( false );
+			}
+			else
+			{
+				menu.add( Menu.NONE, MI_IGNORE, Menu.NONE, R.string.ignore );
+			}
+
+			menu.add( Menu.NONE, MI_DETAILS, Menu.NONE, R.string.details );
 		}
 	}
 
 	@Override
 	public boolean onContextItemSelected( MenuItem item )
 	{
-		if ( item.getItemId( ) == MI_DISPLAY )
-		{
-			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
+		int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
 
-			if ( pos < getListView( ).getCount( ) )
+		if ( pos < getListView( ).getCount( ) )
+		{
+			ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
+
+			if ( item.getItemId( ) == MI_DISPLAY )
 			{
-				ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
+				handleAction( rap, ACTION_SWITCH );
+
+				return true;
+			}
+			else if ( item.getItemId( ) == MI_ENDTASK )
+			{
+				handleAction( rap, ACTION_END );
+
+				return true;
+			}
+			else if ( item.getItemId( ) == MI_END_OTHERS )
+			{
+				handleAction( rap, ACTION_END_OTHERS );
+
+				return true;
+			}
+			else if ( item.getItemId( ) == MI_IGNORE )
+			{
+				handleAction( rap, ACTION_IGNORE );
+
+				return true;
+			}
+			else if ( item.getItemId( ) == MI_DETAILS )
+			{
+				handleAction( rap, ACTION_DETAILS );
+
+				return true;
+			}
+		}
+
+		return super.onContextItemSelected( item );
+	}
+
+	static ArrayList<String> getIgnoreList( SharedPreferences sp )
+	{
+		if ( sp == null )
+		{
+			return null;
+		}
+
+		String listVal = sp.getString( PREF_KEY_IGNORE_LIST, null );
+
+		if ( listVal == null || listVal.length( ) == 0 )
+		{
+			return null;
+		}
+
+		StringTokenizer tokenizer = new StringTokenizer( listVal );
+		ArrayList<String> list = new ArrayList<String>( );
+
+		while ( tokenizer.hasMoreTokens( ) )
+		{
+			list.add( tokenizer.nextToken( ) );
+		}
+
+		return list.size( ) == 0 ? null : list;
+	}
+
+	private void setIgnoreList( Collection<String> list )
+	{
+		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+
+		Editor et = sp.edit( );
+		if ( list == null || list.isEmpty( ) )
+		{
+			et.remove( PREF_KEY_IGNORE_LIST );
+		}
+		else
+		{
+			StringBuffer sb = new StringBuffer( );
+
+			int i = 0;
+			for ( String s : list )
+			{
+				if ( i > 0 )
+				{
+					sb.append( ' ' );
+				}
+				sb.append( s );
+
+				i++;
+			}
+
+			et.putString( PREF_KEY_IGNORE_LIST, sb.toString( ) );
+		}
+		et.commit( );
+	}
+
+	void handleAction( final ProcessItem rap, int action )
+	{
+		switch ( action )
+		{
+			case ACTION_END :
+
+				if ( !ignoreList.contains( rap.procInfo.processName )
+						&& !rap.sys )
+				{
+					ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
+
+					String self = getPackageName( );
+
+					if ( self.equals( rap.procInfo.processName ) )
+					{
+						am.restartPackage( self );
+					}
+					else
+					{
+						endProcess( am, rap.procInfo.pkgList );
+
+						handler.removeCallbacks( task );
+						handler.post( task );
+					}
+				}
+
+				break;
+			case ACTION_END_OTHERS :
+
+				endAllExcept( rap.procInfo.processName );
+
+				break;
+			case ACTION_SWITCH :
 
 				String pkgName = rap.procInfo.processName;
 
@@ -542,67 +753,28 @@ public final class ProcessManager extends ListActivity implements Constants
 						}
 					}
 				}
-			}
 
-			return true;
-		}
-		else if ( item.getItemId( ) == MI_ENDTASK )
-		{
-			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
+				break;
+			case ACTION_IGNORE :
 
-			if ( pos < getListView( ).getCount( ) )
-			{
-				ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
-
-				ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
-
-				String self = getPackageName( );
-
-				if ( self.equals( rap.procInfo.processName ) )
+				if ( !ignoreList.contains( rap.procInfo.processName )
+						&& !rap.sys )
 				{
-					am.restartPackage( self );
+					ignoreList.add( rap.procInfo.processName );
+
+					setIgnoreList( ignoreList );
+
+					if ( IGNORE_ACTION_HIDDEN == Util.getIntOption( this,
+							PREF_KEY_IGNORE_ACTION,
+							IGNORE_ACTION_HIDDEN ) )
+					{
+						handler.removeCallbacks( task );
+						handler.post( task );
+					}
 				}
-				else
-				{
-					endProcess( am, rap.procInfo.pkgList );
 
-					handler.removeCallbacks( task );
-					handler.post( task );
-				}
-			}
-
-			return true;
-		}
-		else if ( item.getItemId( ) == MI_IGNORE )
-		{
-			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
-
-			if ( pos < getListView( ).getCount( ) )
-			{
-				ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
-
-				ignoreList.add( rap.procInfo.processName );
-
-				setIgnoreList( ignoreList );
-
-				if ( IGNORE_ACTION_HIDDEN == Util.getIntOption( this,
-						PREF_KEY_IGNORE_ACTION,
-						IGNORE_ACTION_HIDDEN ) )
-				{
-					handler.removeCallbacks( task );
-					handler.post( task );
-				}
-			}
-
-			return true;
-		}
-		else if ( item.getItemId( ) == MI_DETAILS )
-		{
-			int pos = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).position;
-
-			if ( pos < getListView( ).getCount( ) )
-			{
-				ProcessItem rap = (ProcessItem) getListView( ).getItemAtPosition( pos );
+				break;
+			case ACTION_DETAILS :
 
 				String[] status = readProcStatus( rap.procInfo.pid );
 
@@ -667,67 +839,46 @@ public final class ProcessManager extends ListActivity implements Constants
 						.create( )
 						.show( );
 
-			}
+				break;
+			case ACTION_MENU :
 
-			return true;
+				final boolean protect = ignoreList.contains( rap.procInfo.processName )
+						|| rap.sys;
+
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						dialog.dismiss( );
+
+						if ( !protect
+								|| ( which != ACTION_END && which != ACTION_IGNORE ) )
+						{
+							handleAction( rap, which );
+						}
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.actions )
+						.setItems( new CharSequence[]{
+								getString( R.string.switch_to ),
+								protect ? Html.fromHtml( "<font color=\"#848484\">" //$NON-NLS-1$
+										+ getString( R.string.end_task )
+										+ "</font>" ) //$NON-NLS-1$
+										: getString( R.string.end_task ),
+								getString( R.string.end_others ),
+								protect ? Html.fromHtml( "<font color=\"#848484\">" //$NON-NLS-1$
+										+ getString( R.string.ignore )
+										+ "</font>" ) //$NON-NLS-1$
+										: getString( R.string.ignore ),
+								getString( R.string.details )
+						},
+								listener )
+						.create( )
+						.show( );
+
+				break;
 		}
-
-		return super.onContextItemSelected( item );
-	}
-
-	static ArrayList<String> getIgnoreList( SharedPreferences sp )
-	{
-		if ( sp == null )
-		{
-			return null;
-		}
-
-		String listVal = sp.getString( PREF_KEY_IGNORE_LIST, null );
-
-		if ( listVal == null || listVal.length( ) == 0 )
-		{
-			return null;
-		}
-
-		StringTokenizer tokenizer = new StringTokenizer( listVal );
-		ArrayList<String> list = new ArrayList<String>( );
-
-		while ( tokenizer.hasMoreTokens( ) )
-		{
-			list.add( tokenizer.nextToken( ) );
-		}
-
-		return list.size( ) == 0 ? null : list;
-	}
-
-	private void setIgnoreList( Collection<String> list )
-	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
-
-		Editor et = sp.edit( );
-		if ( list == null || list.isEmpty( ) )
-		{
-			et.remove( PREF_KEY_IGNORE_LIST );
-		}
-		else
-		{
-			StringBuffer sb = new StringBuffer( );
-
-			int i = 0;
-			for ( String s : list )
-			{
-				if ( i > 0 )
-				{
-					sb.append( ' ' );
-				}
-				sb.append( s );
-
-				i++;
-			}
-
-			et.putString( PREF_KEY_IGNORE_LIST, sb.toString( ) );
-		}
-		et.commit( );
 	}
 
 	void endProcess( ActivityManager am, String[] pkgs )
@@ -744,7 +895,7 @@ public final class ProcessManager extends ListActivity implements Constants
 		}
 	}
 
-	void endAll( )
+	void endAllExcept( String exception )
 	{
 		ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
 
@@ -757,15 +908,19 @@ public final class ProcessManager extends ListActivity implements Constants
 		{
 			ProcessItem rap = (ProcessItem) lstProcs.getItemAtPosition( i );
 
-			if ( !ignoreList.contains( rap.procInfo.processName )
-					&& !self.equals( rap.procInfo.processName )
-					&& !rap.sys )
+			String procName = rap.procInfo.processName;
+
+			if ( !ignoreList.contains( procName )
+					&& !self.equals( procName )
+					&& !rap.sys
+					&& exception != null
+					&& !exception.equals( procName ) )
 			{
 				endProcess( am, rap.procInfo.pkgList );
 			}
 		}
 
-		if ( !ignoreList.contains( self ) )
+		if ( !ignoreList.contains( self ) && !self.equals( exception ) )
 		{
 			am.restartPackage( self );
 		}
@@ -1265,6 +1420,17 @@ public final class ProcessManager extends ListActivity implements Constants
 			perfShowSys.setSummary( R.string.show_sys_process_sum );
 			pc.addPreference( perfShowSys );
 
+			CheckBoxPreference perfKillWarn = new CheckBoxPreference( this );
+			perfKillWarn.setKey( PREF_KEY_SHOW_KILL_WARN );
+			perfKillWarn.setTitle( R.string.end_task_warning );
+			perfKillWarn.setSummary( R.string.end_task_warning_sum );
+			pc.addPreference( perfKillWarn );
+
+			Preference perfDefaultAction = new Preference( this );
+			perfDefaultAction.setKey( PREF_KEY_DEFAULT_TAP_ACTION );
+			perfDefaultAction.setTitle( R.string.default_tap_action );
+			pc.addPreference( perfDefaultAction );
+
 			pc = new PreferenceCategory( this );
 			pc.setTitle( R.string.sort );
 			getPreferenceScreen( ).addPreference( pc );
@@ -1297,6 +1463,8 @@ public final class ProcessManager extends ListActivity implements Constants
 			refreshBooleanOption( PREF_KEY_SHOW_MEM );
 			refreshBooleanOption( PREF_KEY_SHOW_CPU );
 			refreshBooleanOption( PREF_KEY_SHOW_SYS_PROC );
+			refreshBooleanOption( PREF_KEY_SHOW_KILL_WARN );
+			refreshDefaultAction( );
 			refreshSortType( );
 			refreshSortDirection( );
 			refreshIgnoreAction( );
@@ -1332,6 +1500,37 @@ public final class ProcessManager extends ListActivity implements Constants
 			boolean val = getIntent( ).getBooleanExtra( key, true );
 
 			( (CheckBoxPreference) findPreference( key ) ).setChecked( val );
+		}
+
+		void refreshDefaultAction( )
+		{
+			int type = getIntent( ).getIntExtra( PREF_KEY_DEFAULT_TAP_ACTION,
+					ACTION_END );
+
+			String label = null;
+			switch ( type )
+			{
+				case ACTION_END :
+					label = getString( R.string.end_task );
+					break;
+				case ACTION_END_OTHERS :
+					label = getString( R.string.end_others );
+					break;
+				case ACTION_SWITCH :
+					label = getString( R.string.switch_to );
+					break;
+				case ACTION_IGNORE :
+					label = getString( R.string.ignore );
+					break;
+				case ACTION_DETAILS :
+					label = getString( R.string.details );
+					break;
+				case ACTION_MENU :
+					label = getString( R.string.show_menu );
+					break;
+			}
+
+			findPreference( PREF_KEY_DEFAULT_TAP_ACTION ).setSummary( label );
 		}
 
 		void refreshSortType( )
@@ -1513,6 +1712,45 @@ public final class ProcessManager extends ListActivity implements Constants
 			{
 				it.putExtra( PREF_KEY_SHOW_SYS_PROC,
 						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_SYS_PROC ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_SHOW_KILL_WARN.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_KILL_WARN,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_KILL_WARN ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_DEFAULT_TAP_ACTION.equals( preference.getKey( ) ) )
+			{
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						it.putExtra( PREF_KEY_DEFAULT_TAP_ACTION, which );
+
+						dialog.dismiss( );
+
+						refreshDefaultAction( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.default_tap_action )
+						.setNeutralButton( R.string.close, null )
+						.setSingleChoiceItems( new String[]{
+								getString( R.string.switch_to ),
+								getString( R.string.end_task ),
+								getString( R.string.end_others ),
+								getString( R.string.ignore ),
+								getString( R.string.details ),
+								getString( R.string.show_menu ),
+						},
+								it.getIntExtra( PREF_KEY_DEFAULT_TAP_ACTION,
+										ACTION_END ),
+								listener )
+						.create( )
+						.show( );
 
 				return true;
 			}

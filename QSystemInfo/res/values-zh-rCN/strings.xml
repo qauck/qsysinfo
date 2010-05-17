@@ -261,5 +261,13 @@
     <string name="task_affinity">任务关联</string>
     <string name="permission">权限</string>
     <string name="manage_space_ac">空间管理类</string>
+    <string name="end_others">结束其他任务</string>
+    <string name="show_menu">显示菜单</string>
+    <string name="default_tap_action">默认点击操作</string>
+    <string name="end_task_warning_sum">结束任务之前提示警告</string>
+    <string name="end_task_warning">结束任务警告</string>
+    <string name="end_other_prompt">是否确定结束所有其他任务?</string>
+    <string name="end_prompt">是否确定结束此任务?</string>
+    <string name="end_all_prompt">是否确定结束所有任务?</string>
 
 </resources>

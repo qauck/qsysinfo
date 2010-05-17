@@ -50,6 +50,7 @@ interface Constants
 	int MI_ENDTASK = 5;
 	int MI_IGNORE = 6;
 	int MI_DETAILS = 7;
+	int MI_END_OTHERS = 8;
 
 	// option menu
 	int MI_REVERT = 101;
