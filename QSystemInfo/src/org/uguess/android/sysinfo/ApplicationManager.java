@@ -33,10 +33,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
@@ -45,15 +45,15 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.DialogInterface.OnClickListener;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.IPackageStatsObserver;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PackageStats;
 import android.content.pm.ResolveInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -70,24 +70,24 @@ import android.text.Html;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 
 /**
  * ApplicationManager
@@ -102,6 +102,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 	private static final int MSG_REFRESH_PKG_LABEL = MSG_PRIVATE + 5;
 	private static final int MSG_REFRESH_PKG_ICON = MSG_PRIVATE + 6;
 	private static final int MSG_REFRESH_BACKUP_STATE = MSG_PRIVATE + 7;
+	private static final int MSG_UPDATE = MSG_PRIVATE + 8;
 
 	private static final int APP_TYPE_ALL = 0;
 	private static final int APP_TYPE_SYS = 1;
@@ -158,13 +159,18 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 	DateFormat dateFormatter = DateFormat.getDateTimeInstance( );
 
+	PkgSizeUpdaterThread sizeUpdater;
+
+	ResourceUpdaterThread resUpdater;
+
+	BackupStateUpdaterThread backupUpdater;
+
 	Handler handler = new Handler( ) {
 
 		@Override
 		public void handleMessage( Message msg )
 		{
 			ArrayAdapter<AppInfoHolder> adapter;
-			ArrayList<AppInfoHolder> localList;
 
 			switch ( msg.what )
 			{
@@ -176,7 +182,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 					adapter.clear( );
 
-					localList = appCache.appList;
+					ArrayList<AppInfoHolder> localList = appCache.appList;
 
 					for ( int i = 0, size = localList.size( ); i < size; i++ )
 					{
@@ -272,13 +278,16 @@ public final class ApplicationManager extends ListActivity implements Constants
 							PREF_KEY_SHOW_BACKUP_STATE ) )
 					{
 						// reload backup state
-						new Thread( new Runnable( ) {
 
-							public void run( )
-							{
-								reloadBackupState( getPackageManager( ), apps );
-							}
-						} ).start( );
+						if ( backupUpdater != null )
+						{
+							backupUpdater.aborted = true;
+						}
+
+						( backupUpdater = new BackupStateUpdaterThread( ApplicationManager.this,
+								apps,
+								appCache,
+								handler ) ).start( );;
 					}
 					break;
 				case MSG_DISMISS_PROGRESS :
@@ -314,6 +323,55 @@ public final class ApplicationManager extends ListActivity implements Constants
 				case MSG_REFRESH_PKG_ICON :
 
 					( (ArrayAdapter<AppInfoHolder>) lstApps.getAdapter( ) ).notifyDataSetChanged( );
+					break;
+				case MSG_TOAST :
+
+					Util.shortToast( ApplicationManager.this, (String) msg.obj );
+					break;
+				case MSG_UPDATE :
+
+					if ( sizeUpdater != null )
+					{
+						sizeUpdater.aborted = true;
+					}
+
+					if ( resUpdater != null )
+					{
+						resUpdater.aborted = true;
+					}
+
+					if ( backupUpdater != null )
+					{
+						backupUpdater.aborted = true;
+					}
+
+					appCache.update( (ArrayList<AppInfoHolder>) msg.obj );
+
+					appCache.reOrder( Util.getIntOption( ApplicationManager.this,
+							PREF_KEY_SORT_ORDER_TYPE,
+							ORDER_TYPE_NAME ),
+							Util.getIntOption( ApplicationManager.this,
+									PREF_KEY_SORT_DIRECTION,
+									ORDER_ASC ) );
+
+					handler.sendEmptyMessage( MSG_INIT_OK );
+
+					( sizeUpdater = new PkgSizeUpdaterThread( ApplicationManager.this,
+							appCache,
+							handler ) ).start( );
+
+					( resUpdater = new ResourceUpdaterThread( ApplicationManager.this,
+							appCache,
+							handler ) ).start( );
+
+					if ( Util.getBooleanOption( ApplicationManager.this,
+							PREF_KEY_SHOW_BACKUP_STATE ) )
+					{
+						( backupUpdater = new BackupStateUpdaterThread( ApplicationManager.this,
+								null,
+								appCache,
+								handler ) ).start( );
+					}
 					break;
 			}
 		}
@@ -542,15 +600,6 @@ public final class ApplicationManager extends ListActivity implements Constants
 	}
 
 	@Override
-	protected void onDestroy( )
-	{
-		appCache.appList.clear( );
-		appCache.appLookup.clear( );
-
-		super.onDestroy( );
-	}
-
-	@Override
 	protected void onStart( )
 	{
 		super.onStart( );
@@ -561,6 +610,21 @@ public final class ApplicationManager extends ListActivity implements Constants
 	@Override
 	protected void onStop( )
 	{
+		if ( sizeUpdater != null )
+		{
+			sizeUpdater.aborted = true;
+		}
+
+		if ( resUpdater != null )
+		{
+			resUpdater.aborted = true;
+		}
+
+		if ( backupUpdater != null )
+		{
+			backupUpdater.aborted = true;
+		}
+
 		( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).cancel( NOTIFY_EXPORT_FINISHED );
 
 		super.onStop( );
@@ -598,8 +662,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 					{
 						PackageInfo pi = pm.getPackageInfo( info.packageName, 0 );
 
-						holder.version = versionPrefix
-								+ " " //$NON-NLS-1$
+						holder.version = versionPrefix + " " //$NON-NLS-1$
 								+ ( pi.versionName == null ? String.valueOf( pi.versionCode )
 										: pi.versionName );
 
@@ -621,291 +684,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 					dataList.add( holder );
 				}
 
-				appCache.update( dataList );
-
-				appCache.reOrder( Util.getIntOption( ApplicationManager.this,
-						PREF_KEY_SORT_ORDER_TYPE,
-						ORDER_TYPE_NAME ),
-						Util.getIntOption( ApplicationManager.this,
-								PREF_KEY_SORT_DIRECTION,
-								ORDER_ASC ) );
-
-				handler.sendEmptyMessage( MSG_INIT_OK );
-
-				new Thread( new Runnable( ) {
-
-					public void run( )
-					{
-						int totalSize = filteredApps.size( );
-						int secSize = 16;
-
-						int num = totalSize / secSize;
-						if ( num * secSize < totalSize )
-						{
-							num++;
-						}
-
-						for ( int k = 0; k < num; k++ )
-						{
-							int secCount = ( k + 1 ) * secSize > totalSize ? ( totalSize - k
-									* secSize )
-									: secSize;
-
-							CountDownLatch count = new CountDownLatch( secCount );
-
-							PkgSizeObserver observer = new PkgSizeObserver( count );
-
-							for ( int i = 0; i < secCount; i++ )
-							{
-								observer.invokeGetPkgSize( filteredApps.get( k
-										* secSize
-										+ i ).packageName,
-										pm );
-							}
-
-							try
-							{
-								count.await( );
-
-								if ( k == num - 1 )
-								{
-									int type = Util.getIntOption( ApplicationManager.this,
-											PREF_KEY_SORT_ORDER_TYPE,
-											ORDER_TYPE_NAME );
-
-									if ( type == ORDER_TYPE_CODE_SIZE
-											|| type == ORDER_TYPE_DATA_SIZE
-											|| type == ORDER_TYPE_CACHE_SIZE
-											|| type == ORDER_TYPE_TOTAL_SIZE )
-									{
-										appCache.reOrder( type,
-												Util.getIntOption( ApplicationManager.this,
-														PREF_KEY_SORT_DIRECTION,
-														ORDER_ASC ) );
-
-										handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_SIZE,
-												1,
-												0 ) );
-
-										return;
-									}
-								}
-
-								handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_SIZE,
-										0,
-										0 ) );
-							}
-							catch ( InterruptedException e )
-							{
-								Log.e( ApplicationManager.class.getName( ),
-										e.getLocalizedMessage( ),
-										e );
-							}
-						}
-					}
-				} ).start( );
-
-				new Thread( new Runnable( ) {
-
-					public void run( )
-					{
-						ApplicationInfo ai;
-						AppInfoHolder holder;
-
-						for ( int i = 0, size = filteredApps.size( ); i < size; i++ )
-						{
-							ai = filteredApps.get( i );
-
-							CharSequence label = ai.loadLabel( pm );
-
-							holder = appCache.appLookup.get( ai.packageName );
-
-							if ( holder != null )
-							{
-								holder.label = label;
-							}
-						}
-
-						// reorder by new names
-						if ( Util.getIntOption( ApplicationManager.this,
-								PREF_KEY_SORT_ORDER_TYPE,
-								ORDER_TYPE_NAME ) == ORDER_TYPE_NAME )
-						{
-							appCache.reOrder( ORDER_TYPE_NAME,
-									Util.getIntOption( ApplicationManager.this,
-											PREF_KEY_SORT_DIRECTION,
-											ORDER_ASC ) );
-
-							handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_LABEL,
-									1,
-									0 ) );
-						}
-						else
-						{
-							handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_LABEL,
-									0,
-									0 ) );
-						}
-
-						for ( int i = 0, size = filteredApps.size( ); i < size; i++ )
-						{
-							ai = filteredApps.get( i );
-
-							try
-							{
-								Drawable icon = ai.loadIcon( pm );
-
-								holder = appCache.appLookup.get( ai.packageName );
-
-								if ( holder != null )
-								{
-									holder.icon = icon;
-								}
-							}
-							catch ( OutOfMemoryError oom )
-							{
-								Log.e( ApplicationManager.class.getName( ),
-										"OOM when loading icon: " //$NON-NLS-1$
-												+ ai.packageName,
-										oom );
-							}
-						}
-
-						handler.sendEmptyMessage( MSG_REFRESH_PKG_ICON );
-					}
-				} ).start( );
-
-				if ( Util.getBooleanOption( ApplicationManager.this,
-						PREF_KEY_SHOW_BACKUP_STATE ) )
-				{
-					new Thread( new Runnable( ) {
-
-						public void run( )
-						{
-							reloadBackupState( pm, filteredApps );
-						}
-					} ).start( );
-				}
+				handler.sendMessage( handler.obtainMessage( MSG_UPDATE,
+						dataList ) );
 			}
-		} ).start( );
-	}
-
-	void reloadBackupState( final PackageManager pm,
-			final List<ApplicationInfo> apps )
-	{
-		if ( apps == null || apps.size( ) == 0 )
-		{
-			return;
-		}
-
-		String exportFolder = Util.getStringOption( ApplicationManager.this,
-				PREF_KEY_APP_EXPORT_DIR,
-				DEFAULT_EXPORT_FOLDER );
-
-		File sysoutput = null;
-		File useroutput = null;
-
-		File output = new File( exportFolder );
-
-		if ( output.exists( ) )
-		{
-			sysoutput = new File( output, SYS_APP );
-
-			if ( !sysoutput.exists( ) )
-			{
-				sysoutput = null;
-			}
-
-			useroutput = new File( output, USER_APP );
-
-			if ( !useroutput.exists( ) )
-			{
-				useroutput = null;
-			}
-		}
-
-		ApplicationInfo ai;
-		AppInfoHolder holder;
-		PackageInfo pi;
-
-		for ( int i = 0, size = apps.size( ); i < size; i++ )
-		{
-			ai = apps.get( i );
-
-			holder = appCache.appLookup.get( ai.packageName );
-
-			if ( holder != null )
-			{
-				File targetOutput = useroutput;
-
-				if ( ( ai.flags & ApplicationInfo.FLAG_SYSTEM ) != 0 )
-				{
-					targetOutput = sysoutput;
-				}
-
-				if ( targetOutput != null )
-				{
-					String src = ai.sourceDir;
-
-					if ( src != null )
-					{
-						String appName = getFileName( src );
-
-						if ( appName != null )
-						{
-							File destFile = new File( targetOutput, appName );
-
-							if ( destFile.exists( ) )
-							{
-								pi = pm.getPackageArchiveInfo( destFile.getAbsolutePath( ),
-										0 );
-
-								if ( pi != null )
-								{
-									if ( pi.versionCode < holder.versionCode )
-									{
-										holder.backupState = 1;
-									}
-									else if ( pi.versionCode == holder.versionCode )
-									{
-										holder.backupState = 2;
-									}
-									else
-									{
-										holder.backupState = 3;
-									}
-
-									continue;
-								}
-							}
-						}
-					}
-				}
-
-				holder.backupState = 0;
-			}
-		}
-
-		// reorder by backup state
-		if ( Util.getIntOption( ApplicationManager.this,
-				PREF_KEY_SORT_ORDER_TYPE,
-				ORDER_TYPE_NAME ) == ORDER_TYPE_BACKUP_STATE )
-		{
-			appCache.reOrder( ORDER_TYPE_BACKUP_STATE,
-					Util.getIntOption( ApplicationManager.this,
-							PREF_KEY_SORT_DIRECTION,
-							ORDER_ASC ) );
-
-			handler.sendMessage( handler.obtainMessage( MSG_REFRESH_BACKUP_STATE,
-					1,
-					0 ) );
-		}
-		else
-		{
-			handler.sendMessage( handler.obtainMessage( MSG_REFRESH_BACKUP_STATE,
-					0,
-					0 ) );
-		}
+		},
+				"MainUpdater" ).start( ); //$NON-NLS-1$
 	}
 
 	List<ApplicationInfo> filterApps( List<ApplicationInfo> apps )
@@ -1248,12 +1031,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION,
-					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
-			it.putExtra( PREF_KEY_SHOW_SIZE,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_SIZE ) );
-			it.putExtra( PREF_KEY_SHOW_DATE,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_DATE ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_SIZE ) );
+			it.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
+					PREF_KEY_SHOW_DATE ) );
 			it.putExtra( PREF_KEY_SHOW_BACKUP_STATE,
 					Util.getBooleanOption( this, PREF_KEY_SHOW_BACKUP_STATE ) );
 
@@ -1564,14 +1348,19 @@ public final class ApplicationManager extends ListActivity implements Constants
 	/**
 	 * PackageSizeObserver
 	 */
-	private final class PkgSizeObserver extends IPackageStatsObserver.Stub
+	private static final class PkgSizeObserver extends
+			IPackageStatsObserver.Stub
 	{
 
 		private CountDownLatch count;
+		private Activity ac;
+		private AppCache appCache;
 
-		PkgSizeObserver( CountDownLatch count )
+		PkgSizeObserver( CountDownLatch count, Activity ac, AppCache appCache )
 		{
 			this.count = count;
+			this.ac = ac;
+			this.appCache = appCache;
 		}
 
 		void invokeGetPkgSize( String pkgName, PackageManager pm )
@@ -1598,14 +1387,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 			if ( holder != null )
 			{
-				holder.size = Formatter.formatFileSize( ApplicationManager.this,
-						pStats.codeSize )
+				holder.size = Formatter.formatFileSize( ac, pStats.codeSize )
 						+ " + " //$NON-NLS-1$
-						+ Formatter.formatFileSize( ApplicationManager.this,
-								pStats.dataSize )
+						+ Formatter.formatFileSize( ac, pStats.dataSize )
 						+ " (" //$NON-NLS-1$
-						+ Formatter.formatFileSize( ApplicationManager.this,
-								pStats.cacheSize )
+						+ Formatter.formatFileSize( ac, pStats.cacheSize )
 						+ ')';
 
 				holder.codeSize = pStats.codeSize;
@@ -1616,6 +1402,370 @@ public final class ApplicationManager extends ListActivity implements Constants
 			count.countDown( );
 		}
 
+	}
+
+	/**
+	 * PkgSizeUpdaterThread
+	 */
+	private static final class PkgSizeUpdaterThread extends Thread
+	{
+
+		private Activity ac;
+		private AppCache appCache;
+		private Handler handler;
+
+		volatile boolean aborted;
+
+		PkgSizeUpdaterThread( Activity ac, AppCache appCache, Handler handler )
+		{
+			super( "SizeUpdater" ); //$NON-NLS-1$
+
+			this.ac = ac;
+			this.appCache = appCache;
+			this.handler = handler;
+		}
+
+		@Override
+		public void run( )
+		{
+			PackageManager pm = ac.getPackageManager( );
+
+			ArrayList<AppInfoHolder> localList = appCache.generateLocalList( );
+
+			int totalSize = localList.size( );
+			int secSize = 32;
+
+			int num = totalSize / secSize;
+			if ( num * secSize < totalSize )
+			{
+				num++;
+			}
+
+			for ( int k = 0; k < num; k++ )
+			{
+				int secCount = ( k + 1 ) * secSize > totalSize ? ( totalSize - k
+						* secSize )
+						: secSize;
+
+				CountDownLatch count = new CountDownLatch( secCount );
+
+				PkgSizeObserver observer = new PkgSizeObserver( count,
+						ac,
+						appCache );
+
+				for ( int i = 0; i < secCount; i++ )
+				{
+					if ( aborted )
+					{
+						return;
+					}
+
+					observer.invokeGetPkgSize( localList.get( k * secSize + i ).appInfo.packageName,
+							pm );
+				}
+
+				try
+				{
+					count.await( );
+
+					if ( k == num - 1 )
+					{
+						int type = Util.getIntOption( ac,
+								PREF_KEY_SORT_ORDER_TYPE,
+								ORDER_TYPE_NAME );
+
+						if ( type == ORDER_TYPE_CODE_SIZE
+								|| type == ORDER_TYPE_DATA_SIZE
+								|| type == ORDER_TYPE_CACHE_SIZE
+								|| type == ORDER_TYPE_TOTAL_SIZE )
+						{
+							appCache.reOrder( type, Util.getIntOption( ac,
+									PREF_KEY_SORT_DIRECTION,
+									ORDER_ASC ) );
+
+							handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_SIZE,
+									1,
+									0 ) );
+
+							return;
+						}
+					}
+
+					handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_SIZE,
+							0,
+							0 ) );
+				}
+				catch ( InterruptedException e )
+				{
+					Log.e( ApplicationManager.class.getName( ),
+							e.getLocalizedMessage( ),
+							e );
+				}
+			}
+		}
+	}
+
+	/**
+	 * ResourceUpdaterThread
+	 */
+	private static final class ResourceUpdaterThread extends Thread
+	{
+
+		private Activity ac;
+		private AppCache appCache;
+		private Handler handler;
+
+		volatile boolean aborted;
+
+		ResourceUpdaterThread( Activity ac, AppCache appCache, Handler handler )
+		{
+			super( "ResourceUpdater" ); //$NON-NLS-1$
+
+			this.ac = ac;
+			this.appCache = appCache;
+			this.handler = handler;
+		}
+
+		public void run( )
+		{
+			ApplicationInfo ai;
+			AppInfoHolder holder;
+
+			PackageManager pm = ac.getPackageManager( );
+
+			ArrayList<AppInfoHolder> localList = appCache.generateLocalList( );
+
+			for ( int i = 0, size = localList.size( ); i < size; i++ )
+			{
+				if ( aborted )
+				{
+					return;
+				}
+
+				ai = localList.get( i ).appInfo;
+
+				CharSequence label = ai.loadLabel( pm );
+
+				holder = appCache.appLookup.get( ai.packageName );
+
+				if ( holder != null )
+				{
+					holder.label = label;
+				}
+			}
+
+			// reorder by new names
+			if ( Util.getIntOption( ac,
+					PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_NAME ) == ORDER_TYPE_NAME )
+			{
+				appCache.reOrder( ORDER_TYPE_NAME, Util.getIntOption( ac,
+						PREF_KEY_SORT_DIRECTION,
+						ORDER_ASC ) );
+
+				handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_LABEL,
+						1,
+						0 ) );
+			}
+			else
+			{
+				handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_LABEL,
+						0,
+						0 ) );
+			}
+
+			for ( int i = 0, size = localList.size( ); i < size; i++ )
+			{
+				if ( aborted )
+				{
+					return;
+				}
+
+				ai = localList.get( i ).appInfo;
+
+				try
+				{
+					Drawable icon = ai.loadIcon( pm );
+
+					holder = appCache.appLookup.get( ai.packageName );
+
+					if ( holder != null )
+					{
+						holder.icon = icon;
+					}
+				}
+				catch ( OutOfMemoryError oom )
+				{
+					Log.e( ApplicationManager.class.getName( ),
+							"OOM when loading icon: " //$NON-NLS-1$
+									+ ai.packageName,
+							oom );
+				}
+			}
+
+			handler.sendEmptyMessage( MSG_REFRESH_PKG_ICON );
+		}
+	}
+
+	/**
+	 * BackupStateUpdaterThread
+	 */
+	private static final class BackupStateUpdaterThread extends Thread
+	{
+
+		private Activity ac;
+		private List<ApplicationInfo> apps;
+		private AppCache appCache;
+		private Handler handler;
+
+		volatile boolean aborted;
+
+		BackupStateUpdaterThread( Activity ac, List<ApplicationInfo> apps,
+				AppCache appCache, Handler handler )
+		{
+			super( "BackupStateUpdater" ); //$NON-NLS-1$
+
+			this.ac = ac;
+			this.apps = apps;
+			this.appCache = appCache;
+			this.handler = handler;
+		}
+
+		public void run( )
+		{
+			if ( apps == null )
+			{
+				apps = new ArrayList<ApplicationInfo>( );
+
+				ArrayList<AppInfoHolder> localList = appCache.generateLocalList( );
+
+				for ( int i = 0, size = localList.size( ); i < size; i++ )
+				{
+					apps.add( localList.get( i ).appInfo );
+				}
+			}
+
+			if ( apps == null || apps.size( ) == 0 )
+			{
+				return;
+			}
+
+			String exportFolder = Util.getStringOption( ac,
+					PREF_KEY_APP_EXPORT_DIR,
+					DEFAULT_EXPORT_FOLDER );
+
+			File sysoutput = null;
+			File useroutput = null;
+
+			File output = new File( exportFolder );
+
+			if ( output.exists( ) )
+			{
+				sysoutput = new File( output, SYS_APP );
+
+				if ( !sysoutput.exists( ) )
+				{
+					sysoutput = null;
+				}
+
+				useroutput = new File( output, USER_APP );
+
+				if ( !useroutput.exists( ) )
+				{
+					useroutput = null;
+				}
+			}
+
+			ApplicationInfo ai;
+			AppInfoHolder holder;
+			PackageInfo pi;
+
+			PackageManager pm = ac.getPackageManager( );
+
+			for ( int i = 0, size = apps.size( ); i < size; i++ )
+			{
+				if ( aborted )
+				{
+					return;
+				}
+
+				ai = apps.get( i );
+
+				holder = appCache.appLookup.get( ai.packageName );
+
+				if ( holder != null )
+				{
+					File targetOutput = useroutput;
+
+					if ( ( ai.flags & ApplicationInfo.FLAG_SYSTEM ) != 0 )
+					{
+						targetOutput = sysoutput;
+					}
+
+					if ( targetOutput != null )
+					{
+						String src = ai.sourceDir;
+
+						if ( src != null )
+						{
+							String appName = getFileName( src );
+
+							if ( appName != null )
+							{
+								File destFile = new File( targetOutput, appName );
+
+								if ( destFile.exists( ) )
+								{
+									pi = pm.getPackageArchiveInfo( destFile.getAbsolutePath( ),
+											0 );
+
+									if ( pi != null )
+									{
+										if ( pi.versionCode < holder.versionCode )
+										{
+											holder.backupState = 1;
+										}
+										else if ( pi.versionCode == holder.versionCode )
+										{
+											holder.backupState = 2;
+										}
+										else
+										{
+											holder.backupState = 3;
+										}
+
+										continue;
+									}
+								}
+							}
+						}
+					}
+
+					holder.backupState = 0;
+				}
+			}
+
+			// reorder by backup state
+			if ( Util.getIntOption( ac,
+					PREF_KEY_SORT_ORDER_TYPE,
+					ORDER_TYPE_NAME ) == ORDER_TYPE_BACKUP_STATE )
+			{
+				appCache.reOrder( ORDER_TYPE_BACKUP_STATE,
+						Util.getIntOption( ac,
+								PREF_KEY_SORT_DIRECTION,
+								ORDER_ASC ) );
+
+				handler.sendMessage( handler.obtainMessage( MSG_REFRESH_BACKUP_STATE,
+						1,
+						0 ) );
+			}
+			else
+			{
+				handler.sendMessage( handler.obtainMessage( MSG_REFRESH_BACKUP_STATE,
+						0,
+						0 ) );
+			}
+		}
 	}
 
 	/**
@@ -1746,6 +1896,15 @@ public final class ApplicationManager extends ListActivity implements Constants
 		{
 			appList = new ArrayList<AppInfoHolder>( );
 			appLookup = new HashMap<String, AppInfoHolder>( );
+		}
+
+		synchronized ArrayList<AppInfoHolder> generateLocalList( )
+		{
+			ArrayList<AppInfoHolder> local = new ArrayList<AppInfoHolder>( );
+
+			local.addAll( appList );
+
+			return local;
 		}
 
 		synchronized void update( ArrayList<AppInfoHolder> apps )
