@@ -269,5 +269,8 @@
     <string name="end_other_prompt">是否確認結束所有其他任務?</string>
     <string name="end_prompt">是否確認結束此任務?</string>
     <string name="end_all_prompt">是否確認結束所有任務?</string>
+    <string name="last_active">最後使用</string>
+    <string name="notifications">通知</string>
+    <string name="default_tab">默認標籤頁</string>
 
 </resources>

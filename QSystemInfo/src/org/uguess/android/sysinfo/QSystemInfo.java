@@ -32,6 +32,7 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -44,6 +45,8 @@ import android.widget.TabHost;
  */
 public final class QSystemInfo extends TabActivity
 {
+
+	private static final String PREF_KEY_LAST_ACTIVE = "last_active_tab"; //$NON-NLS-1$
 
 	/** Called when the activity is first created. */
 	@Override
@@ -89,9 +92,47 @@ public final class QSystemInfo extends TabActivity
 				.setIndicator( getString( R.string.tab_netstat ),
 						getResources( ).getDrawable( R.drawable.connection ) ) );
 
-		Util.updateIcons( this,
-				getSharedPreferences( SysInfoManager.class.getSimpleName( ),
-						Context.MODE_PRIVATE ) );
+		SharedPreferences sp = getSharedPreferences( SysInfoManager.class.getSimpleName( ),
+				Context.MODE_PRIVATE );
+
+		Util.updateIcons( this, sp );
+
+		if ( sp != null )
+		{
+			int tab = sp.getInt( SysInfoManager.PREF_KEY_DEFAULT_TAB, 1 );
+
+			if ( tab == 0 )
+			{
+				tab = sp.getInt( PREF_KEY_LAST_ACTIVE, 1 );
+			}
+
+			if ( tab > 0 && tab < 5 )
+			{
+				th.setCurrentTab( tab - 1 );
+			}
+		}
+	}
+
+	@Override
+	protected void onDestroy( )
+	{
+		SharedPreferences sp = getSharedPreferences( SysInfoManager.class.getSimpleName( ),
+				Context.MODE_PRIVATE );
+
+		if ( sp != null )
+		{
+			int tab = sp.getInt( SysInfoManager.PREF_KEY_DEFAULT_TAB, 1 );
+
+			if ( tab == 0 )
+			{
+				Editor et = sp.edit( );
+				et.putInt( PREF_KEY_LAST_ACTIVE,
+						getTabHost( ).getCurrentTab( ) + 1 );
+				et.commit( );
+			}
+		}
+
+		super.onDestroy( );
 	}
 
 	/**

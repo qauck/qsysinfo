@@ -280,5 +280,8 @@
     <string name="end_other_prompt">Are you sure to end all other tasks?</string>
     <string name="end_prompt">Are you sure to end this task?</string>
     <string name="end_all_prompt">Are you sure to end all tasks?</string>
+    <string name="last_active">Last Active</string>
+    <string name="notifications">Notifications</string>
+    <string name="default_tab">Default Tab</string>
 
 </resources>

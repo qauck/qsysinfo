@@ -37,22 +37,22 @@ import java.util.zip.ZipOutputStream;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.app.ActivityManager.MemoryInfo;
 import android.app.ActivityManager.RunningAppProcessInfo;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
@@ -129,6 +129,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 	static final String PREF_KEY_SHOW_TASK_ICON = "show_task_icon"; //$NON-NLS-1$
 	static final String PREF_KEY_AUTO_START_ICON = "auto_start_icon"; //$NON-NLS-1$
 	static final String PREF_KEY_DEFAULT_EMAIL = "default_email"; //$NON-NLS-1$
+	static final String PREF_KEY_DEFAULT_TAB = "default_tab"; //$NON-NLS-1$
 
 	private static final int BASIC_INFO = 0;
 	private static final int APPLICATIONS = 1;
@@ -1009,6 +1010,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 					PREF_KEY_AUTO_START_ICON,
 					false );
 			Util.updateStringOption( data, this, PREF_KEY_DEFAULT_EMAIL );
+			Util.updateIntOption( data, this, PREF_KEY_DEFAULT_TAB, 1 );
 		}
 	}
 
@@ -1027,16 +1029,17 @@ public final class SysInfoManager extends PreferenceActivity implements
 		{
 			Intent it = new Intent( this, InfoSettings.class );
 
-			it.putExtra( PREF_KEY_SHOW_INFO_ICON, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_INFO_ICON ) );
-			it.putExtra( PREF_KEY_SHOW_TASK_ICON, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_TASK_ICON ) );
+			it.putExtra( PREF_KEY_SHOW_INFO_ICON,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_INFO_ICON ) );
+			it.putExtra( PREF_KEY_SHOW_TASK_ICON,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_TASK_ICON ) );
 			it.putExtra( PREF_KEY_AUTO_START_ICON, Util.getBooleanOption( this,
 					PREF_KEY_AUTO_START_ICON,
 					false ) );
-			it.putExtra( PREF_KEY_DEFAULT_EMAIL, Util.getStringOption( this,
-					PREF_KEY_DEFAULT_EMAIL,
-					null ) );
+			it.putExtra( PREF_KEY_DEFAULT_EMAIL,
+					Util.getStringOption( this, PREF_KEY_DEFAULT_EMAIL, null ) );
+			it.putExtra( PREF_KEY_DEFAULT_TAB,
+					Util.getIntOption( this, PREF_KEY_DEFAULT_TAB, 1 ) );
 
 			startActivityForResult( it, 2 );
 
@@ -1250,8 +1253,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 			{
 				sb.append( getString( R.string.storage_summary,
 						info[0],
-						info[2] )
-						+ getString( R.string.idle_info, info[1] ) );
+						info[2] ) + getString( R.string.idle_info, info[1] ) );
 			}
 			sb.append( "\n\n" ); //$NON-NLS-1$
 
@@ -1590,8 +1592,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 			{
 				sb.append( getString( R.string.storage_summary,
 						info[0],
-						info[2] )
-						+ getString( R.string.idle_info, info[1] ) );
+						info[2] ) + getString( R.string.idle_info, info[1] ) );
 			}
 			sb.append( closeRow );
 
@@ -2534,6 +2535,20 @@ public final class SysInfoManager extends PreferenceActivity implements
 			pc.setTitle( R.string.preference );
 			getPreferenceScreen( ).addPreference( pc );
 
+			Preference perfTab = new Preference( this );
+			perfTab.setKey( PREF_KEY_DEFAULT_TAB );
+			perfTab.setTitle( R.string.default_tab );
+			pc.addPreference( perfTab );
+
+			Preference perfEmail = new Preference( this );
+			perfEmail.setKey( PREF_KEY_DEFAULT_EMAIL );
+			perfEmail.setTitle( R.string.default_email );
+			pc.addPreference( perfEmail );
+
+			pc = new PreferenceCategory( this );
+			pc.setTitle( R.string.notifications );
+			getPreferenceScreen( ).addPreference( pc );
+
 			CheckBoxPreference prefInfo = new CheckBoxPreference( this );
 			prefInfo.setKey( PREF_KEY_SHOW_INFO_ICON );
 			prefInfo.setTitle( R.string.show_info_icon );
@@ -2552,15 +2567,11 @@ public final class SysInfoManager extends PreferenceActivity implements
 			prefAuto.setSummary( R.string.auto_start_sum );
 			pc.addPreference( prefAuto );
 
-			Preference perfEmail = new Preference( this );
-			perfEmail.setKey( PREF_KEY_DEFAULT_EMAIL );
-			perfEmail.setTitle( R.string.default_email );
-			pc.addPreference( perfEmail );
-
+			refreshEmail( );
+			refreshTab( );
 			refreshBooleanOption( PREF_KEY_SHOW_INFO_ICON, true );
 			refreshBooleanOption( PREF_KEY_SHOW_TASK_ICON, true );
 			refreshBooleanOption( PREF_KEY_AUTO_START_ICON, false );
-			refreshEmail( );
 
 			setResult( RESULT_OK, getIntent( ) );
 		}
@@ -2584,6 +2595,30 @@ public final class SysInfoManager extends PreferenceActivity implements
 			{
 				findPreference( PREF_KEY_DEFAULT_EMAIL ).setSummary( email );
 			}
+		}
+
+		void refreshTab( )
+		{
+			int tab = getIntent( ).getIntExtra( PREF_KEY_DEFAULT_TAB, 1 );
+
+			CharSequence label = getString( R.string.last_active );
+			switch ( tab )
+			{
+				case 1 :
+					label = getString( R.string.tab_info );
+					break;
+				case 2 :
+					label = getString( R.string.tab_apps );
+					break;
+				case 3 :
+					label = getString( R.string.tab_procs );
+					break;
+				case 4 :
+					label = getString( R.string.tab_netstat );
+					break;
+			}
+
+			findPreference( PREF_KEY_DEFAULT_TAB ).setSummary( label );
 		}
 
 		@Override
@@ -2652,6 +2687,36 @@ public final class SysInfoManager extends PreferenceActivity implements
 						.setPositiveButton( android.R.string.ok, listener )
 						.setNegativeButton( android.R.string.cancel, null )
 						.setView( txt )
+						.create( )
+						.show( );
+
+				return true;
+			}
+			else if ( PREF_KEY_DEFAULT_TAB.equals( preference.getKey( ) ) )
+			{
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						it.putExtra( PREF_KEY_DEFAULT_TAB, which );
+
+						dialog.dismiss( );
+
+						refreshTab( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.default_tab )
+						.setNeutralButton( R.string.close, null )
+						.setSingleChoiceItems( new CharSequence[]{
+								getString( R.string.last_active ),
+								getString( R.string.tab_info ),
+								getString( R.string.tab_apps ),
+								getString( R.string.tab_procs ),
+								getString( R.string.tab_netstat )
+						},
+								it.getIntExtra( PREF_KEY_DEFAULT_TAB, 1 ),
+								listener )
 						.create( )
 						.show( );
 
