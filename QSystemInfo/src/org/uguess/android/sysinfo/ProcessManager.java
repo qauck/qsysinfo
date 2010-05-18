@@ -34,20 +34,20 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import android.app.ActivityManager;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.AlertDialog;
 import android.app.ListActivity;
-import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -62,18 +62,18 @@ import android.text.Html;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
 
 /**
  * ProcessManager
@@ -94,12 +94,12 @@ public final class ProcessManager extends ListActivity implements Constants
 	private static final int ORDER_TYPE_MEM = 2;
 	private static final int ORDER_TYPE_CPU = 3;
 
-	private static final int ACTION_SWITCH = 0;
-	private static final int ACTION_END = 1;
-	private static final int ACTION_END_OTHERS = 2;
-	private static final int ACTION_IGNORE = 3;
-	private static final int ACTION_DETAILS = 4;
-	private static final int ACTION_MENU = 5;
+	private static final int ACTION_MENU = 0;
+	private static final int ACTION_SWITCH = 1;
+	private static final int ACTION_END = 2;
+	private static final int ACTION_END_OTHERS = 3;
+	private static final int ACTION_IGNORE = 4;
+	private static final int ACTION_DETAILS = 5;
 
 	private static final int IGNORE_ACTION_HIDDEN = 0;
 	private static final int IGNORE_ACTION_PROTECTED = 1;
@@ -509,9 +509,8 @@ public final class ProcessManager extends ListActivity implements Constants
 			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
-					PREF_KEY_SORT_DIRECTION,
-					ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION,
+					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
 			it.putExtra( PREF_KEY_IGNORE_ACTION, Util.getIntOption( this,
 					PREF_KEY_IGNORE_ACTION,
 					IGNORE_ACTION_HIDDEN ) );
@@ -520,15 +519,14 @@ public final class ProcessManager extends ListActivity implements Constants
 					ACTION_END ) );
 			it.putStringArrayListExtra( PREF_KEY_IGNORE_LIST,
 					getIgnoreList( getPreferences( Context.MODE_PRIVATE ) ) );
-			it.putExtra( PREF_KEY_SHOW_MEM, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_MEM ) );
-			it.putExtra( PREF_KEY_SHOW_CPU, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_CPU ) );
-			it.putExtra( PREF_KEY_SHOW_SYS_PROC, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_SYS_PROC ) );
-			it.putExtra( PREF_KEY_SHOW_KILL_WARN, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_KILL_WARN,
-					false ) );
+			it.putExtra( PREF_KEY_SHOW_MEM,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_MEM ) );
+			it.putExtra( PREF_KEY_SHOW_CPU,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_CPU ) );
+			it.putExtra( PREF_KEY_SHOW_SYS_PROC,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_SYS_PROC ) );
+			it.putExtra( PREF_KEY_SHOW_KILL_WARN,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_KILL_WARN, false ) );
 
 			startActivityForResult( it, 1 );
 
@@ -851,17 +849,20 @@ public final class ProcessManager extends ListActivity implements Constants
 					{
 						dialog.dismiss( );
 
+						// bypass the 'showMenu' action offset
+						int action = which + 1;
+
 						if ( !protect
-								|| ( which != ACTION_END && which != ACTION_IGNORE ) )
+								|| ( action != ACTION_END && action != ACTION_IGNORE ) )
 						{
-							handleAction( rap, which );
+							handleAction( rap, action );
 						}
 					}
 				};
 
 				new AlertDialog.Builder( this ).setTitle( R.string.actions )
 						.setItems( new CharSequence[]{
-								getString( R.string.switch_to ),
+						getString( R.string.switch_to ),
 								protect ? Html.fromHtml( "<font color=\"#848484\">" //$NON-NLS-1$
 										+ getString( R.string.end_task )
 										+ "</font>" ) //$NON-NLS-1$
@@ -1739,12 +1740,12 @@ public final class ProcessManager extends ListActivity implements Constants
 				new AlertDialog.Builder( this ).setTitle( R.string.default_tap_action )
 						.setNeutralButton( R.string.close, null )
 						.setSingleChoiceItems( new String[]{
+								getString( R.string.show_menu ),
 								getString( R.string.switch_to ),
 								getString( R.string.end_task ),
 								getString( R.string.end_others ),
 								getString( R.string.ignore ),
 								getString( R.string.details ),
-								getString( R.string.show_menu ),
 						},
 								it.getIntExtra( PREF_KEY_DEFAULT_TAP_ACTION,
 										ACTION_END ),
