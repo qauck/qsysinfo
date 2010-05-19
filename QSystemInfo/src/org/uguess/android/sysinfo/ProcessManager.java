@@ -914,8 +914,7 @@ public final class ProcessManager extends ListActivity implements Constants
 			if ( !ignoreList.contains( procName )
 					&& !self.equals( procName )
 					&& !rap.sys
-					&& exception != null
-					&& !exception.equals( procName ) )
+					&& !procName.equals( exception ) )
 			{
 				endProcess( am, rap.procInfo.pkgList );
 			}
