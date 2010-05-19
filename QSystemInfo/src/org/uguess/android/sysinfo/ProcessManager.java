@@ -346,6 +346,10 @@ public final class ProcessManager extends ListActivity implements Constants
 					{
 						lb += " *"; //$NON-NLS-1$
 					}
+					else if ( ignoreList.contains( itm.procInfo.processName ) )
+					{
+						lb += " ~"; //$NON-NLS-1$
+					}
 					txt_name.setText( lb );
 
 					txt_name.setTypeface( Typeface.DEFAULT, Typeface.NORMAL );
