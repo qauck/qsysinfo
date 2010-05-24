@@ -567,28 +567,19 @@ public final class NetStateManager extends ListActivity implements Constants
 
 	private ArrayList<ConnectionItem> readStatesRaw( )
 	{
-		ArrayList<ConnectionItem> tcp = parseRawData( this,
-				queryCache,
-				"TCP", "/proc/net/tcp", false ); //$NON-NLS-1$ //$NON-NLS-2$
-		ArrayList<ConnectionItem> udp = parseRawData( this,
-				queryCache,
-				"UDP", "/proc/net/udp", true ); //$NON-NLS-1$ //$NON-NLS-2$
+		ArrayList<ConnectionItem> items = new ArrayList<NetStateManager.ConnectionItem>( );
 
-		if ( tcp == null )
-		{
-			return udp;
-		}
-		else if ( udp != null )
-		{
-			tcp.addAll( udp );
-		}
+		parseRawData( items, this, queryCache, "TCP", "/proc/net/tcp", false ); //$NON-NLS-1$ //$NON-NLS-2$
+		parseRawData( items, this, queryCache, "UDP", "/proc/net/udp", true ); //$NON-NLS-1$ //$NON-NLS-2$
+		parseRawData( items, this, queryCache, "TCP6", "/proc/net/tcp6", false ); //$NON-NLS-1$ //$NON-NLS-2$
+		parseRawData( items, this, queryCache, "UDP6", "/proc/net/udp6", true ); //$NON-NLS-1$ //$NON-NLS-2$
 
-		return tcp;
+		return items;
 	}
 
-	private static ArrayList<ConnectionItem> parseRawData( Activity ac,
-			HashMap<String, IpInfo> queryCache, String proto, String source,
-			boolean ignoreState )
+	private static void parseRawData( final ArrayList<ConnectionItem> items,
+			Activity ac, HashMap<String, IpInfo> queryCache, String proto,
+			String source, boolean ignoreState )
 	{
 		BufferedReader reader = null;
 		try
@@ -596,7 +587,6 @@ public final class NetStateManager extends ListActivity implements Constants
 			reader = new BufferedReader( new InputStreamReader( new FileInputStream( source ) ),
 					4096 );
 
-			ArrayList<ConnectionItem> itms = new ArrayList<ConnectionItem>( );
 			boolean first = true;
 			int localOffset = -1, remOffset = -1, stateOffset = -1, stateEndOffset = -1;
 			String line;
@@ -613,6 +603,10 @@ public final class NetStateManager extends ListActivity implements Constants
 				{
 					localOffset = line.indexOf( "local_address" ); //$NON-NLS-1$
 					remOffset = line.indexOf( "rem_address" ); //$NON-NLS-1$
+					if ( remOffset == -1 )
+					{
+						remOffset = line.indexOf( "remote_address" ); //$NON-NLS-1$
+					}
 					stateOffset = line.indexOf( "st", remOffset ); //$NON-NLS-1$
 					stateEndOffset = line.indexOf( ' ', stateOffset );
 
@@ -683,11 +677,9 @@ public final class NetStateManager extends ListActivity implements Constants
 						}
 					}
 
-					itms.add( ci );
+					items.add( ci );
 				}
 			}
-
-			return itms;
 		}
 		catch ( Exception e )
 		{
@@ -711,8 +703,6 @@ public final class NetStateManager extends ListActivity implements Constants
 				}
 			}
 		}
-
-		return null;
 	}
 
 	private static String parseRawIP( String raw )
@@ -747,12 +737,7 @@ public final class NetStateManager extends ListActivity implements Constants
 							"Parsing raw port fail : " + raw ); //$NON-NLS-1$
 				}
 
-				if ( ip.length( ) != 8 )
-				{
-					Log.e( NetStateManager.class.getName( ),
-							"Parsing raw ip fail : " + raw ); //$NON-NLS-1$
-				}
-				else
+				if ( ip.length( ) == 8 )
 				{
 					try
 					{
@@ -768,9 +753,32 @@ public final class NetStateManager extends ListActivity implements Constants
 						ip = "?"; //$NON-NLS-1$
 
 						Log.e( NetStateManager.class.getName( ),
-								"Parsing raw ip fail : " + raw ); //$NON-NLS-1$
+								"Parsing raw ip4 fail : " + raw ); //$NON-NLS-1$
 					}
+				}
+				else if ( ip.length( ) == 32 )
+				{
+					try
+					{
+						int n1 = Integer.parseInt( ip.substring( 30 ), 16 );
+						int n2 = Integer.parseInt( ip.substring( 28, 30 ), 16 );
+						int n3 = Integer.parseInt( ip.substring( 26, 28 ), 16 );
+						int n4 = Integer.parseInt( ip.substring( 24, 26 ), 16 );
 
+						ip = n1 + "." + n2 + "." + n3 + "." + n4; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					}
+					catch ( Exception e )
+					{
+						ip = "?"; //$NON-NLS-1$
+
+						Log.e( NetStateManager.class.getName( ),
+								"Parsing raw ip46 fail : " + raw ); //$NON-NLS-1$
+					}
+				}
+				else
+				{
+					Log.e( NetStateManager.class.getName( ),
+							"Parsing raw ip fail : " + raw ); //$NON-NLS-1$
 				}
 
 				return ip + ':' + port;
