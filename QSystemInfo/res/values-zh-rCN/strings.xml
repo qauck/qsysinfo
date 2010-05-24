@@ -21,7 +21,7 @@
 	<string name="deselect_all">取消选择</string>
 	<string name="no_app_selected">没有选中的应用程序.</string>
 	<string name="warning">警告</string>
-	<string name="warning_msg">应用程序会被导出到 ''%s'', 任何已存在的文件会被覆盖，请确定是否继续?</string>
+	<string name="warning_msg">应用程序会被导出到 \'%s\', 任何已存在的文件会被覆盖，请确定是否继续?</string>
 	<string name="cont">继续</string>
 	<string name="start_exporting">开始导出...</string>
 	<string name="sys_apps">系统</string>
@@ -29,7 +29,7 @@
 	<string name="exporting">导出 %s...</string>
 	<string name="copy_error">复制文件时发生错误: %s</string>
 	<string name="exported">共 %s 个应用程序已被导出.</string>
-	<string name="exported_to">共 %s 个应用程序已被导出到 ''%s''.</string>
+	<string name="exported_to">共 %s 个应用程序已被导出到 \'%s\'.</string>
 	<string name="export_complete">导出完成</string>
 	<string name="error_sdcard">请确认SD存储卡已正确加载并有足够的可写空间.</string>
 	<string name="computing">计算中...</string>
@@ -246,7 +246,7 @@
     <string name="show_backup_state_sum">检查每个应用程序的备份状态并用不同颜色显示</string>
     <string name="search_market">搜索市场</string>
 	<string name="exported_skip">%s 个应用程序已被导出, 跳过 %s 个受保护程序.</string>
-	<string name="exported_to_skip">%s 个应用程序被导出到 ''%s'', 跳过 %s 个受保护程序.</string>
+	<string name="exported_to_skip">%s 个应用程序被导出到 \'%s\', 跳过 %s 个受保护程序.</string>
     <string name="threads">线程数</string>
     <string name="gid">组 ID</string>
     <string name="uid">用户 ID</string>

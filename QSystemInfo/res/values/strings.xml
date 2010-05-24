@@ -21,7 +21,7 @@
 	<string name="no_app_show">No application available under current filter
 		condition.</string>
 	<string name="warning">Warning</string>
-	<string name="warning_msg">Applications will be exported to ''%s'', any
+	<string name="warning_msg">Applications will be exported to \'%s\', any
 		existing file in the folder will be overwritten, are you sure to
 		continue?</string>
 	<string name="cont">Continue</string>
@@ -29,7 +29,7 @@
 	<string name="exporting">Exporting %s...</string>
 	<string name="copy_error">Error happened during copying: %s</string>
 	<string name="exported">Total %s applications exported.</string>
-	<string name="exported_to">Total %s applications exported to ''%s''.</string>
+	<string name="exported_to">Total %s applications exported to \'%s\'.</string>
 	<string name="export_complete">Export completed</string>
 	<string name="error_sdcard">Please ensure the SD card is mounted as writable
 		with sufficient free space.
@@ -257,7 +257,7 @@
     <string name="show_backup_state_sum">Check application backup state and display in differnt colors</string>
     <string name="search_market">Search in Market</string>
 	<string name="exported_skip">%s applications exported, %s protected been skipped.</string>
-	<string name="exported_to_skip">%s applications exported to ''%s'', %s protected been skipped.</string>
+	<string name="exported_to_skip">%s applications exported to \'%s\', %s protected been skipped.</string>
     <string name="threads">Threads</string>
     <string name="gid">Group ID</string>
     <string name="uid">User ID</string>

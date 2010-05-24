@@ -21,7 +21,7 @@
 	<string name="deselect_all">取消選中</string>
 	<string name="no_app_selected">沒有選取的應用程式.</string>
 	<string name="warning">警示</string>
-	<string name="warning_msg">應用程式將被匯出至 ''%s'', 任何已存在的檔案會被覆蓋，請確認是否繼續?</string>
+	<string name="warning_msg">應用程式將被匯出至 \'%s\', 任何已存在的檔案會被覆蓋，請確認是否繼續?</string>
 	<string name="cont">繼續</string>
 	<string name="start_exporting">開始匯出...</string>
 	<string name="sys_apps">系統</string>
@@ -29,7 +29,7 @@
 	<string name="exporting">匯出 %s...</string>
 	<string name="copy_error">復制檔案時發生錯誤: %s</string>
 	<string name="exported">共 %s 個應用程式已被匯出.</string>
-	<string name="exported_to">共 %s 個應用程式已被匯出至 ''%s''.</string>
+	<string name="exported_to">共 %s 個應用程式已被匯出至 \'%s\'.</string>
 	<string name="export_complete">匯出完成</string>
 	<string name="error_sdcard">請確認SD存儲卡已正確載入并有足夠的可寫入空間.</string>
 	<string name="computing">計算中...</string>
@@ -246,7 +246,7 @@
     <string name="show_backup_state_sum">查詢每個應用程式的備份狀態並以不同顏色顯示</string>
     <string name="search_market">搜尋市場</string>
 	<string name="exported_skip">%s 個應用程式已被匯出, 跳過 %s 個受保護程式.</string>
-	<string name="exported_to_skip">%s 個應用程式被匯出到 ''%s'', 跳過 %s 個受保護程式.</string>
+	<string name="exported_to_skip">%s 個應用程式被匯出到 \'%s\', 跳過 %s 個受保護程式.</string>
     <string name="threads">執行緒數</string>
     <string name="gid">組 ID</string>
     <string name="uid">使用者 ID</string>
