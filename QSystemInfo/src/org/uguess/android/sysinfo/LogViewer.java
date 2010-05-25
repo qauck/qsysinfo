@@ -852,7 +852,7 @@ public final class LogViewer extends ListActivity implements Constants
 
 		String tag = line.substring( levelOffset + 1, tagOffset );
 
-		if ( tagFilter != null && !tag.contains( tagFilter ) )
+		if ( tagFilter != null && !tag.toLowerCase( ).contains( tagFilter ) )
 		{
 			return null;
 		}
@@ -974,6 +974,11 @@ public final class LogViewer extends ListActivity implements Constants
 			LogItem clog, lastClog = null;
 
 			ArrayList<LogItem> logs = new ArrayList<LogItem>( );
+
+			if ( tagFilter != null )
+			{
+				tagFilter = tagFilter.toLowerCase( );
+			}
 
 			while ( ( line = reader.readLine( ) ) != null )
 			{

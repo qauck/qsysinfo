@@ -571,8 +571,8 @@ public final class NetStateManager extends ListActivity implements Constants
 
 		parseRawData( items, this, queryCache, "TCP", "/proc/net/tcp", false ); //$NON-NLS-1$ //$NON-NLS-2$
 		parseRawData( items, this, queryCache, "UDP", "/proc/net/udp", true ); //$NON-NLS-1$ //$NON-NLS-2$
-		parseRawData( items, this, queryCache, "TCP6", "/proc/net/tcp6", false ); //$NON-NLS-1$ //$NON-NLS-2$
-		parseRawData( items, this, queryCache, "UDP6", "/proc/net/udp6", true ); //$NON-NLS-1$ //$NON-NLS-2$
+		parseRawData( items, this, queryCache, "TCP", "/proc/net/tcp6", false ); //$NON-NLS-1$ //$NON-NLS-2$
+		parseRawData( items, this, queryCache, "UDP", "/proc/net/udp6", true ); //$NON-NLS-1$ //$NON-NLS-2$
 
 		return items;
 	}
