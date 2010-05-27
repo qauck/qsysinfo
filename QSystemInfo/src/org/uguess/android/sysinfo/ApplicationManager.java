@@ -292,7 +292,21 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 					if ( progress != null )
 					{
-						progress.dismiss( );
+						try
+						{
+							// TODO this is only a temp solution to hide the
+							// weird FC for HTC desire, need investigate for the
+							// real cause in future.
+							progress.dismiss( );
+						}
+						catch ( Exception e )
+						{
+							Log.d( ApplicationManager.class.getName( ),
+									"Unexpected exception from dismissing the dialog", //$NON-NLS-1$
+									e );
+
+							progress.hide( );
+						}
 						progress = null;
 					}
 					break;
