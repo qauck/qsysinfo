@@ -19,6 +19,7 @@ package org.uguess.android.sysinfo;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -680,6 +681,11 @@ public final class NetStateManager extends ListActivity implements Constants
 					items.add( ci );
 				}
 			}
+		}
+		catch ( FileNotFoundException fe )
+		{
+			Log.d( NetStateManager.class.getName( ),
+					"File not found: " + fe.getLocalizedMessage( ) ); //$NON-NLS-1$
 		}
 		catch ( Exception e )
 		{
