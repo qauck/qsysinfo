@@ -45,15 +45,15 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.IPackageStatsObserver;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PackageStats;
 import android.content.pm.ResolveInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -70,24 +70,24 @@ import android.text.Html;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 
 /**
  * ApplicationManager
@@ -292,21 +292,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 					if ( progress != null )
 					{
-						try
-						{
-							// TODO this is only a temp solution to hide the
-							// weird FC for HTC desire, need investigate for the
-							// real cause in future.
-							progress.dismiss( );
-						}
-						catch ( Exception e )
-						{
-							Log.d( ApplicationManager.class.getName( ),
-									"Unexpected exception from dismissing the dialog", //$NON-NLS-1$
-									e );
-
-							progress.hide( );
-						}
+						progress.dismiss( );
 						progress = null;
 					}
 					break;
@@ -674,7 +660,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 					{
 						PackageInfo pi = pm.getPackageInfo( info.packageName, 0 );
 
-						holder.version = versionPrefix + " " //$NON-NLS-1$
+						holder.version = versionPrefix
+								+ " " //$NON-NLS-1$
 								+ ( pi.versionName == null ? String.valueOf( pi.versionCode )
 										: pi.versionName );
 
@@ -1043,13 +1030,12 @@ public final class ApplicationManager extends ListActivity implements Constants
 			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
-					PREF_KEY_SORT_DIRECTION,
-					ORDER_ASC ) );
-			it.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_SIZE ) );
-			it.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_DATE ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION,
+					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SHOW_SIZE,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_SIZE ) );
+			it.putExtra( PREF_KEY_SHOW_DATE,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_DATE ) );
 			it.putExtra( PREF_KEY_SHOW_BACKUP_STATE,
 					Util.getBooleanOption( this, PREF_KEY_SHOW_BACKUP_STATE ) );
 

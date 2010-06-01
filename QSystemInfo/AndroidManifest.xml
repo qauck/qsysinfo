@@ -11,20 +11,24 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-		<activity android:name=".SysInfoManager"></activity>
+		<activity android:name=".SysInfoManager"
+			android:configChanges="keyboardHidden|orientation"></activity>
 		<activity android:configChanges="keyboardHidden|orientation"
 			android:name=".SysInfoManager$InfoSettings"></activity>
 		<activity android:configChanges="keyboardHidden|orientation"
 			android:name=".LogViewer"></activity>
 		<activity android:configChanges="keyboardHidden|orientation"
 			android:name=".LogViewer$LogSettings"></activity>
-		<activity android:name=".ApplicationManager"></activity>
+		<activity android:name=".ApplicationManager"
+			android:configChanges="keyboardHidden|orientation"></activity>
 		<activity android:name=".ApplicationManager$AppSettings"
 			android:configChanges="keyboardHidden|orientation"></activity>
-		<activity android:name=".ProcessManager"></activity>
+		<activity android:name=".ProcessManager"
+			android:configChanges="keyboardHidden|orientation"></activity>
 		<activity android:name=".ProcessManager$ProcessSettings"
 			android:configChanges="keyboardHidden|orientation"></activity>
-		<activity android:name=".NetStateManager"></activity>
+		<activity android:name=".NetStateManager"
+			android:configChanges="keyboardHidden|orientation"></activity>
 		<activity android:name=".NetStateManager$NetStateSettings"
 			android:configChanges="keyboardHidden|orientation"></activity>
 		<activity android:configChanges="keyboardHidden|orientation"
