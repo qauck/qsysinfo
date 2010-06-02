@@ -12,6 +12,9 @@
 		android:key="internal_storage" android:title="@string/internal_storage" />
 
 	<Preference style="?android:preferenceInformationStyle"
+		android:key="system_storage" android:title="@string/system_storage" />
+
+	<Preference style="?android:preferenceInformationStyle"
 		android:key="cache_storage" android:title="@string/cache_storage" />
 
 	<Preference style="?android:preferenceInformationStyle"

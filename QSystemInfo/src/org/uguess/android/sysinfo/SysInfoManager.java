@@ -297,6 +297,10 @@ public final class SysInfoManager extends PreferenceActivity implements
 		findPreference( "internal_storage" ).setSummary( si == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
 				: getString( R.string.storage_summary, si[0], si[1] ) );
 
+		si = getSystemStorageInfo( );
+		findPreference( "system_storage" ).setSummary( si == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+				: getString( R.string.storage_summary, si[0], si[1] ) );
+
 		si = getCacheStorageInfo( );
 		findPreference( "cache_storage" ).setSummary( si == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
 				: getString( R.string.storage_summary, si[0], si[1] ) );
@@ -727,6 +731,11 @@ public final class SysInfoManager extends PreferenceActivity implements
 	private String[] getInternalStorageInfo( )
 	{
 		return getStorageInfo( Environment.getDataDirectory( ) );
+	}
+
+	private String[] getSystemStorageInfo( )
+	{
+		return getStorageInfo( Environment.getRootDirectory( ) );
 	}
 
 	private String[] getCacheStorageInfo( )
@@ -1224,6 +1233,23 @@ public final class SysInfoManager extends PreferenceActivity implements
 			sb.append( "\n\n" ); //$NON-NLS-1$
 
 			sb.append( "* " ) //$NON-NLS-1$
+					.append( getString( R.string.system_storage ) )
+					.append( "\n\t" ); //$NON-NLS-1$
+
+			info = getSystemStorageInfo( );
+			if ( info == null )
+			{
+				sb.append( getString( R.string.info_not_available ) );
+			}
+			else
+			{
+				sb.append( getString( R.string.storage_summary,
+						info[0],
+						info[1] ) );
+			}
+			sb.append( "\n\n" ); //$NON-NLS-1$
+
+			sb.append( "* " ) //$NON-NLS-1$
 					.append( getString( R.string.cache_storage ) )
 					.append( "\n\t" ); //$NON-NLS-1$
 
@@ -1550,6 +1576,23 @@ public final class SysInfoManager extends PreferenceActivity implements
 					.append( nextColumn4 );
 
 			info = getInternalStorageInfo( );
+			if ( info == null )
+			{
+				sb.append( getString( R.string.info_not_available ) );
+			}
+			else
+			{
+				sb.append( getString( R.string.storage_summary,
+						info[0],
+						info[1] ) );
+			}
+			sb.append( closeRow );
+
+			sb.append( openRow )
+					.append( getString( R.string.system_storage ) )
+					.append( nextColumn4 );
+
+			info = getSystemStorageInfo( );
 			if ( info == null )
 			{
 				sb.append( getString( R.string.info_not_available ) );

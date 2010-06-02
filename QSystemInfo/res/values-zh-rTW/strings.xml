@@ -272,5 +272,6 @@
     <string name="last_active">最後使用</string>
     <string name="notifications">通知</string>
     <string name="default_tab">默認標籤頁</string>
+    <string name="system_storage">系統存儲</string>
 
 </resources>

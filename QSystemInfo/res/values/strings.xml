@@ -58,7 +58,7 @@
 	<string name="export_dir">Backup Folder</string>
 	<string name="error_create_folder">Failed to create folder %s.</string>
 	<string name="error_switch_task">Cannot switch to this task.</string>
-	<string name="net_address">Network Address</string>
+	<string name="net_address">Network address</string>
 	<string name="verbose">Verbose</string>
 	<string name="debug">Debug</string>
 	<string name="info">Info</string>
@@ -180,7 +180,7 @@
     <string name="ignored_list">Ignored List</string>
     <string name="ignored_as">Ignored as</string>
     <string name="ignore">Ignore</string>
-    <string name="a2sd_storage">A2SD Storage</string>
+    <string name="a2sd_storage">A2SD storage</string>
     <string name="check">Click to Check</string>
     <string name="network_type">Network Type</string>
     <string name="extra_info">Extra Info</string>
@@ -283,5 +283,6 @@
     <string name="last_active">Last Active</string>
     <string name="notifications">Notifications</string>
     <string name="default_tab">Default Tab</string>
+    <string name="system_storage">System storage</string>
 
 </resources>
