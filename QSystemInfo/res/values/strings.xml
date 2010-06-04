@@ -289,5 +289,8 @@
     <string name="share">Share</string>
     <string name="market_link">Market Link</string>
     <string name="include">Include</string>
+    <string name="send">Send</string>
+    <string name="copy">Copy</string>
+    <string name="copied_hint">Content copied to clipboard.</string>
 
 </resources>

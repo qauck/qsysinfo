@@ -278,5 +278,8 @@
     <string name="share">分享</string>
     <string name="market_link">Market鏈接</string>
     <string name="include">包含</string>
+    <string name="send">發送</string>
+    <string name="copy">複製</string>
+    <string name="copied_hint">內容已複製至剪貼簿.</string>
 
 </resources>

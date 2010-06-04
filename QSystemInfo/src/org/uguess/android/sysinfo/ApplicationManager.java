@@ -67,6 +67,7 @@ import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
+import android.text.ClipboardManager;
 import android.text.Html;
 import android.text.format.Formatter;
 import android.util.Log;
@@ -1364,7 +1365,23 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 				public void onClick( DialogInterface dialog, int which )
 				{
-					sendContent( items, sels );
+
+					OnClickListener typeListener = new OnClickListener( ) {
+
+						public void onClick( DialogInterface dialog, int which )
+						{
+							sendContent( items, sels, which == 0 );
+						}
+					};
+
+					new AlertDialog.Builder( ApplicationManager.this ).setTitle( R.string.actions )
+							.setItems( new String[]{
+									getString( R.string.copy ),
+									getString( R.string.send ),
+							},
+									typeListener )
+							.create( )
+							.show( );
 				}
 			};
 
@@ -1384,7 +1401,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 		}
 	}
 
-	void sendContent( final boolean[] items, final List<AppInfoHolder> apps )
+	void sendContent( final boolean[] items, final List<AppInfoHolder> apps,
+			final boolean isCopy )
 	{
 		if ( progress == null )
 		{
@@ -1399,6 +1417,23 @@ public final class ApplicationManager extends ListActivity implements Constants
 			public void run( )
 			{
 				String content = collectTextContent( items, apps );
+
+				if ( isCopy )
+				{
+					ClipboardManager cm = (ClipboardManager) getSystemService( CLIPBOARD_SERVICE );
+
+					if ( cm != null && content != null )
+					{
+						cm.setText( content );
+					}
+
+					handler.sendEmptyMessage( MSG_DISMISS_PROGRESS );
+
+					handler.sendMessage( handler.obtainMessage( MSG_TOAST,
+							getString( R.string.copied_hint ) ) );
+
+					return;
+				}
 
 				if ( aborted )
 				{
