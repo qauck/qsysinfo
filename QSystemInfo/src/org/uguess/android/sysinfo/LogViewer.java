@@ -294,6 +294,17 @@ public final class LogViewer extends ListActivity implements Constants
 	}
 
 	@Override
+	protected void onDestroy( )
+	{
+		if ( progress != null )
+		{
+			progress.dismiss( );
+			progress = null;
+		}
+		super.onDestroy( );
+	}
+
+	@Override
 	public void onCreateContextMenu( ContextMenu menu, View v,
 			ContextMenuInfo menuInfo )
 	{

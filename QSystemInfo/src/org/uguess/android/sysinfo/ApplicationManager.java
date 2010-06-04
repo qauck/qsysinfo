@@ -598,6 +598,17 @@ public final class ApplicationManager extends ListActivity implements Constants
 	}
 
 	@Override
+	protected void onDestroy( )
+	{
+		if ( progress != null )
+		{
+			progress.dismiss( );
+			progress = null;
+		}
+		super.onDestroy( );
+	}
+
+	@Override
 	protected void onStart( )
 	{
 		super.onStart( );

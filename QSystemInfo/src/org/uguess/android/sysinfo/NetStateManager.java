@@ -286,6 +286,17 @@ public final class NetStateManager extends ListActivity implements Constants
 	}
 
 	@Override
+	protected void onDestroy( )
+	{
+		if ( progress != null )
+		{
+			progress.dismiss( );
+			progress = null;
+		}
+		super.onDestroy( );
+	}
+
+	@Override
 	protected void onResume( )
 	{
 		aborted = false;

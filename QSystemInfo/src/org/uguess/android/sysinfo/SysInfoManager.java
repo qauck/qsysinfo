@@ -258,6 +258,17 @@ public final class SysInfoManager extends PreferenceActivity implements
 	}
 
 	@Override
+	protected void onDestroy( )
+	{
+		if ( progress != null )
+		{
+			progress.dismiss( );
+			progress = null;
+		}
+		super.onDestroy( );
+	}
+
+	@Override
 	protected void onResume( )
 	{
 		super.onResume( );

@@ -31,12 +31,12 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -51,24 +51,24 @@ import android.preference.PreferenceScreen;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 
 /**
  * RestoreAppActivity
@@ -380,6 +380,17 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 	}
 
 	@Override
+	protected void onDestroy( )
+	{
+		if ( progress != null )
+		{
+			progress.dismiss( );
+			progress = null;
+		}
+		super.onDestroy( );
+	}
+
+	@Override
 	protected void onStart( )
 	{
 		super.onStart( );
@@ -469,23 +480,21 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 			it.putExtra( PREF_KEY_DEFAULT_RESTORE_DIR,
 					getIntent( ).getStringExtra( ApplicationManager.KEY_RESTORE_PATH ) );
-			it.putExtra( PREF_KEY_APP_RESTORE_DIR, Util.getStringOption( this,
-					PREF_KEY_APP_RESTORE_DIR,
-					null ) );
-			it.putExtra( PREF_KEY_SEARCH_SUB_DIR, Util.getBooleanOption( this,
-					PREF_KEY_SEARCH_SUB_DIR ) );
+			it.putExtra( PREF_KEY_APP_RESTORE_DIR,
+					Util.getStringOption( this, PREF_KEY_APP_RESTORE_DIR, null ) );
+			it.putExtra( PREF_KEY_SEARCH_SUB_DIR,
+					Util.getBooleanOption( this, PREF_KEY_SEARCH_SUB_DIR ) );
 			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
-					PREF_KEY_SORT_DIRECTION,
-					ORDER_ASC ) );
-			it.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_SIZE ) );
-			it.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_DATE ) );
-			it.putExtra( PREF_KEY_SHOW_PATH, Util.getBooleanOption( this,
-					PREF_KEY_SHOW_PATH ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION,
+					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SHOW_SIZE,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_SIZE ) );
+			it.putExtra( PREF_KEY_SHOW_DATE,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_DATE ) );
+			it.putExtra( PREF_KEY_SHOW_PATH,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_PATH ) );
 
 			startActivityForResult( it, 1 );
 
