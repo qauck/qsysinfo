@@ -17,19 +17,32 @@
 
 package org.uguess.android.sysinfo;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.Date;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.uguess.android.sysinfo.WidgetProvider.EndTaskService;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
+import android.net.Uri;
+import android.os.Environment;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -37,7 +50,7 @@ import android.widget.Toast;
 /**
  * Util
  */
-final class Util
+final class Util implements Constants
 {
 
 	private static Field fdTargetSdkVersion = null;
@@ -133,6 +146,16 @@ final class Util
 	static void shortToast( Context context, String msg )
 	{
 		Toast.makeText( context, msg, Toast.LENGTH_SHORT ).show( );
+	}
+
+	static void longToast( Context context, int resId )
+	{
+		Toast.makeText( context, resId, Toast.LENGTH_LONG ).show( );
+	}
+
+	static void longToast( Context context, String msg )
+	{
+		Toast.makeText( context, msg, Toast.LENGTH_LONG ).show( );
 	}
 
 	static boolean updateIntOption( Intent data, Activity ac, String key,
@@ -261,6 +284,211 @@ final class Util
 		{
 			( (NotificationManager) ctx.getSystemService( Context.NOTIFICATION_SERVICE ) ).cancel( Integer.MAX_VALUE - 1 );
 		}
+	}
+
+	private static void sendContent( Activity context, String email,
+			String subject, String content, boolean compressed )
+	{
+		Intent it = new Intent( Intent.ACTION_SEND );
+
+		it.putExtra( Intent.EXTRA_SUBJECT, subject );
+
+		if ( email != null )
+		{
+			it.putExtra( Intent.EXTRA_EMAIL, new String[]{
+				email
+			} );
+		}
+
+		if ( compressed )
+		{
+			it.putExtra( Intent.EXTRA_STREAM,
+					Uri.fromFile( new File( content ) ) );
+			it.putExtra( Intent.EXTRA_TEXT, subject );
+			it.setType( "application/zip" ); //$NON-NLS-1$
+		}
+		else
+		{
+			it.putExtra( Intent.EXTRA_TEXT, content );
+			it.setType( "text/plain" ); //$NON-NLS-1$
+		}
+
+		it = Intent.createChooser( it, null );
+
+		context.startActivity( it );
+	}
+
+	static void handleMsgSendContentReady( String content, String prefix,
+			Activity ctx, boolean compressed )
+	{
+		if ( content == null )
+		{
+			Util.shortToast( ctx, R.string.no_content_sent );
+		}
+		else
+		{
+			SharedPreferences sp = ctx.getSharedPreferences( SysInfoManager.class.getSimpleName( ),
+					Context.MODE_PRIVATE );
+
+			String email = null;
+
+			if ( sp != null )
+			{
+				email = sp.getString( SysInfoManager.PREF_KEY_DEFAULT_EMAIL,
+						null );
+			}
+
+			sendContent( ctx,
+					email,
+					prefix + new Date( ).toLocaleString( ),
+					content,
+					compressed );
+		}
+	}
+
+	static void checkForceCompression( final Handler handler,
+			final Activity context, final String content, final int format,
+			final String title )
+	{
+		Log.d( SysInfoManager.class.getName( ), "VM Max size: " //$NON-NLS-1$
+				+ Runtime.getRuntime( ).maxMemory( ) );
+
+		Log.d( SysInfoManager.class.getName( ), "Sending content size: " //$NON-NLS-1$
+				+ content.length( ) );
+
+		if ( content != null && content.length( ) > 250 * 1024 )
+		{
+			OnClickListener listener = new OnClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which )
+				{
+					String sendContent = createCompressedContent( null,
+							context,
+							content,
+							format,
+							title );
+
+					handler.sendMessage( handler.obtainMessage( MSG_CONTENT_READY,
+							format,
+							1,
+							sendContent ) );
+				}
+			};
+
+			new AlertDialog.Builder( context ).setTitle( R.string.warning )
+					.setMessage( R.string.size_warning )
+					.setPositiveButton( android.R.string.ok, listener )
+					.setNegativeButton( android.R.string.cancel, null )
+					.create( )
+					.show( );
+		}
+		else
+		{
+			handler.sendMessage( handler.obtainMessage( MSG_CONTENT_READY,
+					format,
+					0,
+					content ) );
+		}
+	}
+
+	static String createCompressedContent( Handler handler, Activity context,
+			String content, int format, String filePrefix )
+	{
+		String state = Environment.getExternalStorageState( );
+
+		if ( Environment.MEDIA_MOUNTED.equals( state ) )
+		{
+			File path = Environment.getExternalStorageDirectory( );
+
+			File tf = new File( path, "logs" ); //$NON-NLS-1$
+
+			if ( !tf.exists( ) )
+			{
+				if ( !tf.mkdirs( ) )
+				{
+					if ( handler == null )
+					{
+						Util.shortToast( context,
+								context.getString( R.string.error_create_folder,
+										tf.getAbsolutePath( ) ) );
+					}
+					else
+					{
+						handler.sendMessage( handler.obtainMessage( MSG_TOAST,
+								context.getString( R.string.error_create_folder,
+										tf.getAbsolutePath( ) ) ) );
+					}
+
+					return null;
+				}
+			}
+
+			File zf = new File( tf, filePrefix
+					+ Math.abs( System.currentTimeMillis( ) )
+					+ ".zip" ); //$NON-NLS-1$
+
+			ZipOutputStream zos = null;
+			try
+			{
+				zos = new ZipOutputStream( new BufferedOutputStream( new FileOutputStream( zf ) ) );
+
+				String ext = ".txt"; //$NON-NLS-1$
+
+				switch ( format )
+				{
+					case HTML :
+						ext = ".html"; //$NON-NLS-1$
+						break;
+					case CSV :
+						ext = ".csv"; //$NON-NLS-1$
+						break;
+				}
+
+				zos.putNextEntry( new ZipEntry( filePrefix + ext ) );
+
+				zos.write( content.getBytes( ) );
+
+				zos.closeEntry( );
+
+				return zf.getAbsolutePath( );
+			}
+			catch ( IOException e )
+			{
+				Log.e( SysInfoManager.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+			finally
+			{
+				if ( zos != null )
+				{
+					try
+					{
+						zos.close( );
+					}
+					catch ( IOException e )
+					{
+						Log.e( SysInfoManager.class.getName( ),
+								e.getLocalizedMessage( ),
+								e );
+					}
+				}
+			}
+		}
+		else
+		{
+			if ( handler == null )
+			{
+				Util.shortToast( context, R.string.error_sdcard );
+			}
+			else
+			{
+				handler.sendMessage( handler.obtainMessage( MSG_TOAST,
+						context.getString( R.string.error_sdcard ) ) );
+			}
+		}
+
+		return null;
 	}
 
 }

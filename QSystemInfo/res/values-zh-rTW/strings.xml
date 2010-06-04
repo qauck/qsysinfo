@@ -244,6 +244,8 @@
     <string name="backup_state">備份狀態</string>
     <string name="show_backup_state">顯示備份狀態</string>
     <string name="show_backup_state_sum">查詢每個應用程式的備份狀態並以不同顏色顯示</string>
+    <string name="no_content_sent">沒有可發送的內容.</string>
+    <string name="no_cat_selected">沒有選中的分類.</string>
     <string name="search_market">搜尋市場</string>
 	<string name="exported_skip">%s 個應用程式已被匯出, 跳過 %s 個受保護程式.</string>
 	<string name="exported_to_skip">%s 個應用程式被匯出到 \'%s\', 跳過 %s 個受保護程式.</string>
@@ -273,5 +275,8 @@
     <string name="notifications">通知</string>
     <string name="default_tab">默認標籤頁</string>
     <string name="system_storage">系統存儲</string>
+    <string name="share">分享</string>
+    <string name="market_link">Market鏈接</string>
+    <string name="include">包含</string>
 
 </resources>

@@ -30,11 +30,9 @@ import org.uguess.android.sysinfo.SysInfoManager.FormatItem;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -86,7 +84,10 @@ public final class LogViewer extends ListActivity implements Constants
 	static final String DMESG_MODE = "dmesgMode"; //$NON-NLS-1$
 
 	boolean dmesgMode;
+
 	ProgressDialog progress;
+
+	volatile boolean aborted;
 
 	Handler handler = new Handler( ) {
 
@@ -130,38 +131,17 @@ public final class LogViewer extends ListActivity implements Constants
 
 					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
-					String content = (String) msg.obj;
-
-					if ( content == null )
-					{
-						Util.shortToast( LogViewer.this, R.string.no_log_info );
-					}
-					else
-					{
-						SharedPreferences sp = getSharedPreferences( SysInfoManager.class.getSimpleName( ),
-								Context.MODE_PRIVATE );
-
-						String email = null;
-
-						if ( sp != null )
-						{
-							email = sp.getString( SysInfoManager.PREF_KEY_DEFAULT_EMAIL,
-									null );
-						}
-
-						SysInfoManager.sendContent( LogViewer.this,
-								email,
-								"Android Device Log - " + new Date( ).toLocaleString( ), //$NON-NLS-1$
-								content,
-								msg.arg2 == 1 );
-					}
+					Util.handleMsgSendContentReady( (String) msg.obj,
+							"Android Device Log - ", //$NON-NLS-1$
+							LogViewer.this,
+							msg.arg2 == 1 );
 
 					break;
 				case MSG_CHECK_FORCE_COMPRESSION :
 
 					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
-					SysInfoManager.checkForceCompression( this,
+					Util.checkForceCompression( this,
 							LogViewer.this,
 							(String) msg.obj,
 							msg.arg1,
@@ -305,6 +285,25 @@ public final class LogViewer extends ListActivity implements Constants
 	}
 
 	@Override
+	protected void onResume( )
+	{
+		aborted = false;
+
+		super.onResume( );
+	}
+
+	@Override
+	protected void onPause( )
+	{
+		aborted = true;
+
+		handler.removeMessages( MSG_CHECK_FORCE_COMPRESSION );
+		handler.removeMessages( MSG_CONTENT_READY );
+
+		super.onPause( );
+	}
+
+	@Override
 	public void onCreateContextMenu( ContextMenu menu, View v,
 			ContextMenuInfo menuInfo )
 	{
@@ -334,7 +333,20 @@ public final class LogViewer extends ListActivity implements Constants
 	@Override
 	public boolean onCreateOptionsMenu( Menu menu )
 	{
-		getMenuInflater( ).inflate( R.menu.log_options, menu );
+		MenuItem mi = menu.add( Menu.NONE,
+				MI_SHARE,
+				Menu.NONE,
+				R.string.send_log );
+		mi.setIcon( android.R.drawable.ic_menu_share );
+
+		mi = menu.add( Menu.NONE, MI_REFRESH, Menu.NONE, R.string.refresh );
+		mi.setIcon( R.drawable.refresh );
+
+		mi = menu.add( Menu.NONE,
+				R.id.mi_preference,
+				Menu.NONE,
+				R.string.preference );
+		mi.setIcon( android.R.drawable.ic_menu_preferences );
 
 		return true;
 	}
@@ -363,13 +375,13 @@ public final class LogViewer extends ListActivity implements Constants
 
 			return true;
 		}
-		else if ( item.getItemId( ) == R.id.mi_refresh )
+		else if ( item.getItemId( ) == MI_REFRESH )
 		{
 			refreshLogs( );
 
 			return true;
 		}
-		else if ( item.getItemId( ) == R.id.mi_send_log )
+		else if ( item.getItemId( ) == MI_SHARE )
 		{
 			final FormatArrayAdapter adapter = new FormatArrayAdapter( this,
 					R.layout.send_item,
@@ -432,11 +444,16 @@ public final class LogViewer extends ListActivity implements Constants
 
 				if ( content != null && compressed )
 				{
-					content = SysInfoManager.createCompressedContent( handler,
+					content = Util.createCompressedContent( handler,
 							LogViewer.this,
 							content,
 							format,
 							"android_log" ); //$NON-NLS-1$
+				}
+
+				if ( aborted )
+				{
+					return;
 				}
 
 				if ( content != null && !compressed )

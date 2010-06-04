@@ -17,11 +17,9 @@
 
 package org.uguess.android.sysinfo;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -32,8 +30,6 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -121,10 +117,6 @@ public final class SysInfoManager extends PreferenceActivity implements
 	static final String nextColumn4 = "</small></td><td colspan=4><small>"; //$NON-NLS-1$
 	static final String emptyRow = "<tr><td>&nbsp;</td></tr>\n"; //$NON-NLS-1$
 
-	static final int PLAINTEXT = 0;
-	static final int HTML = 1;
-	static final int CSV = 2;
-
 	static final String PREF_KEY_SHOW_INFO_ICON = "show_info_icon"; //$NON-NLS-1$
 	static final String PREF_KEY_SHOW_TASK_ICON = "show_task_icon"; //$NON-NLS-1$
 	static final String PREF_KEY_AUTO_START_ICON = "auto_start_icon"; //$NON-NLS-1$
@@ -139,6 +131,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 	private static final int LOGCAT_LOG = 5;
 
 	ProgressDialog progress;
+
+	volatile boolean aborted;
 
 	private BroadcastReceiver mBatteryInfoReceiver = new BroadcastReceiver( ) {
 
@@ -195,30 +189,17 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
-					String content = (String) msg.obj;
-
-					if ( content == null )
-					{
-						Util.shortToast( SysInfoManager.this,
-								R.string.no_report );
-					}
-					else
-					{
-						sendContent( SysInfoManager.this,
-								Util.getStringOption( SysInfoManager.this,
-										PREF_KEY_DEFAULT_EMAIL,
-										null ),
-								"Android System Report - " + new Date( ).toLocaleString( ), //$NON-NLS-1$
-								content,
-								msg.arg2 == 1 );
-					}
+					Util.handleMsgSendContentReady( (String) msg.obj,
+							"Android System Report - ", //$NON-NLS-1$
+							SysInfoManager.this,
+							msg.arg2 == 1 );
 
 					break;
 				case MSG_CHECK_FORCE_COMPRESSION :
 
 					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
-					checkForceCompression( this,
+					Util.checkForceCompression( this,
 							SysInfoManager.this,
 							(String) msg.obj,
 							msg.arg1,
@@ -271,6 +252,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 	@Override
 	protected void onResume( )
 	{
+		aborted = false;
+
 		super.onResume( );
 
 		registerReceiver( mBatteryInfoReceiver,
@@ -282,6 +265,11 @@ public final class SysInfoManager extends PreferenceActivity implements
 	@Override
 	protected void onPause( )
 	{
+		aborted = true;
+
+		handler.removeMessages( MSG_CHECK_FORCE_COMPRESSION );
+		handler.removeMessages( MSG_CONTENT_READY );
+
 		unregisterReceiver( mBatteryInfoReceiver );
 
 		super.onPause( );
@@ -1155,11 +1143,16 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 				if ( content != null && compressed )
 				{
-					content = createCompressedContent( handler,
+					content = Util.createCompressedContent( handler,
 							SysInfoManager.this,
 							content,
 							format,
 							"android_report" ); //$NON-NLS-1$
+				}
+
+				if ( aborted )
+				{
+					return;
 				}
 
 				if ( content != null && !compressed )
@@ -2189,183 +2182,6 @@ public final class SysInfoManager extends PreferenceActivity implements
 		{
 			Log.e( LogViewer.class.getName( ), e.getLocalizedMessage( ), e );
 		}
-	}
-
-	static String createCompressedContent( Handler handler, Activity context,
-			String content, int format, String filePrefix )
-	{
-		String state = Environment.getExternalStorageState( );
-
-		if ( Environment.MEDIA_MOUNTED.equals( state ) )
-		{
-			File path = Environment.getExternalStorageDirectory( );
-
-			File tf = new File( path, "logs" ); //$NON-NLS-1$
-
-			if ( !tf.exists( ) )
-			{
-				if ( !tf.mkdirs( ) )
-				{
-					if ( handler == null )
-					{
-						Util.shortToast( context,
-								context.getString( R.string.error_create_folder,
-										tf.getAbsolutePath( ) ) );
-					}
-					else
-					{
-						handler.sendMessage( handler.obtainMessage( MSG_TOAST,
-								context.getString( R.string.error_create_folder,
-										tf.getAbsolutePath( ) ) ) );
-					}
-
-					return null;
-				}
-			}
-
-			File zf = new File( tf, filePrefix
-					+ Math.abs( System.currentTimeMillis( ) )
-					+ ".zip" ); //$NON-NLS-1$
-
-			ZipOutputStream zos = null;
-			try
-			{
-				zos = new ZipOutputStream( new BufferedOutputStream( new FileOutputStream( zf ) ) );
-
-				String ext = ".txt"; //$NON-NLS-1$
-
-				switch ( format )
-				{
-					case HTML :
-						ext = ".html"; //$NON-NLS-1$
-						break;
-					case CSV :
-						ext = ".csv"; //$NON-NLS-1$
-						break;
-				}
-
-				zos.putNextEntry( new ZipEntry( filePrefix + ext ) );
-
-				zos.write( content.getBytes( ) );
-
-				zos.closeEntry( );
-
-				return zf.getAbsolutePath( );
-			}
-			catch ( IOException e )
-			{
-				Log.e( SysInfoManager.class.getName( ),
-						e.getLocalizedMessage( ),
-						e );
-			}
-			finally
-			{
-				if ( zos != null )
-				{
-					try
-					{
-						zos.close( );
-					}
-					catch ( IOException e )
-					{
-						Log.e( SysInfoManager.class.getName( ),
-								e.getLocalizedMessage( ),
-								e );
-					}
-				}
-			}
-		}
-		else
-		{
-			if ( handler == null )
-			{
-				Util.shortToast( context, R.string.error_sdcard );
-			}
-			else
-			{
-				handler.sendMessage( handler.obtainMessage( MSG_TOAST,
-						context.getString( R.string.error_sdcard ) ) );
-			}
-		}
-
-		return null;
-	}
-
-	static void checkForceCompression( final Handler handler,
-			final Activity context, final String content, final int format,
-			final String title )
-	{
-		Log.d( SysInfoManager.class.getName( ), "VM Max size: " //$NON-NLS-1$
-				+ Runtime.getRuntime( ).maxMemory( ) );
-
-		Log.d( SysInfoManager.class.getName( ), "Sending content size: " //$NON-NLS-1$
-				+ content.length( ) );
-
-		if ( content != null && content.length( ) > 250 * 1024 )
-		{
-			OnClickListener listener = new OnClickListener( ) {
-
-				public void onClick( DialogInterface dialog, int which )
-				{
-					String sendContent = createCompressedContent( null,
-							context,
-							content,
-							format,
-							title );
-
-					handler.sendMessage( handler.obtainMessage( MSG_CONTENT_READY,
-							format,
-							1,
-							sendContent ) );
-				}
-			};
-
-			new AlertDialog.Builder( context ).setTitle( R.string.warning )
-					.setMessage( R.string.size_warning )
-					.setPositiveButton( android.R.string.ok, listener )
-					.setNegativeButton( android.R.string.cancel, null )
-					.create( )
-					.show( );
-		}
-		else
-		{
-			handler.sendMessage( handler.obtainMessage( MSG_CONTENT_READY,
-					format,
-					0,
-					content ) );
-		}
-	}
-
-	static void sendContent( Activity context, String email, String subject,
-			String content, boolean compressed )
-	{
-		Intent it = new Intent( Intent.ACTION_SEND );
-
-		it.putExtra( Intent.EXTRA_SUBJECT, subject );
-
-		if ( email != null )
-		{
-			it.putExtra( Intent.EXTRA_EMAIL, new String[]{
-				email
-			} );
-		}
-
-		if ( compressed )
-		{
-			it.putExtra( Intent.EXTRA_STREAM,
-					Uri.fromFile( new File( content ) ) );
-			it.putExtra( Intent.EXTRA_TEXT, subject );
-			it.setType( "application/zip" ); //$NON-NLS-1$
-		}
-		else
-		{
-			it.putExtra( Intent.EXTRA_TEXT, content );
-			it.setType( "text/plain" ); //$NON-NLS-1$
-		}
-
-		it = Intent.createChooser( it, null );
-
-		context.startActivity( it );
 	}
 
 	static String escapeCsv( String str )

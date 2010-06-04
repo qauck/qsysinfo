@@ -46,6 +46,7 @@ import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.IPackageStatsObserver;
@@ -151,6 +152,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 	ProgressDialog progress;
 
+	volatile boolean aborted;
+
 	String versionPrefix;
 
 	AppCache appCache;
@@ -223,7 +226,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 					break;
 				case MSG_COPING_FINISHED :
 
-					final List<ApplicationInfo> apps = (List<ApplicationInfo>) msg.obj;
+					final List<AppInfoHolder> apps = (List<AppInfoHolder>) msg.obj;
 
 					if ( progress != null )
 					{
@@ -370,6 +373,27 @@ public final class ApplicationManager extends ListActivity implements Constants
 								appCache,
 								handler ) ).start( );
 					}
+					break;
+				case MSG_CONTENT_READY :
+
+					sendEmptyMessage( MSG_DISMISS_PROGRESS );
+
+					Util.handleMsgSendContentReady( (String) msg.obj,
+							"Android Applications - ", //$NON-NLS-1$
+							ApplicationManager.this,
+							msg.arg2 == 1 );
+
+					break;
+				case MSG_CHECK_FORCE_COMPRESSION :
+
+					sendEmptyMessage( MSG_DISMISS_PROGRESS );
+
+					Util.checkForceCompression( this,
+							ApplicationManager.this,
+							(String) msg.obj,
+							msg.arg1,
+							"android_applications" ); //$NON-NLS-1$
+
 					break;
 			}
 		}
@@ -639,6 +663,25 @@ public final class ApplicationManager extends ListActivity implements Constants
 		super.onStop( );
 	}
 
+	@Override
+	protected void onResume( )
+	{
+		aborted = false;
+
+		super.onResume( );
+	}
+
+	@Override
+	protected void onPause( )
+	{
+		aborted = true;
+
+		handler.removeMessages( MSG_CHECK_FORCE_COMPRESSION );
+		handler.removeMessages( MSG_CONTENT_READY );
+
+		super.onPause( );
+	}
+
 	private void loadApps( )
 	{
 		if ( progress == null )
@@ -755,11 +798,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 		return Environment.MEDIA_MOUNTED.equals( state );
 	}
 
-	private static List<ApplicationInfo> getSelected( ListView lstApps )
+	private static List<AppInfoHolder> getSelected( ListView lstApps )
 	{
 		int count = lstApps.getCount( );
 
-		ArrayList<ApplicationInfo> apps = new ArrayList<ApplicationInfo>( );
+		ArrayList<AppInfoHolder> apps = new ArrayList<AppInfoHolder>( );
 
 		for ( int i = 0; i < count; i++ )
 		{
@@ -767,7 +810,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 			if ( holder.checked )
 			{
-				apps.add( holder.appInfo );
+				apps.add( holder );
 			}
 		}
 
@@ -793,7 +836,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		return s;
 	}
 
-	void export( final List<ApplicationInfo> apps )
+	void export( final List<AppInfoHolder> apps )
 	{
 		if ( apps == null || apps.isEmpty( ) )
 		{
@@ -876,7 +919,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 				for ( int i = 0, size = apps.size( ); i < size; i++ )
 				{
-					ApplicationInfo app = apps.get( i );
+					ApplicationInfo app = apps.get( i ).appInfo;
 
 					String src = app.sourceDir;
 
@@ -1013,6 +1056,9 @@ public final class ApplicationManager extends ListActivity implements Constants
 				R.string.uninstall );
 		mi.setIcon( android.R.drawable.ic_menu_delete );
 
+		mi = menu.add( Menu.NONE, MI_SHARE, Menu.NONE, R.string.share );
+		mi.setIcon( android.R.drawable.ic_menu_share );
+
 		mi = menu.add( Menu.NONE, MI_REVERT, Menu.NONE, R.string.restore );
 		mi.setIcon( android.R.drawable.ic_menu_revert );
 
@@ -1064,6 +1110,12 @@ public final class ApplicationManager extends ListActivity implements Constants
 							DEFAULT_EXPORT_FOLDER ), USER_APP ).getAbsolutePath( ) );
 
 			startActivityForResult( it, REQUEST_RESTORE );
+
+			return true;
+		}
+		else if ( item.getItemId( ) == MI_SHARE )
+		{
+			doShare( );
 
 			return true;
 		}
@@ -1229,7 +1281,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 	private void doUninstall( )
 	{
-		final List<ApplicationInfo> sels = getSelected( getListView( ) );
+		final List<AppInfoHolder> sels = getSelected( getListView( ) );
 
 		if ( sels == null || sels.size( ) == 0 )
 		{
@@ -1245,7 +1297,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 					for ( int i = 0, size = sels.size( ); i < size; i++ )
 					{
-						ApplicationInfo app = sels.get( i );
+						ApplicationInfo app = sels.get( i ).appInfo;
 
 						Intent it = new Intent( Intent.ACTION_DELETE,
 								Uri.parse( "package:" //$NON-NLS-1$
@@ -1285,9 +1337,140 @@ public final class ApplicationManager extends ListActivity implements Constants
 		}
 	}
 
+	private void doShare( )
+	{
+		final List<AppInfoHolder> sels = getSelected( getListView( ) );
+
+		if ( sels == null || sels.size( ) == 0 )
+		{
+			Util.shortToast( this, R.string.no_app_selected );
+		}
+		else
+		{
+			final boolean[] items = new boolean[]{
+					true, true, true, true
+			};
+
+			OnMultiChoiceClickListener selListener = new OnMultiChoiceClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which,
+						boolean isChecked )
+				{
+					items[which] = isChecked;
+				}
+			};
+
+			OnClickListener sendListener = new OnClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which )
+				{
+					sendContent( items, sels );
+				}
+			};
+
+			new AlertDialog.Builder( this ).setTitle( R.string.include )
+					.setMultiChoiceItems( new CharSequence[]{
+							getString( R.string.version ),
+							getString( R.string.target_sdk ),
+							getString( R.string.pkg_name ),
+							getString( R.string.market_link ),
+					},
+							items,
+							selListener )
+					.setPositiveButton( android.R.string.ok, sendListener )
+					.setNegativeButton( android.R.string.cancel, null )
+					.create( )
+					.show( );
+		}
+	}
+
+	void sendContent( final boolean[] items, final List<AppInfoHolder> apps )
+	{
+		if ( progress == null )
+		{
+			progress = new ProgressDialog( this );
+		}
+		progress.setMessage( getResources( ).getText( R.string.loading ) );
+		progress.setIndeterminate( true );
+		progress.show( );
+
+		new Thread( new Runnable( ) {
+
+			public void run( )
+			{
+				String content = collectTextContent( items, apps );
+
+				if ( aborted )
+				{
+					return;
+				}
+
+				if ( content != null )
+				{
+					handler.sendMessage( handler.obtainMessage( MSG_CHECK_FORCE_COMPRESSION,
+							SysInfoManager.PLAINTEXT,
+							0,
+							content ) );
+				}
+				else
+				{
+					handler.sendMessage( handler.obtainMessage( MSG_CONTENT_READY,
+							SysInfoManager.PLAINTEXT,
+							0,
+							content ) );
+				}
+			}
+		} ).start( );
+	}
+
+	String collectTextContent( boolean[] items, List<AppInfoHolder> apps )
+	{
+		StringBuilder sb = new StringBuilder( );
+
+		for ( int i = 0, size = apps.size( ); i < size; i++ )
+		{
+			AppInfoHolder ai = apps.get( i );
+
+			if ( i > 0 )
+			{
+				sb.append( '\n' );
+			}
+
+			sb.append( ai.label == null ? ai.appInfo.packageName : ai.label );
+
+			if ( items[0] )
+			{
+				sb.append( ", " + ai.version ); //$NON-NLS-1$
+			}
+
+			if ( items[1] )
+			{
+				sb.append( ", SDK " + Util.getTargetSdkVersion( this, ai.appInfo ) ); //$NON-NLS-1$
+			}
+
+			if ( items[2] )
+			{
+				sb.append( ", " + ai.appInfo.packageName ); //$NON-NLS-1$
+			}
+
+			if ( items[3] )
+			{
+				sb.append( ", http://market.android.com/search?q=pname:" //$NON-NLS-1$
+						+ ai.appInfo.packageName );
+			}
+		}
+
+		if ( sb.length( ) > 0 )
+		{
+			return sb.toString( );
+		}
+
+		return null;
+	}
+
 	void doExport( )
 	{
-		final List<ApplicationInfo> sels = getSelected( getListView( ) );
+		final List<AppInfoHolder> sels = getSelected( getListView( ) );
 
 		if ( sels == null || sels.size( ) == 0 )
 		{
@@ -1625,13 +1808,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 	{
 
 		private Activity ac;
-		private List<ApplicationInfo> apps;
+		private List<AppInfoHolder> apps;
 		private AppCache appCache;
 		private Handler handler;
 
 		volatile boolean aborted;
 
-		BackupStateUpdaterThread( Activity ac, List<ApplicationInfo> apps,
+		BackupStateUpdaterThread( Activity ac, List<AppInfoHolder> apps,
 				AppCache appCache, Handler handler )
 		{
 			super( "BackupStateUpdater" ); //$NON-NLS-1$
@@ -1646,14 +1829,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		{
 			if ( apps == null )
 			{
-				apps = new ArrayList<ApplicationInfo>( );
-
-				ArrayList<AppInfoHolder> localList = appCache.generateLocalList( );
-
-				for ( int i = 0, size = localList.size( ); i < size; i++ )
-				{
-					apps.add( localList.get( i ).appInfo );
-				}
+				apps = appCache.generateLocalList( );
 			}
 
 			if ( apps == null || apps.size( ) == 0 )
@@ -1700,7 +1876,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 					return;
 				}
 
-				ai = apps.get( i );
+				ai = apps.get( i ).appInfo;
 
 				holder = appCache.appLookup.get( ai.packageName );
 

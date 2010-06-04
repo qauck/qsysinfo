@@ -54,6 +54,10 @@ interface Constants
 
 	// option menu
 	int MI_REVERT = 101;
+	int MI_SHARE = 102;
+	int MI_REFRESH = 103;
+	int MI_CLEAR_CACHE = 104;
+	int MI_SYNC_APP = 105;
 
 	// message
 	int MSG_INIT_OK = 1;
@@ -69,4 +73,10 @@ interface Constants
 	int NOTIFY_EXPORT_FINISHED = 2;
 	int NOTIFY_INFO_UPDATE = 3;
 	int NOTIFY_TASK_UPDATE = 4;
+
+	// format
+	int PLAINTEXT = 0;
+	int HTML = 1;
+	int CSV = 2;
+
 }
