@@ -480,6 +480,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 						"com.android.settings.InstalledAppDetails" ); //$NON-NLS-1$
 				it.putExtra( "com.android.settings.ApplicationPkgName", //$NON-NLS-1$
 						holder.appInfo.packageName );
+				// this is for Froyo
+				it.putExtra( "pkg", holder.appInfo.packageName ); //$NON-NLS-1$
 
 				List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
 						0 );
