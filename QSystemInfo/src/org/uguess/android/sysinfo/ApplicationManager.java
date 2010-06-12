@@ -126,12 +126,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 	private static final String PREF_KEY_SHOW_BACKUP_STATE = "show_backup_state"; //$NON-NLS-1$
 
 	static final String KEY_RESTORE_PATH = "restore_path"; //$NON-NLS-1$
+	static final String KEY_ARCHIVE_PATH = "archive_path"; //$NON-NLS-1$
 
 	private static final String DEFAULT_EXPORT_FOLDER = "/sdcard/backups/"; //$NON-NLS-1$
 
 	private static final String SYS_APP = "system/"; //$NON-NLS-1$
-
 	private static final String USER_APP = "user/"; //$NON-NLS-1$
+	private static final String ARCHIVED = "archived/"; //$NON-NLS-1$
 
 	static Method mdGetPackageSizeInfo;
 
@@ -1111,6 +1112,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 					new File( Util.getStringOption( this,
 							PREF_KEY_APP_EXPORT_DIR,
 							DEFAULT_EXPORT_FOLDER ), USER_APP ).getAbsolutePath( ) );
+			it.putExtra( KEY_ARCHIVE_PATH,
+					new File( Util.getStringOption( this,
+							PREF_KEY_APP_EXPORT_DIR,
+							DEFAULT_EXPORT_FOLDER ), ARCHIVED ).getAbsolutePath( ) );
 
 			startActivityForResult( it, REQUEST_RESTORE );
 

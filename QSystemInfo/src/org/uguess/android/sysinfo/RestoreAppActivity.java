@@ -572,8 +572,9 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 			ContextMenuInfo menuInfo )
 	{
 		menu.setHeaderTitle( R.string.actions );
-		menu.add( Menu.NONE, MI_DELETE, MI_DELETE, R.string.delete_file );
-		menu.add( Menu.NONE, MI_SEARCH, MI_SEARCH, R.string.search_market );
+		menu.add( Menu.NONE, MI_DELETE, Menu.NONE, R.string.delete_file );
+		menu.add( Menu.NONE, MI_ARCHIVE, Menu.NONE, R.string.archive );
+		menu.add( Menu.NONE, MI_SEARCH, Menu.NONE, R.string.search_market );
 	}
 
 	@Override
@@ -620,6 +621,77 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 						.setNegativeButton( android.R.string.no, null )
 						.create( )
 						.show( );
+
+				return true;
+			}
+			else if ( item.getItemId( ) == MI_ARCHIVE )
+			{
+				final String archivePath = getIntent( ).getStringExtra( ApplicationManager.KEY_ARCHIVE_PATH );
+
+				if ( archivePath == null )
+				{
+					Util.shortToast( RestoreAppActivity.this,
+							R.string.no_archive_path );
+				}
+				else if ( ai.file.getAbsolutePath( ).startsWith( archivePath ) )
+				{
+					Util.shortToast( RestoreAppActivity.this,
+							getString( R.string.dup_archived,
+									ai.file.getAbsolutePath( ) ) );
+				}
+				else
+				{
+					OnClickListener listener = new OnClickListener( ) {
+
+						public void onClick( DialogInterface dialog, int which )
+						{
+							File f = new File( archivePath );
+
+							if ( !f.exists( ) )
+							{
+								if ( !f.mkdirs( ) )
+								{
+									Util.shortToast( RestoreAppActivity.this,
+											getString( R.string.fail_create_archive_folder,
+													f.getAbsolutePath( ) ) );
+
+									return;
+								}
+							}
+
+							boolean moved = ai.file.renameTo( new File( f,
+									ai.file.getName( ) ) );
+
+							if ( moved )
+							{
+								( (ArrayAdapter) lstApps.getAdapter( ) ).remove( ai );
+
+								if ( getSelectedCount( ) == 0 )
+								{
+									hideButtons( );
+								}
+
+								Util.shortToast( RestoreAppActivity.this,
+										getString( R.string.archive_success,
+												ai.file.getAbsolutePath( ) ) );
+							}
+							else
+							{
+								Util.shortToast( RestoreAppActivity.this,
+										getString( R.string.archive_fail,
+												ai.file.getAbsolutePath( ) ) );
+							}
+						}
+					};
+
+					new AlertDialog.Builder( this ).setTitle( R.string.warning )
+							.setMessage( getString( R.string.archive_warning,
+									archivePath ) )
+							.setPositiveButton( android.R.string.yes, listener )
+							.setNegativeButton( android.R.string.no, null )
+							.create( )
+							.show( );
+				}
 
 				return true;
 			}
