@@ -33,6 +33,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.AlertDialog;
@@ -81,6 +82,9 @@ import android.widget.TextView;
 public final class ProcessManager extends ListActivity implements Constants
 {
 
+	private static final int MSG_REFRESH_PKG_LABEL = MSG_PRIVATE + 1;
+	private static final int MSG_REFRESH_PKG_ICON = MSG_PRIVATE + 2;
+
 	private static final String PREF_KEY_IGNORE_ACTION = "ignore_action"; //$NON-NLS-1$
 	private static final String PREF_KEY_IGNORE_LIST = "ignore_list"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_MEM = "show_mem"; //$NON-NLS-1$
@@ -112,47 +116,89 @@ public final class ProcessManager extends ListActivity implements Constants
 
 	LinkedHashSet<String> ignoreList;
 
+	ResourceUpdaterThread resUpdater;
+
 	private byte[] buf = new byte[512];
 
 	Handler handler = new Handler( ) {
 
 		public void handleMessage( android.os.Message msg )
 		{
-			if ( msg.what == MSG_INIT_OK )
+			ArrayList<ProcessItem> localList;
+
+			switch ( msg.what )
 			{
-				ArrayAdapter<ProcessItem> adapter = (ArrayAdapter<ProcessItem>) getListView( ).getAdapter( );
+				case MSG_INIT_OK :
 
-				adapter.setNotifyOnChange( false );
+					if ( resUpdater != null )
+					{
+						resUpdater.aborted = true;
+					}
 
-				adapter.clear( );
+					( resUpdater = new ResourceUpdaterThread( ProcessManager.this,
+							procCache,
+							handler ) ).start( );
 
-				adapter.add( dummyInfo );
+					ArrayAdapter<ProcessItem> adapter = (ArrayAdapter<ProcessItem>) getListView( ).getAdapter( );
 
-				ArrayList<ProcessItem> localList = procCache.procList;
+					adapter.setNotifyOnChange( false );
 
-				for ( int i = 0, size = localList.size( ); i < size; i++ )
-				{
-					adapter.add( localList.get( i ) );
-				}
+					adapter.clear( );
 
-				adapter.notifyDataSetChanged( );
+					adapter.add( dummyInfo );
 
-				int interval = Util.getIntOption( ProcessManager.this,
-						PREF_KEY_REFRESH_INTERVAL,
-						REFRESH_LOW );
+					localList = procCache.procList;
 
-				switch ( interval )
-				{
-					case REFRESH_HIGH :
-						handler.postDelayed( task, 1000 );
-						break;
-					case REFRESH_NORMAL :
-						handler.postDelayed( task, 2000 );
-						break;
-					case REFRESH_LOW :
-						handler.postDelayed( task, 4000 );
-						break;
-				}
+					for ( int i = 0, size = localList.size( ); i < size; i++ )
+					{
+						adapter.add( localList.get( i ) );
+					}
+
+					adapter.notifyDataSetChanged( );
+
+					int interval = Util.getIntOption( ProcessManager.this,
+							PREF_KEY_REFRESH_INTERVAL,
+							REFRESH_LOW );
+
+					switch ( interval )
+					{
+						case REFRESH_HIGH :
+							handler.postDelayed( task, 1000 );
+							break;
+						case REFRESH_NORMAL :
+							handler.postDelayed( task, 2000 );
+							break;
+						case REFRESH_LOW :
+							handler.postDelayed( task, 4000 );
+							break;
+					}
+					break;
+				case MSG_REFRESH_PKG_LABEL :
+
+					adapter = (ArrayAdapter<ProcessItem>) (ArrayAdapter<ProcessItem>) getListView( ).getAdapter( );
+
+					if ( msg.arg1 == 1 )
+					{
+						adapter.setNotifyOnChange( false );
+
+						adapter.clear( );
+
+						adapter.add( dummyInfo );
+
+						localList = procCache.procList;
+
+						for ( int i = 0, size = localList.size( ); i < size; i++ )
+						{
+							adapter.add( localList.get( i ) );
+						}
+					}
+
+					adapter.notifyDataSetChanged( );
+					break;
+				case MSG_REFRESH_PKG_ICON :
+
+					( (ArrayAdapter<ProcessItem>) getListView( ).getAdapter( ) ).notifyDataSetChanged( );
+					break;
 			}
 		};
 	};
@@ -434,10 +480,22 @@ public final class ProcessManager extends ListActivity implements Constants
 		handler.removeCallbacks( task );
 		handler.removeMessages( MSG_INIT_OK );
 
+		if ( resUpdater != null )
+		{
+			resUpdater.aborted = true;
+			resUpdater = null;
+		}
+
+		super.onPause( );
+	}
+
+	@Override
+	protected void onDestroy( )
+	{
 		procCache.resCache.clear( );
 		procCache.procList.clear( );
 
-		super.onPause( );
+		super.onDestroy( );
 	}
 
 	@Override
@@ -697,6 +755,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 					if ( self.equals( rap.procInfo.processName ) )
 					{
+						ProcessManager.this.finish( );
 						am.restartPackage( self );
 					}
 					else
@@ -926,6 +985,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 		if ( !ignoreList.contains( self ) && !self.equals( exception ) )
 		{
+			ProcessManager.this.finish( );
 			am.restartPackage( self );
 		}
 		else
@@ -955,8 +1015,6 @@ public final class ProcessManager extends ListActivity implements Constants
 
 		if ( list != null )
 		{
-			PackageManager pm = getPackageManager( );
-
 			int ignoreAction = Util.getIntOption( this,
 					PREF_KEY_IGNORE_ACTION,
 					IGNORE_ACTION_HIDDEN );
@@ -998,18 +1056,17 @@ public final class ProcessManager extends ListActivity implements Constants
 					pi = new ProcessItem( );
 					pi.procInfo = rap;
 					pi.sys = isSys;
-
-					readProcessInfo( this, pi, pm, true, buf, showMem, showCpu );
-
-					procCache.resCache.put( name, pi );
 				}
 				else
 				{
 					pi.procInfo = rap;
 					pi.sys = isSys;
 					pi.lastcputime = pi.cputime;
+				}
 
-					readProcessInfo( this, pi, pm, false, buf, showMem, showCpu );
+				if ( rap.pid != 0 && ( showMem || showCpu ) )
+				{
+					readProcessStat( this, buf, pi, showMem, showCpu );
 				}
 
 				procCache.procList.add( pi );
@@ -1305,80 +1362,182 @@ public final class ProcessManager extends ListActivity implements Constants
 		return null;
 	}
 
-	private static void readProcessInfo( Context ctx, ProcessItem proc,
-			PackageManager pm, boolean isNew, byte[] buf, boolean showMem,
-			boolean showCpu )
+	/**
+	 * ResourceUpdaterThread
+	 */
+	private static final class ResourceUpdaterThread extends Thread
 	{
-		if ( isNew && pm != null )
+
+		private Activity ac;
+		private ProcessCache procCache;
+		private Handler handler;
+
+		volatile boolean aborted;
+
+		ResourceUpdaterThread( Activity ac, ProcessCache procCache,
+				Handler handler )
 		{
-			try
-			{
-				ApplicationInfo ai = pm.getApplicationInfo( proc.procInfo.processName,
-						0 );
+			super( "ProcessResourceUpdater" ); //$NON-NLS-1$
 
-				if ( ai != null )
-				{
-					CharSequence label = pm.getApplicationLabel( ai );
-
-					if ( label != null )
-					{
-						proc.label = label.toString( );
-					}
-
-					try
-					{
-						Drawable icon = pm.getApplicationIcon( ai );
-
-						if ( icon == null )
-						{
-							icon = pm.getDefaultActivityIcon( );
-						}
-
-						proc.icon = icon;
-					}
-					catch ( OutOfMemoryError oom )
-					{
-						Log.e( ProcessManager.class.getName( ),
-								"OOM when loading icon: " //$NON-NLS-1$
-										+ ai.packageName,
-								oom );
-					}
-				}
-			}
-			catch ( NameNotFoundException e )
-			{
-				int idx = proc.procInfo.processName.indexOf( ':' );
-
-				if ( idx != -1 )
-				{
-					String name = proc.procInfo.processName.substring( 0, idx );
-
-					try
-					{
-						ApplicationInfo ai = pm.getApplicationInfo( name, 0 );
-
-						if ( ai != null )
-						{
-							CharSequence label = pm.getApplicationLabel( ai );
-
-							if ( label != null )
-							{
-								proc.label = label.toString( )
-										+ proc.procInfo.processName.substring( idx );
-							}
-						}
-					}
-					catch ( NameNotFoundException e1 )
-					{
-						// ignore this exception
-					}
-				}
-			}
+			this.ac = ac;
+			this.procCache = procCache;
+			this.handler = handler;
 		}
 
-		if ( proc.procInfo.pid != 0 && ( showMem || showCpu ) )
+		public void run( )
 		{
-			readProcessStat( ctx, buf, proc, showMem, showCpu );
+			PackageManager pm = ac.getPackageManager( );
+
+			boolean changed = false;
+
+			ArrayList<ProcessItem> localList = procCache.generateLocalList( );
+
+			for ( int i = 0, size = localList.size( ); i < size; i++ )
+			{
+				if ( aborted )
+				{
+					return;
+				}
+
+				ProcessItem proc = localList.get( i );
+
+				String pname = proc.procInfo.processName;
+
+				if ( procCache.resCache.containsKey( pname ) )
+				{
+					continue;
+				}
+
+				try
+				{
+					ApplicationInfo ai = pm.getApplicationInfo( pname, 0 );
+
+					if ( ai != null )
+					{
+						CharSequence label = pm.getApplicationLabel( ai );
+
+						if ( label != null )
+						{
+							proc.label = label.toString( );
+
+							changed = true;
+						}
+					}
+				}
+				catch ( NameNotFoundException e )
+				{
+					int idx = pname.indexOf( ':' );
+
+					if ( idx != -1 )
+					{
+						String name = pname.substring( 0, idx );
+
+						try
+						{
+							ApplicationInfo ai = pm.getApplicationInfo( name, 0 );
+
+							if ( ai != null )
+							{
+								CharSequence label = pm.getApplicationLabel( ai );
+
+								if ( label != null )
+								{
+									proc.label = label.toString( )
+											+ pname.substring( idx );
+
+									changed = true;
+								}
+							}
+						}
+						catch ( NameNotFoundException e1 )
+						{
+							// ignore this exception
+						}
+					}
+				}
+
+				procCache.resCache.put( pname, proc );
+			}
+
+			if ( changed )
+			{
+				// reorder by new names
+				if ( Util.getIntOption( ac,
+						PREF_KEY_SORT_ORDER_TYPE,
+						ORDER_TYPE_NAME ) == ORDER_TYPE_NAME )
+				{
+					procCache.reOrder( ORDER_TYPE_NAME, Util.getIntOption( ac,
+							PREF_KEY_SORT_DIRECTION,
+							ORDER_ASC ) );
+
+					handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_LABEL,
+							1,
+							0 ) );
+				}
+				else
+				{
+					handler.sendMessage( handler.obtainMessage( MSG_REFRESH_PKG_LABEL,
+							0,
+							0 ) );
+				}
+			}
+
+			changed = false;
+
+			for ( int i = 0, size = localList.size( ); i < size; i++ )
+			{
+				if ( aborted )
+				{
+					return;
+				}
+
+				ProcessItem proc = localList.get( i );
+
+				String pname = proc.procInfo.processName;
+
+				if ( proc.icon != null )
+				{
+					continue;
+				}
+
+				try
+				{
+					ApplicationInfo ai = pm.getApplicationInfo( pname, 0 );
+
+					if ( ai != null )
+					{
+						try
+						{
+							Drawable icon = pm.getApplicationIcon( ai );
+
+							if ( icon == null )
+							{
+								icon = pm.getDefaultActivityIcon( );
+							}
+
+							proc.icon = icon;
+
+							changed = true;
+						}
+						catch ( OutOfMemoryError oom )
+						{
+							Log.e( ProcessManager.class.getName( ),
+									"OOM when loading icon: " //$NON-NLS-1$
+											+ ai.packageName,
+									oom );
+						}
+					}
+				}
+				catch ( NameNotFoundException e1 )
+				{
+					// ignore this exception
+				}
+			}
+
+			if ( changed )
+			{
+				handler.sendEmptyMessage( MSG_REFRESH_PKG_ICON );
+			}
 		}
 	}
 
@@ -1972,6 +2131,15 @@ public final class ProcessManager extends ListActivity implements Constants
 		{
 			resCache = new HashMap<String, ProcessItem>( );
 			procList = new ArrayList<ProcessItem>( );
+		}
+
+		synchronized ArrayList<ProcessItem> generateLocalList( )
+		{
+			ArrayList<ProcessItem> local = new ArrayList<ProcessItem>( );
+
+			local.addAll( procList );
+
+			return local;
 		}
 
 		synchronized void reOrder( int type, final int direction )

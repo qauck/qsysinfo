@@ -650,16 +650,19 @@ public final class ApplicationManager extends ListActivity implements Constants
 		if ( sizeUpdater != null )
 		{
 			sizeUpdater.aborted = true;
+			sizeUpdater = null;
 		}
 
 		if ( resUpdater != null )
 		{
 			resUpdater.aborted = true;
+			resUpdater = null;
 		}
 
 		if ( backupUpdater != null )
 		{
 			backupUpdater.aborted = true;
+			backupUpdater = null;
 		}
 
 		( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).cancel( NOTIFY_EXPORT_FINISHED );
