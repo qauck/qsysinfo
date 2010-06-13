@@ -283,9 +283,8 @@
     <string name="copied_hint">内容已复制至剪贴板.</string>
     <string name="archive_warning">选中的文件会被移动到目录 \'%s\', 任何已存在的文件会被覆盖, 请确定是否继续?</string>
     <string name="archive_fail">归档文件 \'%s\' 失败.</string>
-    <string name="archive_success">文件 \'%s\' 已成功归档.</string>
     <string name="fail_create_archive_folder">创建归档目录 \'%s\' 失败.</string>
-    <string name="dup_archived">文件 \'%s\' 已经归档.</string>
+    <string name="dup_archived">选中的文件已经归档.</string>
     <string name="no_archive_path">未指定归档路径.</string>
     <string name="archive">归档</string>
 

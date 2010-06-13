@@ -462,6 +462,9 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 				R.string.delete_file );
 		mi.setIcon( android.R.drawable.ic_menu_delete );
 
+		mi = menu.add( Menu.NONE, MI_ARCHIVE, Menu.NONE, R.string.archive );
+		mi.setIcon( R.drawable.archive );
+
 		mi = menu.add( Menu.NONE,
 				R.id.mi_preference,
 				Menu.NONE,
@@ -563,6 +566,92 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 			return true;
 		}
+		else if ( item.getItemId( ) == MI_ARCHIVE )
+		{
+			final List<ApkInfo> apks = getSelected( );
+
+			if ( apks.size( ) == 0 )
+			{
+				Util.shortToast( this, R.string.no_apk_selected );
+			}
+			else
+			{
+				final String archivePath = getIntent( ).getStringExtra( ApplicationManager.KEY_ARCHIVE_PATH );
+
+				if ( archivePath == null )
+				{
+					Util.shortToast( RestoreAppActivity.this,
+							R.string.no_archive_path );
+				}
+				else if ( apks.get( 0 ).file.getAbsolutePath( )
+						.startsWith( archivePath ) )
+				{
+					Util.shortToast( RestoreAppActivity.this,
+							R.string.dup_archived );
+				}
+				else
+				{
+					OnClickListener listener = new OnClickListener( ) {
+
+						public void onClick( DialogInterface dialog, int which )
+						{
+							File f = new File( archivePath );
+
+							if ( !f.exists( ) )
+							{
+								if ( !f.mkdirs( ) )
+								{
+									Util.shortToast( RestoreAppActivity.this,
+											getString( R.string.fail_create_archive_folder,
+													f.getAbsolutePath( ) ) );
+
+									return;
+								}
+							}
+
+							ArrayAdapter adapter = (ArrayAdapter) getListAdapter( );
+							adapter.setNotifyOnChange( false );
+
+							for ( int i = 0, size = apks.size( ); i < size; i++ )
+							{
+								ApkInfo ai = apks.get( i );
+
+								boolean moved = ai.file.renameTo( new File( f,
+										ai.file.getName( ) ) );
+
+								if ( moved )
+								{
+									adapter.remove( ai );
+								}
+								else
+								{
+									Util.shortToast( RestoreAppActivity.this,
+											getString( R.string.archive_fail,
+													ai.file.getAbsolutePath( ) ) );
+								}
+							}
+
+							adapter.notifyDataSetChanged( );
+
+							if ( getSelectedCount( ) == 0 )
+							{
+								hideButtons( );
+							}
+						}
+					};
+
+					new AlertDialog.Builder( this ).setTitle( R.string.warning )
+							.setMessage( getString( R.string.archive_warning,
+									archivePath ) )
+							.setPositiveButton( android.R.string.yes, listener )
+							.setNegativeButton( android.R.string.no, null )
+							.create( )
+							.show( );
+				}
+			}
+
+			return true;
+		}
 
 		return false;
 	}
@@ -636,8 +725,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 				else if ( ai.file.getAbsolutePath( ).startsWith( archivePath ) )
 				{
 					Util.shortToast( RestoreAppActivity.this,
-							getString( R.string.dup_archived,
-									ai.file.getAbsolutePath( ) ) );
+							R.string.dup_archived );
 				}
 				else
 				{
@@ -670,10 +758,6 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 								{
 									hideButtons( );
 								}
-
-								Util.shortToast( RestoreAppActivity.this,
-										getString( R.string.archive_success,
-												ai.file.getAbsolutePath( ) ) );
 							}
 							else
 							{

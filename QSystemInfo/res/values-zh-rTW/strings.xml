@@ -283,9 +283,8 @@
     <string name="copied_hint">內容已複製至剪貼簿.</string>
     <string name="archive_warning">選中的檔案會被移動至資料夾 \'%s\', 任何已存在的檔案會被覆蓋, 請確認是否繼續?</string>
     <string name="archive_fail">歸檔 \'%s\' 失敗.</string>
-    <string name="archive_success">檔案 \'%s\' 已成功歸檔.</string>
     <string name="fail_create_archive_folder">創建歸檔資料夾 \'%s\' 失敗.</string>
-    <string name="dup_archived">檔案 \'%s\' 已經歸檔.</string>
+    <string name="dup_archived">選中的檔案已經歸檔.</string>
     <string name="no_archive_path">未指定歸檔路徑.</string>
     <string name="archive">歸檔</string>
 

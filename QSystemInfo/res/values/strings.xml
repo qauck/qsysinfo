@@ -295,9 +295,8 @@
     <string name="archive_warning">This will move the selected file to the archive folder \'%s\', any
 		existing file in the folder will be overwritten, are you sure to continue?</string>
     <string name="archive_fail">Failed to arvhive the file \'%s\'.</string>
-    <string name="archive_success">File \'%s\' archived successfully.</string>
     <string name="fail_create_archive_folder">Failed to create the archive folder \'%s\'.</string>
-    <string name="dup_archived">The file \'%s\' is already archived.</string>
+    <string name="dup_archived">The selected file is already archived.</string>
     <string name="no_archive_path">No archive path configured.</string>
     <string name="archive">Archive</string>
 
