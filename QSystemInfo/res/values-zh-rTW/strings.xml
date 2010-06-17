@@ -287,5 +287,19 @@
     <string name="dup_archived">選中的檔案已經歸檔.</string>
     <string name="no_archive_path">未指定歸檔路徑.</string>
     <string name="archive">歸檔</string>
+	<string name="wifi_state">Wi-Fi 狀態</string>
+    <string name="seconds">秒</string>
+    <string name="lease_duration">租借時間</string>
+    <string name="netmask">網路掩碼</string>
+    <string name="ip_addr">IP 位址</string>
+    <string name="gateway">網關</string>
+    <string name="dhcp_srv">DHCP 伺服器</string>
+    <string name="sig_strength">信號強度</string>
+    <string name="link_speed">連接速率</string>
+    <string name="mac_addr">MAC 位址</string>
+    <string name="scaling_governor">調整策略</string>
+    <string name="scaling_range">調整範圍</string>
+    <string name="cpu_freq_range">CPU 時脈範圍</string>
+    <string name="cur_freq">當前時脈</string>
 
 </resources>

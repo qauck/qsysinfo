@@ -20,8 +20,7 @@
 	<Preference style="?android:preferenceInformationStyle"
 		android:key="memory" android:title="@string/memory"></Preference>
 
-	<Preference style="?android:preferenceInformationStyle"
-		android:key="processor" android:title="@string/processor"></Preference>
+	<Preference android:key="processor" android:title="@string/processor"></Preference>
 
 	<Preference android:key="net_address" android:title="@string/net_address" />
 

@@ -23,13 +23,17 @@ import org.uguess.android.sysinfo.NetStateManager.IpInfo;
 import org.uguess.android.sysinfo.SysInfoManager.PopActivity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.DhcpInfo;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -166,6 +170,61 @@ public class NetworkInfoActivity extends PopActivity
 				getString( roaming ? R.string.roaming : R.string.not_roaming )
 		} );
 
+		if ( ni != null
+				&& ni.isConnected( )
+				&& ni.getType( ) == ConnectivityManager.TYPE_WIFI )
+		{
+			StringBuilder sb = new StringBuilder( );
+
+			WifiManager wm = (WifiManager) getSystemService( Context.WIFI_SERVICE );
+
+			WifiInfo wi = wm.getConnectionInfo( );
+
+			if ( wi != null )
+			{
+				sb.append( "SSID: " ).append( wi.getSSID( ) ).append( '\n' ); //$NON-NLS-1$
+				sb.append( "BSSID: " ).append( wi.getBSSID( ) ).append( '\n' ); //$NON-NLS-1$
+				sb.append( getString( R.string.mac_addr ) ).append( ": " ) //$NON-NLS-1$
+						.append( wi.getMacAddress( ) )
+						.append( '\n' );
+				sb.append( getString( R.string.link_speed ) ).append( ": " ) //$NON-NLS-1$
+						.append( wi.getLinkSpeed( ) )
+						.append( WifiInfo.LINK_SPEED_UNITS )
+						.append( '\n' );
+				sb.append( getString( R.string.sig_strength ) ).append( ": " ) //$NON-NLS-1$
+						.append( wi.getRssi( ) )
+						.append( '\n' );
+			}
+
+			DhcpInfo di = wm.getDhcpInfo( );
+
+			if ( di != null )
+			{
+				sb.append( getString( R.string.dhcp_srv ) );
+				putAddress( sb, di.serverAddress );
+				sb.append( getString( R.string.gateway ) );
+				putAddress( sb, di.gateway );
+				sb.append( getString( R.string.ip_addr ) );
+				putAddress( sb, di.ipAddress );
+				sb.append( getString( R.string.netmask ) );
+				putAddress( sb, di.netmask );
+				sb.append( "DNS 1" ); //$NON-NLS-1$
+				putAddress( sb, di.dns1 );
+				sb.append( "DNS 2" ); //$NON-NLS-1$
+				putAddress( sb, di.dns2 );
+				sb.append( getString( R.string.lease_duration ) ).append( ": " ) //$NON-NLS-1$
+						.append( di.leaseDuration )
+						.append( ' ' )
+						.append( getString( R.string.seconds ) );
+			}
+
+			data.add( new String[]{
+					getString( R.string.wifi_state ),
+					sb.length( ) == 0 ? getString( R.string.unknown )
+							: sb.toString( )
+			} );
+		}
+
 		String localAddress = SysInfoManager.getNetAddressInfo( );
 
 		data.add( new String[]{
@@ -194,4 +253,16 @@ public class NetworkInfoActivity extends PopActivity
 		adapter.notifyDataSetChanged( );
 	}
 
+	private void putAddress( StringBuilder buf, int addr )
+	{
+		buf.append( ": " ) //$NON-NLS-1$
+				.append( addr & 0xff )
+				.append( '.' )
+				.append( ( addr >>>= 8 ) & 0xff )
+				.append( '.' )
+				.append( ( addr >>>= 8 ) & 0xff )
+				.append( '.' )
+				.append( ( addr >>>= 8 ) & 0xff )
+				.append( '\n' );
+	}
 }

@@ -299,5 +299,19 @@
     <string name="dup_archived">The selected file is already archived.</string>
     <string name="no_archive_path">No archive path configured.</string>
     <string name="archive">Archive</string>
+	<string name="wifi_state">Wi-Fi State</string>
+    <string name="seconds">seconds</string>
+    <string name="lease_duration">Lease Duration</string>
+    <string name="netmask">Netmask</string>
+    <string name="ip_addr">IP Address</string>
+    <string name="gateway">Gateway</string>
+    <string name="dhcp_srv">DHCP Server</string>
+    <string name="sig_strength">Signal Strength</string>
+    <string name="link_speed">Link Speed</string>
+    <string name="mac_addr">MAC Address</string>
+    <string name="scaling_governor">Scaling Governor</string>
+    <string name="scaling_range">Scaling Range</string>
+    <string name="cpu_freq_range">CPU Frequency Range</string>
+    <string name="cur_freq">Current Frequency</string>
 
 </resources>

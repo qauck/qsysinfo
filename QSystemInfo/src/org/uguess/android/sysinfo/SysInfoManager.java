@@ -450,6 +450,28 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 	private String getCpuInfo( )
 	{
+		String[] stat = getCpuState( );
+
+		if ( stat != null && stat.length == 2 )
+		{
+			if ( stat[1] == null )
+			{
+				return stat[0];
+			}
+			else
+			{
+				return stat[0] + "  " + stat[1]; //$NON-NLS-1$
+			}
+		}
+
+		return getResources( ).getString( R.string.info_not_available );
+	}
+
+	/**
+	 * @return [model, mips]
+	 */
+	static String[] getCpuState( )
+	{
 		BufferedReader reader = null;
 
 		try
@@ -536,7 +558,9 @@ public final class SysInfoManager extends PreferenceActivity implements
 				int idx = model.indexOf( ':' );
 				if ( idx != -1 )
 				{
-					return model.substring( idx + 1 ).trim( );
+					return new String[]{
+							model.substring( idx + 1 ).trim( ), null
+					};
 				}
 				else
 				{
@@ -558,7 +582,9 @@ public final class SysInfoManager extends PreferenceActivity implements
 						mips = mips.substring( idx + 1 ).trim( );
 					}
 
-					return processor + "  " + mips + "MHz"; //$NON-NLS-1$ //$NON-NLS-2$
+					return new String[]{
+							processor, mips + "MHz" //$NON-NLS-1$
+					};
 				}
 				else
 				{
@@ -593,8 +619,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 			}
 		}
 
-		return getResources( ).getString( R.string.info_not_available );
-
+		return null;
 	}
 
 	private String getSensorInfo( int state )
@@ -822,6 +847,13 @@ public final class SysInfoManager extends PreferenceActivity implements
 		if ( "net_address".equals( preference.getKey( ) ) ) //$NON-NLS-1$
 		{
 			Intent it = new Intent( this, NetworkInfoActivity.class );
+			startActivityForResult( it, 1 );
+
+			return true;
+		}
+		else if ( "processor".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		{
+			Intent it = new Intent( this, CpuInfoActivity.class );
 			startActivityForResult( it, 1 );
 
 			return true;

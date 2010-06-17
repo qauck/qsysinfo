@@ -35,6 +35,8 @@
 			android:name=".BatteryInfoActivity" android:theme="@android:style/Theme.Dialog"></activity>
 		<activity android:configChanges="keyboardHidden|orientation"
 			android:name=".SensorInfoActivity" android:theme="@android:style/Theme.Dialog"></activity>
+		<activity android:name=".CpuInfoActivity"
+			android:configChanges="keyboardHidden|orientation" android:theme="@android:style/Theme.Dialog"></activity>
 		<activity android:name=".NetworkInfoActivity"
 			android:configChanges="keyboardHidden|orientation" android:theme="@android:style/Theme.Dialog"></activity>
 		<activity android:name=".RestoreAppActivity"
@@ -82,6 +84,7 @@
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"></uses-permission>
 	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"></uses-permission>
+	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
 
 	<supports-screens android:smallScreens="true"
 		android:largeScreens="true" android:normalScreens="true"
