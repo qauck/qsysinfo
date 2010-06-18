@@ -2277,7 +2277,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 		void refreshBackupFolder( )
 		{
-			findPreference( "export_dir" ).setSummary( getIntent( ).getStringExtra( PREF_KEY_APP_EXPORT_DIR ) ); //$NON-NLS-1$
+			findPreference( PREF_KEY_APP_EXPORT_DIR ).setSummary( getIntent( ).getStringExtra( PREF_KEY_APP_EXPORT_DIR ) );
 		}
 
 		void refreshAppType( )
@@ -2295,7 +2295,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 				res = R.string.user_apps;
 			}
 
-			findPreference( "app_filter" ).setSummary( res ); //$NON-NLS-1$
+			findPreference( PREF_KEY_FILTER_APP_TYPE ).setSummary( res );
 		}
 
 		void refreshSortType( )
@@ -2328,7 +2328,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 					label = getString( R.string.backup_state );
 			}
 
-			findPreference( "sort_type" ).setSummary( label ); //$NON-NLS-1$
+			findPreference( PREF_KEY_SORT_ORDER_TYPE ).setSummary( label );
 		}
 
 		void refreshSortDirection( )
@@ -2339,7 +2339,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			String label = type == ORDER_ASC ? getString( R.string.ascending )
 					: getString( R.string.descending );
 
-			findPreference( "sort_direction" ).setSummary( label ); //$NON-NLS-1$
+			findPreference( PREF_KEY_SORT_DIRECTION ).setSummary( label );
 		}
 
 		@Override
@@ -2348,7 +2348,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		{
 			final Intent it = getIntent( );
 
-			if ( "export_dir".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+			if ( PREF_KEY_APP_EXPORT_DIR.equals( preference.getKey( ) ) )
 			{
 				final EditText txt = new EditText( this );
 				txt.setText( it.getStringExtra( PREF_KEY_APP_EXPORT_DIR ) );
@@ -2391,7 +2391,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( "app_filter".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+			else if ( PREF_KEY_FILTER_APP_TYPE.equals( preference.getKey( ) ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
@@ -2441,7 +2441,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( "sort_type".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+			else if ( PREF_KEY_SORT_ORDER_TYPE.equals( preference.getKey( ) ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
@@ -2474,7 +2474,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( "sort_direction".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+			else if ( PREF_KEY_SORT_DIRECTION.equals( preference.getKey( ) ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
