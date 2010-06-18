@@ -124,8 +124,6 @@ public final class ProcessManager extends ListActivity implements Constants
 
 		public void handleMessage( android.os.Message msg )
 		{
-			ArrayList<ProcessItem> localList;
-
 			switch ( msg.what )
 			{
 				case MSG_INIT_OK :
@@ -147,11 +145,14 @@ public final class ProcessManager extends ListActivity implements Constants
 
 					adapter.add( dummyInfo );
 
-					localList = procCache.procList;
-
-					for ( int i = 0, size = localList.size( ); i < size; i++ )
+					synchronized ( procCache )
 					{
-						adapter.add( localList.get( i ) );
+						ArrayList<ProcessItem> localList = procCache.procList;
+
+						for ( int i = 0, size = localList.size( ); i < size; i++ )
+						{
+							adapter.add( localList.get( i ) );
+						}
 					}
 
 					adapter.notifyDataSetChanged( );
@@ -185,11 +186,14 @@ public final class ProcessManager extends ListActivity implements Constants
 
 						adapter.add( dummyInfo );
 
-						localList = procCache.procList;
-
-						for ( int i = 0, size = localList.size( ); i < size; i++ )
+						synchronized ( procCache )
 						{
-							adapter.add( localList.get( i ) );
+							ArrayList<ProcessItem> localList = procCache.procList;
+
+							for ( int i = 0, size = localList.size( ); i < size; i++ )
+							{
+								adapter.add( localList.get( i ) );
+							}
 						}
 					}
 
@@ -487,15 +491,6 @@ public final class ProcessManager extends ListActivity implements Constants
 		}
 
 		super.onPause( );
-	}
-
-	@Override
-	protected void onDestroy( )
-	{
-		procCache.resCache.clear( );
-		procCache.procList.clear( );
-
-		super.onDestroy( );
 	}
 
 	@Override
@@ -1011,72 +1006,76 @@ public final class ProcessManager extends ListActivity implements Constants
 			totalLoad = newload;
 		}
 
-		procCache.procList.clear( );
-
-		if ( list != null )
+		synchronized ( procCache )
 		{
-			int ignoreAction = Util.getIntOption( this,
-					PREF_KEY_IGNORE_ACTION,
-					IGNORE_ACTION_HIDDEN );
-			boolean showMem = Util.getBooleanOption( this, PREF_KEY_SHOW_MEM );
-			boolean showSys = Util.getBooleanOption( this,
-					PREF_KEY_SHOW_SYS_PROC );
+			procCache.procList.clear( );
 
-			String name;
-			boolean isSys;
-
-			for ( int i = 0, size = list.size( ); i < size; i++ )
+			if ( list != null )
 			{
-				RunningAppProcessInfo rap = list.get( i );
+				int ignoreAction = Util.getIntOption( this,
+						PREF_KEY_IGNORE_ACTION,
+						IGNORE_ACTION_HIDDEN );
+				boolean showMem = Util.getBooleanOption( this,
+						PREF_KEY_SHOW_MEM );
+				boolean showSys = Util.getBooleanOption( this,
+						PREF_KEY_SHOW_SYS_PROC );
 
-				name = rap.processName;
+				String name;
+				boolean isSys;
 
-				isSys = name.startsWith( "com.google.process" ) //$NON-NLS-1$
-						|| name.startsWith( "com.android.phone" ) //$NON-NLS-1$
-						|| name.startsWith( "android.process" ) //$NON-NLS-1$
-						|| name.startsWith( "system" ) //$NON-NLS-1$
-						|| name.startsWith( "com.android.inputmethod" ) //$NON-NLS-1$
-						|| name.startsWith( "com.android.alarmclock" ); //$NON-NLS-1$
-
-				if ( isSys && !showSys )
+				for ( int i = 0, size = list.size( ); i < size; i++ )
 				{
-					continue;
+					RunningAppProcessInfo rap = list.get( i );
+
+					name = rap.processName;
+
+					isSys = name.startsWith( "com.google.process" ) //$NON-NLS-1$
+							|| name.startsWith( "com.android.phone" ) //$NON-NLS-1$
+							|| name.startsWith( "android.process" ) //$NON-NLS-1$
+							|| name.startsWith( "system" ) //$NON-NLS-1$
+							|| name.startsWith( "com.android.inputmethod" ) //$NON-NLS-1$
+							|| name.startsWith( "com.android.alarmclock" ); //$NON-NLS-1$
+
+					if ( isSys && !showSys )
+					{
+						continue;
+					}
+
+					if ( ignoreAction == IGNORE_ACTION_HIDDEN
+							&& ignoreList.contains( name ) )
+					{
+						continue;
+					}
+
+					ProcessItem pi = procCache.resCache.get( name );
+
+					if ( pi == null )
+					{
+						pi = new ProcessItem( );
+						pi.procInfo = rap;
+						pi.sys = isSys;
+					}
+					else
+					{
+						pi.procInfo = rap;
+						pi.sys = isSys;
+						pi.lastcputime = pi.cputime;
+					}
+
+					if ( rap.pid != 0 && ( showMem || showCpu ) )
+					{
+						readProcessStat( this, buf, pi, showMem, showCpu );
+					}
+
+					procCache.procList.add( pi );
 				}
 
-				if ( ignoreAction == IGNORE_ACTION_HIDDEN
-						&& ignoreList.contains( name ) )
-				{
-					continue;
-				}
-
-				ProcessItem pi = procCache.resCache.get( name );
-
-				if ( pi == null )
-				{
-					pi = new ProcessItem( );
-					pi.procInfo = rap;
-					pi.sys = isSys;
-				}
-				else
-				{
-					pi.procInfo = rap;
-					pi.sys = isSys;
-					pi.lastcputime = pi.cputime;
-				}
-
-				if ( rap.pid != 0 && ( showMem || showCpu ) )
-				{
-					readProcessStat( this, buf, pi, showMem, showCpu );
-				}
-
-				procCache.procList.add( pi );
+				procCache.reOrder( Util.getIntOption( this,
+						PREF_KEY_SORT_ORDER_TYPE,
+						ORDER_TYPE_NAME ), Util.getIntOption( this,
+						PREF_KEY_SORT_DIRECTION,
+						ORDER_ASC ) );
 			}
-
-			procCache.reOrder( Util.getIntOption( this,
-					PREF_KEY_SORT_ORDER_TYPE,
-					ORDER_TYPE_NAME ), Util.getIntOption( this,
-					PREF_KEY_SORT_DIRECTION,
-					ORDER_ASC ) );
 		}
 	}
 

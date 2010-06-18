@@ -185,11 +185,14 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 					adapter.clear( );
 
-					ArrayList<AppInfoHolder> localList = appCache.appList;
-
-					for ( int i = 0, size = localList.size( ); i < size; i++ )
+					synchronized ( appCache )
 					{
-						adapter.add( localList.get( i ) );
+						ArrayList<AppInfoHolder> localList = appCache.appList;
+
+						for ( int i = 0, size = localList.size( ); i < size; i++ )
+						{
+							adapter.add( localList.get( i ) );
+						}
 					}
 
 					// should always no selection at this stage
@@ -313,11 +316,14 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 						adapter.clear( );
 
-						localList = appCache.appList;
-
-						for ( int i = 0, size = localList.size( ); i < size; i++ )
+						synchronized ( appCache )
 						{
-							adapter.add( localList.get( i ) );
+							ArrayList<AppInfoHolder> localList = appCache.appList;
+
+							for ( int i = 0, size = localList.size( ); i < size; i++ )
+							{
+								adapter.add( localList.get( i ) );
+							}
 						}
 					}
 
