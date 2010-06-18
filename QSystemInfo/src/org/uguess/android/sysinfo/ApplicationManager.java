@@ -481,27 +481,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			{
 				AppInfoHolder holder = (AppInfoHolder) parent.getItemAtPosition( position );
 
-				Intent it = new Intent( Intent.ACTION_VIEW );
-
-				it.setClassName( "com.android.settings", //$NON-NLS-1$
-						"com.android.settings.InstalledAppDetails" ); //$NON-NLS-1$
-				it.putExtra( "com.android.settings.ApplicationPkgName", //$NON-NLS-1$
-						holder.appInfo.packageName );
-				// this is for Froyo
-				it.putExtra( "pkg", holder.appInfo.packageName ); //$NON-NLS-1$
-
-				List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
-						0 );
-
-				if ( acts.size( ) > 0 )
-				{
-					startActivity( it );
-				}
-				else
-				{
-					Log.d( ApplicationManager.class.getName( ),
-							"Failed to resolve activity for InstalledAppDetails" ); //$NON-NLS-1$
-				}
+				doManage( holder.appInfo.packageName );
 			}
 		} );
 
@@ -1151,9 +1131,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 			ContextMenuInfo menuInfo )
 	{
 		menu.setHeaderTitle( R.string.actions );
-		menu.add( Menu.NONE, MI_LAUNCH, MI_LAUNCH, R.string.run );
-		menu.add( Menu.NONE, MI_SEARCH, MI_SEARCH, R.string.search_market );
-		menu.add( Menu.NONE, MI_DETAILS, MI_DETAILS, R.string.details );
+		menu.add( Menu.NONE, MI_MANAGE, Menu.NONE, R.string.manage );
+		menu.add( Menu.NONE, MI_LAUNCH, Menu.NONE, R.string.run );
+		menu.add( Menu.NONE, MI_SEARCH, Menu.NONE, R.string.search_market );
+		menu.add( Menu.NONE, MI_DETAILS, Menu.NONE, R.string.details );
 	}
 
 	@Override
@@ -1167,7 +1148,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 			final String pkgName = ai.appInfo.packageName;
 
-			if ( item.getItemId( ) == MI_LAUNCH )
+			if ( item.getItemId( ) == MI_MANAGE )
+			{
+				doManage( pkgName );
+
+				return true;
+			}
+			else if ( item.getItemId( ) == MI_LAUNCH )
 			{
 				if ( !pkgName.equals( this.getPackageName( ) ) )
 				{
@@ -1294,6 +1281,30 @@ public final class ApplicationManager extends ListActivity implements Constants
 		}
 
 		return false;
+	}
+
+	void doManage( String pkgName )
+	{
+		Intent it = new Intent( Intent.ACTION_VIEW );
+
+		it.setClassName( "com.android.settings", //$NON-NLS-1$
+				"com.android.settings.InstalledAppDetails" ); //$NON-NLS-1$
+		it.putExtra( "com.android.settings.ApplicationPkgName", pkgName ); //$NON-NLS-1$
+		// this is for Froyo
+		it.putExtra( "pkg", pkgName ); //$NON-NLS-1$
+
+		List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
+				0 );
+
+		if ( acts.size( ) > 0 )
+		{
+			startActivity( it );
+		}
+		else
+		{
+			Log.d( ApplicationManager.class.getName( ),
+					"Failed to resolve activity for InstalledAppDetails" ); //$NON-NLS-1$
+		}
 	}
 
 	private void doUninstall( )

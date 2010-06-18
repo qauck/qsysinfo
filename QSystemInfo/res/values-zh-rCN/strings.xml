@@ -301,5 +301,6 @@
     <string name="scaling_range">调整范围</string>
     <string name="cpu_freq_range">CPU 频率范围</string>
     <string name="cur_freq">当前频率</string>
+    <string name="manage">管理</string>
 
 </resources>

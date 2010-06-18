@@ -313,5 +313,6 @@
     <string name="scaling_range">Scaling Range</string>
     <string name="cpu_freq_range">CPU Frequency Range</string>
     <string name="cur_freq">Current Frequency</string>
+    <string name="manage">Manage</string>
 
 </resources>

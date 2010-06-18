@@ -52,6 +52,7 @@ interface Constants
 	int MI_DETAILS = 7;
 	int MI_END_OTHERS = 8;
 	int MI_ARCHIVE = 9;
+	int MI_MANAGE = 10;
 
 	// option menu
 	int MI_REVERT = 101;
