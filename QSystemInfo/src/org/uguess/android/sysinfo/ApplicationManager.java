@@ -602,13 +602,22 @@ public final class ApplicationManager extends ListActivity implements Constants
 				}
 
 				img_type = (ImageView) view.findViewById( R.id.img_app_icon );
-				if ( itm.icon != null )
+				if ( Util.getBooleanOption( ApplicationManager.this,
+						PREF_KEY_SHOW_ICON ) )
 				{
-					img_type.setImageDrawable( itm.icon );
+					img_type.setVisibility( View.VISIBLE );
+					if ( itm.icon != null )
+					{
+						img_type.setImageDrawable( itm.icon );
+					}
+					else
+					{
+						img_type.setImageDrawable( getResources( ).getDrawable( R.drawable.icon ) );
+					}
 				}
 				else
 				{
-					img_type.setImageDrawable( getResources( ).getDrawable( R.drawable.icon ) );
+					img_type.setVisibility( View.GONE );
 				}
 
 				ckb_app = (CheckBox) view.findViewById( R.id.ckb_app );
@@ -1055,6 +1064,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_SIZE );
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_DATE );
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_ICON );
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_BACKUP_STATE );
 		}
 	}
@@ -1105,6 +1115,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 					Util.getBooleanOption( this, PREF_KEY_SHOW_SIZE ) );
 			it.putExtra( PREF_KEY_SHOW_DATE,
 					Util.getBooleanOption( this, PREF_KEY_SHOW_DATE ) );
+			it.putExtra( PREF_KEY_SHOW_ICON,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_ICON ) );
 			it.putExtra( PREF_KEY_SHOW_BACKUP_STATE,
 					Util.getBooleanOption( this, PREF_KEY_SHOW_BACKUP_STATE ) );
 			it.putExtra( PREF_KEY_DEFAULT_TAP_ACTION, Util.getIntOption( this,
@@ -1896,36 +1908,39 @@ public final class ApplicationManager extends ListActivity implements Constants
 						0 ) );
 			}
 
-			for ( int i = 0, size = localList.size( ); i < size; i++ )
+			if ( Util.getBooleanOption( ac, PREF_KEY_SHOW_ICON ) )
 			{
-				if ( aborted )
+				for ( int i = 0, size = localList.size( ); i < size; i++ )
 				{
-					return;
-				}
-
-				ai = localList.get( i ).appInfo;
-
-				try
-				{
-					Drawable icon = ai.loadIcon( pm );
-
-					holder = appCache.appLookup.get( ai.packageName );
-
-					if ( holder != null )
+					if ( aborted )
 					{
-						holder.icon = icon;
+						return;
+					}
+
+					ai = localList.get( i ).appInfo;
+
+					try
+					{
+						Drawable icon = ai.loadIcon( pm );
+
+						holder = appCache.appLookup.get( ai.packageName );
+
+						if ( holder != null )
+						{
+							holder.icon = icon;
+						}
+					}
+					catch ( OutOfMemoryError oom )
+					{
+						Log.e( ApplicationManager.class.getName( ),
+								"OOM when loading icon: " //$NON-NLS-1$
+										+ ai.packageName,
+								oom );
 					}
 				}
-				catch ( OutOfMemoryError oom )
-				{
-					Log.e( ApplicationManager.class.getName( ),
-							"OOM when loading icon: " //$NON-NLS-1$
-									+ ai.packageName,
-							oom );
-				}
-			}
 
-			handler.sendEmptyMessage( MSG_REFRESH_PKG_ICON );
+				handler.sendEmptyMessage( MSG_REFRESH_PKG_ICON );
+			}
 		}
 	}
 
@@ -2349,6 +2364,12 @@ public final class ApplicationManager extends ListActivity implements Constants
 			perfShowDate.setSummary( R.string.show_app_date_sum );
 			pc.addPreference( perfShowDate );
 
+			CheckBoxPreference perfShowIcon = new CheckBoxPreference( this );
+			perfShowIcon.setKey( PREF_KEY_SHOW_ICON );
+			perfShowIcon.setTitle( R.string.show_app_icon );
+			perfShowIcon.setSummary( R.string.show_app_icon_sum );
+			pc.addPreference( perfShowIcon );
+
 			CheckBoxPreference perfShowBackup = new CheckBoxPreference( this );
 			perfShowBackup.setKey( PREF_KEY_SHOW_BACKUP_STATE );
 			perfShowBackup.setTitle( R.string.show_backup_state );
@@ -2381,6 +2402,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			refreshSortDirection( );
 			refreshBooleanOption( PREF_KEY_SHOW_SIZE );
 			refreshBooleanOption( PREF_KEY_SHOW_DATE );
+			refreshBooleanOption( PREF_KEY_SHOW_ICON );
 			refreshBooleanOption( PREF_KEY_SHOW_BACKUP_STATE );
 
 			setResult( RESULT_OK, getIntent( ) );
@@ -2577,6 +2599,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 			{
 				it.putExtra( PREF_KEY_SHOW_DATE,
 						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_DATE ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_SHOW_ICON.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_ICON,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_ICON ) ).isChecked( ) );
 
 				return true;
 			}

@@ -39,6 +39,7 @@ interface Constants
 
 	String PREF_KEY_SHOW_SIZE = "show_size"; //$NON-NLS-1$
 	String PREF_KEY_SHOW_DATE = "show_date"; //$NON-NLS-1$
+	String PREF_KEY_SHOW_ICON = "show_icon"; //$NON-NLS-1$
 	String PREF_KEY_SHOW_AD_STATE = "show_ad_state"; //$NON-NLS-1$
 	String PREF_KEY_SHOW_AUTO_STATE = "show_auto_state"; //$NON-NLS-1$
 	String PREF_KEY_DEFAULT_TAP_ACTION = "default_tap_action"; //$NON-NLS-1$

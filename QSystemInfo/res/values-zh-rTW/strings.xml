@@ -302,5 +302,7 @@
     <string name="cpu_freq_range">CPU 時脈範圍</string>
     <string name="cur_freq">當前時脈</string>
     <string name="manage">管理</string>
+    <string name="show_app_icon_sum">顯示每個應用程式的圖示</string>
+    <string name="show_app_icon">顯示應用程式圖示</string>
 
 </resources>

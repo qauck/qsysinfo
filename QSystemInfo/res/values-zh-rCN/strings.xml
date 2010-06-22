@@ -302,5 +302,7 @@
     <string name="cpu_freq_range">CPU 频率范围</string>
     <string name="cur_freq">当前频率</string>
     <string name="manage">管理</string>
+    <string name="show_app_icon_sum">显示每个应用程序的图标</string>
+    <string name="show_app_icon">显示应用程序图标</string>
 
 </resources>

@@ -314,5 +314,7 @@
     <string name="cpu_freq_range">CPU Frequency Range</string>
     <string name="cur_freq">Current Frequency</string>
     <string name="manage">Manage</string>
+    <string name="show_app_icon_sum">Show icon for each application</string>
+    <string name="show_app_icon">Show Application Icon</string>
 
 </resources>
