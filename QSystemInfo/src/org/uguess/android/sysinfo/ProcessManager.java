@@ -90,7 +90,6 @@ public final class ProcessManager extends ListActivity implements Constants
 	private static final String PREF_KEY_SHOW_MEM = "show_mem"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_CPU = "show_cpu"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_SYS_PROC = "show_sys_proc"; //$NON-NLS-1$
-	private static final String PREF_KEY_DEFAULT_TAP_ACTION = "default_tap_action"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_KILL_WARN = "show_kill_warn"; //$NON-NLS-1$
 
 	private static final int ORDER_TYPE_NAME = 0;

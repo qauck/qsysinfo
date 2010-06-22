@@ -66,6 +66,7 @@ import android.os.RemoteException;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.text.ClipboardManager;
 import android.text.Html;
@@ -124,6 +125,12 @@ public final class ApplicationManager extends ListActivity implements Constants
 	private static final String PREF_KEY_FILTER_APP_TYPE = "filter_app_type"; //$NON-NLS-1$
 	private static final String PREF_KEY_APP_EXPORT_DIR = "app_export_dir"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_BACKUP_STATE = "show_backup_state"; //$NON-NLS-1$
+
+	private static final int ACTION_MENU = 0;
+	private static final int ACTION_MANAGE = 1;
+	private static final int ACTION_LAUNCH = 2;
+	private static final int ACTION_SEARCH = 3;
+	private static final int ACTION_DETAILS = 4;
 
 	static final String KEY_RESTORE_PATH = "restore_path"; //$NON-NLS-1$
 	static final String KEY_ARCHIVE_PATH = "archive_path"; //$NON-NLS-1$
@@ -481,7 +488,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 			{
 				AppInfoHolder holder = (AppInfoHolder) parent.getItemAtPosition( position );
 
-				doManage( holder.appInfo.packageName );
+				int action = Util.getIntOption( ApplicationManager.this,
+						PREF_KEY_DEFAULT_TAP_ACTION,
+						ACTION_MANAGE );
+
+				handleAction( holder, action );
 			}
 		} );
 
@@ -1033,6 +1044,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 					this,
 					PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC );
+			Util.updateIntOption( data,
+					this,
+					PREF_KEY_DEFAULT_TAP_ACTION,
+					ACTION_MANAGE );
 
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_SIZE );
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_DATE );
@@ -1088,6 +1103,9 @@ public final class ApplicationManager extends ListActivity implements Constants
 					Util.getBooleanOption( this, PREF_KEY_SHOW_DATE ) );
 			it.putExtra( PREF_KEY_SHOW_BACKUP_STATE,
 					Util.getBooleanOption( this, PREF_KEY_SHOW_BACKUP_STATE ) );
+			it.putExtra( PREF_KEY_DEFAULT_TAP_ACTION, Util.getIntOption( this,
+					PREF_KEY_DEFAULT_TAP_ACTION,
+					ACTION_MANAGE ) );
 
 			startActivityForResult( it, REQUEST_SETTINGS );
 
@@ -1144,25 +1162,98 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 		if ( pos >= 0 && pos < getListView( ).getCount( ) )
 		{
-			final AppInfoHolder ai = (AppInfoHolder) getListView( ).getItemAtPosition( pos );
-
-			final String pkgName = ai.appInfo.packageName;
+			AppInfoHolder ai = (AppInfoHolder) getListView( ).getItemAtPosition( pos );
 
 			if ( item.getItemId( ) == MI_MANAGE )
 			{
-				doManage( pkgName );
-
+				handleAction( ai, ACTION_MANAGE );
 				return true;
 			}
 			else if ( item.getItemId( ) == MI_LAUNCH )
 			{
+				handleAction( ai, ACTION_LAUNCH );
+				return true;
+			}
+			else if ( item.getItemId( ) == MI_SEARCH )
+			{
+				handleAction( ai, ACTION_SEARCH );
+				return true;
+			}
+			else if ( item.getItemId( ) == MI_DETAILS )
+			{
+				handleAction( ai, ACTION_DETAILS );
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	void handleAction( final AppInfoHolder ai, int action )
+	{
+		String pkgName = ai.appInfo.packageName;
+
+		switch ( action )
+		{
+			case ACTION_MENU :
+
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						dialog.dismiss( );
+
+						// bypass the 'showMenu' action offset
+						int action = which + 1;
+
+						handleAction( ai, action );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.actions )
+						.setItems( new CharSequence[]{
+								getString( R.string.manage ),
+								getString( R.string.run ),
+								getString( R.string.search_market ),
+								getString( R.string.details )
+						},
+								listener )
+						.create( )
+						.show( );
+
+				break;
+			case ACTION_MANAGE :
+
+				Intent it = new Intent( Intent.ACTION_VIEW );
+
+				it.setClassName( "com.android.settings", //$NON-NLS-1$
+						"com.android.settings.InstalledAppDetails" ); //$NON-NLS-1$
+				it.putExtra( "com.android.settings.ApplicationPkgName", pkgName ); //$NON-NLS-1$
+				// this is for Froyo
+				it.putExtra( "pkg", pkgName ); //$NON-NLS-1$
+
+				List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
+						0 );
+
+				if ( acts.size( ) > 0 )
+				{
+					startActivity( it );
+				}
+				else
+				{
+					Log.d( ApplicationManager.class.getName( ),
+							"Failed to resolve activity for InstalledAppDetails" ); //$NON-NLS-1$
+				}
+
+				break;
+			case ACTION_LAUNCH :
+
 				if ( !pkgName.equals( this.getPackageName( ) ) )
 				{
-					Intent it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
+					it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
 					it.addCategory( Intent.CATEGORY_LAUNCHER );
 
-					List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
-							0 );
+					acts = getPackageManager( ).queryIntentActivities( it, 0 );
 
 					if ( acts != null )
 					{
@@ -1194,11 +1285,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 					}
 				}
 
-				return true;
-			}
-			else if ( item.getItemId( ) == MI_SEARCH )
-			{
-				Intent it = new Intent( Intent.ACTION_VIEW );
+				break;
+			case ACTION_SEARCH :
+
+				it = new Intent( Intent.ACTION_VIEW );
 
 				it.setData( Uri.parse( "market://search?q=pname:" + pkgName ) ); //$NON-NLS-1$
 
@@ -1206,10 +1296,9 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 				startActivity( it );
 
-				return true;
-			}
-			else if ( item.getItemId( ) == MI_DETAILS )
-			{
+				break;
+			case ACTION_DETAILS :
+
 				ApplicationInfo appInfo = ai.appInfo;
 
 				StringBuffer sb = new StringBuffer( ).append( "<small>" ) //$NON-NLS-1$
@@ -1276,34 +1365,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 						.create( )
 						.show( );
 
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	void doManage( String pkgName )
-	{
-		Intent it = new Intent( Intent.ACTION_VIEW );
-
-		it.setClassName( "com.android.settings", //$NON-NLS-1$
-				"com.android.settings.InstalledAppDetails" ); //$NON-NLS-1$
-		it.putExtra( "com.android.settings.ApplicationPkgName", pkgName ); //$NON-NLS-1$
-		// this is for Froyo
-		it.putExtra( "pkg", pkgName ); //$NON-NLS-1$
-
-		List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
-				0 );
-
-		if ( acts.size( ) > 0 )
-		{
-			startActivity( it );
-		}
-		else
-		{
-			Log.d( ApplicationManager.class.getName( ),
-					"Failed to resolve activity for InstalledAppDetails" ); //$NON-NLS-1$
+				break;
 		}
 	}
 
@@ -2255,10 +2317,62 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 			super.onCreate( savedInstanceState );
 
-			addPreferencesFromResource( R.xml.app_pref );
+			setPreferenceScreen( getPreferenceManager( ).createPreferenceScreen( this ) );
+
+			PreferenceCategory pc = new PreferenceCategory( this );
+			pc.setTitle( R.string.preference );
+			getPreferenceScreen( ).addPreference( pc );
+
+			Preference perfExportDir = new Preference( this );
+			perfExportDir.setKey( PREF_KEY_APP_EXPORT_DIR );
+			perfExportDir.setTitle( R.string.export_dir );
+			pc.addPreference( perfExportDir );
+
+			Preference perfFilter = new Preference( this );
+			perfFilter.setKey( PREF_KEY_FILTER_APP_TYPE );
+			perfFilter.setTitle( R.string.filter_title );
+			pc.addPreference( perfFilter );
+
+			CheckBoxPreference perfShowSize = new CheckBoxPreference( this );
+			perfShowSize.setKey( PREF_KEY_SHOW_SIZE );
+			perfShowSize.setTitle( R.string.show_app_size );
+			perfShowSize.setSummary( R.string.show_app_size_sum );
+			pc.addPreference( perfShowSize );
+
+			CheckBoxPreference perfShowDate = new CheckBoxPreference( this );
+			perfShowDate.setKey( PREF_KEY_SHOW_DATE );
+			perfShowDate.setTitle( R.string.show_app_date );
+			perfShowDate.setSummary( R.string.show_app_date_sum );
+			pc.addPreference( perfShowDate );
+
+			CheckBoxPreference perfShowBackup = new CheckBoxPreference( this );
+			perfShowBackup.setKey( PREF_KEY_SHOW_BACKUP_STATE );
+			perfShowBackup.setTitle( R.string.show_backup_state );
+			perfShowBackup.setSummary( R.string.show_backup_state_sum );
+			pc.addPreference( perfShowBackup );
+
+			Preference perfDefaultAction = new Preference( this );
+			perfDefaultAction.setKey( PREF_KEY_DEFAULT_TAP_ACTION );
+			perfDefaultAction.setTitle( R.string.default_tap_action );
+			pc.addPreference( perfDefaultAction );
+
+			pc = new PreferenceCategory( this );
+			pc.setTitle( R.string.sort );
+			getPreferenceScreen( ).addPreference( pc );
+
+			Preference perfSortType = new Preference( this );
+			perfSortType.setKey( PREF_KEY_SORT_ORDER_TYPE );
+			perfSortType.setTitle( R.string.sort_type );
+			pc.addPreference( perfSortType );
+
+			Preference perfSortDirection = new Preference( this );
+			perfSortDirection.setKey( PREF_KEY_SORT_DIRECTION );
+			perfSortDirection.setTitle( R.string.sort_direction );
+			pc.addPreference( perfSortDirection );
 
 			refreshBackupFolder( );
 			refreshAppType( );
+			refreshDefaultAction( );
 			refreshSortType( );
 			refreshSortDirection( );
 			refreshBooleanOption( PREF_KEY_SHOW_SIZE );
@@ -2296,6 +2410,34 @@ public final class ApplicationManager extends ListActivity implements Constants
 			}
 
 			findPreference( PREF_KEY_FILTER_APP_TYPE ).setSummary( res );
+		}
+
+		void refreshDefaultAction( )
+		{
+			int type = getIntent( ).getIntExtra( PREF_KEY_DEFAULT_TAP_ACTION,
+					ACTION_MANAGE );
+
+			String label = null;
+			switch ( type )
+			{
+				case ACTION_MANAGE :
+					label = getString( R.string.manage );
+					break;
+				case ACTION_LAUNCH :
+					label = getString( R.string.run );
+					break;
+				case ACTION_SEARCH :
+					label = getString( R.string.search_market );
+					break;
+				case ACTION_DETAILS :
+					label = getString( R.string.details );
+					break;
+				case ACTION_MENU :
+					label = getString( R.string.show_menu );
+					break;
+			}
+
+			findPreference( PREF_KEY_DEFAULT_TAP_ACTION ).setSummary( label );
 		}
 
 		void refreshSortType( )
@@ -2438,6 +2580,37 @@ public final class ApplicationManager extends ListActivity implements Constants
 			{
 				it.putExtra( PREF_KEY_SHOW_BACKUP_STATE,
 						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_BACKUP_STATE ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_DEFAULT_TAP_ACTION.equals( preference.getKey( ) ) )
+			{
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						it.putExtra( PREF_KEY_DEFAULT_TAP_ACTION, which );
+
+						dialog.dismiss( );
+
+						refreshDefaultAction( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.default_tap_action )
+						.setNeutralButton( R.string.close, null )
+						.setSingleChoiceItems( new String[]{
+								getString( R.string.show_menu ),
+								getString( R.string.manage ),
+								getString( R.string.run ),
+								getString( R.string.search_market ),
+								getString( R.string.details ),
+						},
+								it.getIntExtra( PREF_KEY_DEFAULT_TAP_ACTION,
+										ACTION_MANAGE ),
+								listener )
+						.create( )
+						.show( );
 
 				return true;
 			}
