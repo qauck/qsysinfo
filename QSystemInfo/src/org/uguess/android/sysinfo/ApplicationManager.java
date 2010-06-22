@@ -372,9 +372,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 					handler.sendEmptyMessage( MSG_INIT_OK );
 
-					( sizeUpdater = new PkgSizeUpdaterThread( ApplicationManager.this,
-							appCache,
-							handler ) ).start( );
+					if ( Util.getBooleanOption( ApplicationManager.this,
+							PREF_KEY_SHOW_SIZE ) )
+					{
+						( sizeUpdater = new PkgSizeUpdaterThread( ApplicationManager.this,
+								appCache,
+								handler ) ).start( );
+					}
 
 					( resUpdater = new ResourceUpdaterThread( ApplicationManager.this,
 							appCache,
