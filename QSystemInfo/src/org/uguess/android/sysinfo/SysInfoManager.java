@@ -320,6 +320,35 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 	private String[] getMemInfo( )
 	{
+		long[] state = getMemState( this );
+
+		if ( state == null )
+		{
+			return null;
+		}
+
+		String[] mem = new String[state.length];
+
+		for ( int i = 0, size = mem.length; i < size; i++ )
+		{
+			if ( state[i] == -1 )
+			{
+				mem[i] = getString( R.string.info_not_available );
+			}
+			else
+			{
+				mem[i] = Formatter.formatFileSize( this, state[i] );
+			}
+		}
+
+		return mem;
+	}
+
+	/**
+	 * @return [total, idle, free]
+	 */
+	static long[] getMemState( Context ctx )
+	{
 		BufferedReader reader = null;
 
 		try
@@ -348,15 +377,15 @@ public final class SysInfoManager extends PreferenceActivity implements
 				}
 			}
 
-			String[] mem = new String[3];
+			long[] mem = new long[3];
 
-			mem[0] = extractMemCount( this, totalMsg );
-			mem[1] = extractMemCount( this, freeMsg );
+			mem[0] = extractMemCount( totalMsg );
+			mem[1] = extractMemCount( freeMsg );
 
-			ActivityManager am = (ActivityManager) getSystemService( Context.ACTIVITY_SERVICE );
+			ActivityManager am = (ActivityManager) ctx.getSystemService( Context.ACTIVITY_SERVICE );
 			MemoryInfo mi = new MemoryInfo( );
 			am.getMemoryInfo( mi );
-			mem[2] = Formatter.formatFileSize( this, mi.availMem );
+			mem[2] = mi.availMem;
 
 			return mem;
 		}
@@ -384,7 +413,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 		return null;
 	}
 
-	private static String extractMemCount( Context ctx, String line )
+	private static long extractMemCount( String line )
 	{
 		if ( line != null )
 		{
@@ -423,7 +452,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 									"Unexpected mem unit format: " + line ); //$NON-NLS-1$
 						}
 
-						return Formatter.formatFileSize( ctx, size );
+						return size;
 					}
 					catch ( Exception e )
 					{
@@ -445,7 +474,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 			}
 		}
 
-		return ctx.getResources( ).getString( R.string.info_not_available );
+		return -1;
 	}
 
 	private String getCpuInfo( )

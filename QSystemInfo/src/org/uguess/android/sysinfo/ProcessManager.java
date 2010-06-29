@@ -50,7 +50,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -73,7 +72,9 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 /**
@@ -111,7 +112,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 	ProcessCache procCache;
 
-	long totalLoad, totalDelta;
+	long totalLoad, totalDelta, totalWork, workDelta;
 
 	LinkedHashSet<String> ignoreList;
 
@@ -337,14 +338,23 @@ public final class ProcessManager extends ListActivity implements Constants
 				TextView txt_name, txt_mem, txt_cpu;
 				ImageView img_type;
 
-				if ( convertView == null )
+				if ( ( position == 0 && convertView instanceof RelativeLayout )
+						|| ( position > 0 && convertView instanceof LinearLayout ) )
 				{
-					view = ProcessManager.this.getLayoutInflater( )
-							.inflate( R.layout.proc_item, parent, false );
+					view = convertView;
 				}
 				else
 				{
-					view = convertView;
+					if ( position == 0 )
+					{
+						view = ProcessManager.this.getLayoutInflater( )
+								.inflate( R.layout.proc_head, parent, false );
+					}
+					else
+					{
+						view = ProcessManager.this.getLayoutInflater( )
+								.inflate( R.layout.proc_item, parent, false );
+					}
 				}
 
 				ProcessItem itm = getItem( position );
@@ -362,15 +372,23 @@ public final class ProcessManager extends ListActivity implements Constants
 				if ( itm == dummyInfo )
 				{
 					txt_name.setText( itm.label );
-					txt_name.setTypeface( Typeface.DEFAULT, Typeface.ITALIC );
-					txt_name.setTextColor( Color.WHITE );
 
-					img_type.setImageDrawable( null );
+					StringBuilder totalString = null;
 
 					if ( showMem )
 					{
 						txt_mem.setVisibility( View.VISIBLE );
-						txt_mem.setText( "MEM" ); //$NON-NLS-1$
+
+						long[] mem = SysInfoManager.getMemState( ProcessManager.this );
+
+						if ( mem != null )
+						{
+							totalString = new StringBuilder( );
+							totalString.append( getString( R.string.free ) )
+									.append( ": " ) //$NON-NLS-1$
+									.append( Formatter.formatFileSize( ProcessManager.this,
+											mem[2] ) );
+						}
 					}
 					else
 					{
@@ -380,11 +398,51 @@ public final class ProcessManager extends ListActivity implements Constants
 					if ( showCpu )
 					{
 						txt_cpu.setVisibility( View.VISIBLE );
-						txt_cpu.setText( "CPU%" ); //$NON-NLS-1$
+
+						long cu = totalDelta == 0 ? 0
+								: ( workDelta * 100 / totalDelta );
+
+						if ( cu < 0 )
+						{
+							cu = 0;
+						}
+						if ( cu > 100 )
+						{
+							cu = 100;
+						}
+
+						if ( totalString == null )
+						{
+							totalString = new StringBuilder( );
+							totalString.append( getString( R.string.load ) )
+									.append( ": " ) //$NON-NLS-1$
+									.append( cu )
+									.append( '%' );
+						}
+						else
+						{
+							totalString.append( "  " ) //$NON-NLS-1$
+									.append( getString( R.string.load ) )
+									.append( ": " ) //$NON-NLS-1$
+									.append( cu )
+									.append( '%' );
+						}
 					}
 					else
 					{
 						txt_cpu.setVisibility( View.GONE );
+					}
+
+					TextView txt_total = (TextView) view.findViewById( R.id.txt_total );
+
+					if ( totalString == null )
+					{
+						txt_total.setVisibility( View.GONE );
+					}
+					else
+					{
+						txt_total.setVisibility( View.VISIBLE );
+						txt_total.setText( totalString );
 					}
 				}
 				else
@@ -400,8 +458,6 @@ public final class ProcessManager extends ListActivity implements Constants
 						lb += " ~"; //$NON-NLS-1$
 					}
 					txt_name.setText( lb );
-
-					txt_name.setTypeface( Typeface.DEFAULT, Typeface.NORMAL );
 
 					switch ( itm.procInfo.importance )
 					{
@@ -995,7 +1051,9 @@ public final class ProcessManager extends ListActivity implements Constants
 
 		if ( showCpu )
 		{
-			long newload = readCpuLoad( );
+			long[] loads = readCpuLoad( );
+
+			long newload = loads == null ? 0 : ( loads[0] + loads[1] );
 
 			if ( totalLoad != 0 )
 			{
@@ -1003,6 +1061,15 @@ public final class ProcessManager extends ListActivity implements Constants
 			}
 
 			totalLoad = newload;
+
+			long newWork = loads == null ? 0 : loads[0];
+
+			if ( totalWork != 0 )
+			{
+				workDelta = newWork - totalWork;
+			}
+
+			totalWork = newWork;
 		}
 
 		synchronized ( procCache )
@@ -1078,7 +1145,10 @@ public final class ProcessManager extends ListActivity implements Constants
 		}
 	}
 
-	private static long readCpuLoad( )
+	/**
+	 * @return [worktime, idletime]
+	 */
+	static long[] readCpuLoad( )
 	{
 		BufferedReader reader = null;
 		try
@@ -1094,7 +1164,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 				StringTokenizer tokens = new StringTokenizer( line );
 
-				long totaltime = 0;
+				long totaltime = 0, idletime = 0;
 				int i = 0;
 				String tk;
 
@@ -1102,11 +1172,20 @@ public final class ProcessManager extends ListActivity implements Constants
 				{
 					tk = tokens.nextToken( );
 
-					totaltime += Long.parseLong( tk );
+					if ( i == 3 )
+					{
+						idletime = Long.parseLong( tk );
+					}
+					else
+					{
+						totaltime += Long.parseLong( tk );
+					}
 					i++;
 				}
 
-				return totaltime;
+				return new long[]{
+						totaltime, idletime
+				};
 			}
 		}
 		catch ( Exception e )
@@ -1130,7 +1209,7 @@ public final class ProcessManager extends ListActivity implements Constants
 			}
 		}
 
-		return 0;
+		return null;
 	}
 
 	private static void readProcessStat( Context ctx, byte[] buf,

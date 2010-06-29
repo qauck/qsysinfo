@@ -299,5 +299,7 @@
     <string name="manage">Manage</string>
     <string name="show_app_icon_sum">Show icon for each application</string>
     <string name="show_app_icon">Show Application Icon</string>
+    <string name="free">Free</string>
+    <string name="load">Load</string>
 
 </resources>

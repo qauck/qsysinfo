@@ -299,5 +299,7 @@
     <string name="manage">管理</string>
     <string name="show_app_icon_sum">顯示每個應用程式的圖示</string>
     <string name="show_app_icon">顯示應用程式圖示</string>
+    <string name="free">可用</string>
+    <string name="load">負載</string>
 
 </resources>

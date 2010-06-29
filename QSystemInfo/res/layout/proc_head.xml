@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="wrap_content">
+
+	<TextView android:layout_height="wrap_content" android:text="name"
+		android:paddingLeft="3dip" android:id="@+id/txt_proc_name"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:layout_width="fill_parent" android:layout_marginLeft="30dip"
+		android:layout_alignParentLeft="true" android:textStyle="italic"
+		android:textColor="#ffffffff"></TextView>
+	<TextView android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:layout_marginLeft="2dip"
+		android:textAppearance="?android:attr/textAppearanceSmall"
+		android:paddingLeft="3dip" android:paddingRight="3dip"
+		android:layout_marginRight="2dip" android:id="@+id/txt_mem"
+		android:gravity="right" android:layout_toLeftOf="@+id/txt_cpu"
+		android:layout_below="@+id/txt_proc_name"
+		android:layout_alignWithParentIfMissing="true" android:text="MEM"></TextView>
+	<TextView android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:layout_marginRight="2dip"
+		android:id="@+id/txt_cpu" android:textAppearance="?android:attr/textAppearanceSmall"
+		android:gravity="right" android:text="CPU%" android:minWidth="40dip"
+		android:paddingRight="5dip" android:layout_alignParentRight="true"
+		android:layout_below="@+id/txt_proc_name"></TextView>
+	<TextView android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:textAppearance="?android:attr/textAppearanceSmall"
+		android:layout_below="@+id/txt_proc_name" android:id="@+id/txt_total"
+		android:text="total" android:layout_alignParentLeft="true"
+		android:layout_marginLeft="8dip"></TextView>
+
+</RelativeLayout>
