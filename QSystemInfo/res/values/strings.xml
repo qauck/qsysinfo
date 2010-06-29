@@ -18,12 +18,9 @@
 	<string name="select_all">Select All</string>
 	<string name="deselect_all">Deselect All</string>
 	<string name="no_app_selected">No application selected.</string>
-	<string name="no_app_show">No application available under current filter
-		condition.</string>
+	<string name="no_app_show">No application available under current filter condition.</string>
 	<string name="warning">Warning</string>
-	<string name="warning_msg">Applications will be exported to \'%s\', any
-		existing file in the folder will be overwritten, are you sure to
-		continue?</string>
+	<string name="warning_msg">Applications will be exported to \'%s\', any existing file in the folder will be overwritten, are you sure to continue?</string>
 	<string name="cont">Continue</string>
 	<string name="start_exporting">Start exporting...</string>
 	<string name="exporting">Exporting %s...</string>
@@ -31,15 +28,10 @@
 	<string name="exported">Total %s applications exported.</string>
 	<string name="exported_to">Total %s applications exported to \'%s\'.</string>
 	<string name="export_complete">Export completed</string>
-	<string name="error_sdcard">Please ensure the SD card is mounted as writable
-		with sufficient free space.
-	</string>
+	<string name="error_sdcard">Please ensure the SD card is mounted as writable with sufficient free space.</string>
 	<string name="computing">Computing...</string>
 	<string name="about">About</string>
-	<string name="about_msg">Version %s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a
-		href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a
-		href="%s">[ Support this app ]&lt;/a>&lt;br>
-	</string>
+	<string name="about_msg">Version %s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a href="%s">[ Support this app ]&lt;/a>&lt;br></string>
 	<string name="close">Close</string>
 	<string name="filter_title">Application Type</string>
 	<string name="all_apps">All</string>
@@ -47,8 +39,7 @@
 	<string name="user_apps">User</string>
 	<string name="version">Version</string>
 	<string name="loading">Refreshing...</string>
-	<string name="end_proc_hint">- Click a task to end\n- Click me to end all
-	</string>
+	<string name="end_proc_hint">- Click a task to end\n- Click me to end all</string>
 	<string name="switch_to">Switch To</string>
 	<string name="end_task">End Task</string>
 	<string name="tab_info">Basic Info</string>
@@ -87,17 +78,14 @@
 	<string name="normal">Normal</string>
 	<string name="low">Low</string>
 	<string name="paused">Paused</string>
-	<string name="no_ip_info">No public information available for this IP
-		address
-		at this time.</string>
+	<string name="no_ip_info">No public information available for this IP address at this time.</string>
 	<string name="query_ip_msg">Acquiring Remote Information...</string>
 	<string name="ip_location">Remote Information</string>
 	<string name="protocol">Protocol</string>
 	<string name="local_remote_addr">Local/Remote Address</string>
 	<string name="state">State</string>
 	<string name="copy_ip">Copy Remote Address</string>
-	<string name="location_info">&lt;b>%s&lt;/b>&lt;br>%s&lt;br>Country:
-		%s&lt;br>Region: %s&lt;br>City: %s</string>
+	<string name="location_info">&lt;b>%s&lt;/b>&lt;br>%s&lt;br>Country: %s&lt;br>Region: %s&lt;br>City: %s</string>
 	<string name="view_map">View in Map</string>
 	<string name="remote_query">Remote Information Query</string>
 	<string name="enabled">Enabled</string>
@@ -205,11 +193,7 @@
     <string name="show_cpu_usage">Show CPU Usage</string>
     <string name="show_memory_usage">Show Memory Usage</string>
     <string name="bug_failed">Failed to generate the bug report, please send the Logcat log to the author manually.</string>
-	<string name="bug_detail">An exception was caught during the last launch of
-		Quick System Info. Do you want to send the error details to the author
-		to help further addressing this issue?\n\nThe information collected is
-		for debug purpose only, it will NOT contain any data with regard to
-		your privacy.</string>
+	<string name="bug_detail">An exception was caught during the last launch of Quick System Info. Do you want to send the error details to the author to help further addressing this issue?\n\nThe information collected is for debug purpose only, it will NOT contain any data with regard to your privacy.</string>
 	<string name="bug_title">Bug Report</string>
 	<string name="oops_msg">Click to report this exception.</string>
 	<string name="oops">Oops, An exception.</string>
@@ -292,8 +276,7 @@
     <string name="send">Send</string>
     <string name="copy">Copy</string>
     <string name="copied_hint">Content copied to clipboard.</string>
-    <string name="archive_warning">This will move the selected file to the archive folder \'%s\', any
-		existing file in the folder will be overwritten, are you sure to continue?</string>
+    <string name="archive_warning">This will move the selected file to the archive folder \'%s\', any existing file in the folder will be overwritten, are you sure to continue?</string>
     <string name="archive_fail">Failed to arvhive the file \'%s\'.</string>
     <string name="fail_create_archive_folder">Failed to create the archive folder \'%s\'.</string>
     <string name="dup_archived">The selected file is already archived.</string>

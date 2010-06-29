@@ -5,7 +5,8 @@
 	android:minHeight="30dip">
 	<TextView android:layout_height="wrap_content" android:id="@+id/txt_proto"
 		android:text="proto" android:layout_gravity="center_vertical"
-		android:layout_width="60dip" android:layout_marginLeft="5dip"></TextView>
+		android:layout_width="60dip" android:layout_marginLeft="5dip"
+		android:singleLine="true" android:ellipsize="marquee"></TextView>
 	<TextView android:layout_height="wrap_content" android:id="@+id/txt_ip"
 		android:text="ip" android:layout_width="fill_parent"
 		android:layout_weight="1" android:layout_gravity="center_vertical"></TextView>
