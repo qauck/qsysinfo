@@ -5,8 +5,8 @@
 	<string name="info_not_available">Información no disponible</string>
 	<string name="processor">Procesador</string>
 	<string name="memory">Memoria</string>
-	<string name="sd_storage">Almacenamiento externo SD</string>
-	<string name="internal_storage">Almacenamiento interno</string>
+	<string name="sd_storage">Almacenamiento Externo SD</string>
+	<string name="internal_storage">Almacenamiento Interno</string>
 	<string name="battery_level">Batería</string>
 	<string name="retrieving">Obteniendo...</string>
 	<string name="about_phone">Acerca del teléfono</string>
@@ -31,7 +31,7 @@
 	<string name="error_sdcard">Por favor, asegúrese que la tarjeta SD está montada como escribible y con suficiente espacio disponible.</string>
 	<string name="computing">Calculando...</string>
 	<string name="about">Acerca de</string>
-	<string name="about_msg">Versión %s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a href="%s">[ Colabora con esta aplicación ]&lt;/a>&lt;br></string>
+	<string name="about_msg">Versión %s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a href="%s">[ Mantenga esta aplicación ]&lt;/a>&lt;br></string>
 	<string name="close">Cerrar</string>
 	<string name="filter_title">Tipo de Aplicación</string>
 	<string name="all_apps">Todas</string>
@@ -161,12 +161,12 @@
     <string name="memory_usage">Uso de Memoria</string>
     <string name="remove">Eliminar</string>
     <string name="no_item_remove">Ningún campo seleccionado para eliminar</string>
-    <string name="multi_ignored">%s procesos ignorados</string>
-    <string name="single_ignored">%s proceso ignorado</string>
-    <string name="protect">Protegido</string>
-    <string name="hidden">Oculto</string>
-    <string name="ignored_list">Lista de Ignorados</string>
-    <string name="ignored_as">Ignorado como</string>
+    <string name="multi_ignored">%s tareas ignoradas</string>
+    <string name="single_ignored">%s tarea ignorada</string>
+    <string name="protect">Protegidas</string>
+    <string name="hidden">Ocultas</string>
+    <string name="ignored_list">Lista de Ignoradas</string>
+    <string name="ignored_as">Ignoradas como</string>
     <string name="ignore">Ignorar</string>
     <string name="a2sd_storage">Almacenamiento A2SD</string>
     <string name="check">Pulsar para Comprobar</string>
@@ -184,7 +184,7 @@
     <string name="restore">Restablecer</string>
     <string name="file_size">Tamaño del Archivo</string>
     <string name="installation">Estado de Instalación</string>
-    <string name="installed_ver">%s (Instalado %s)</string>
+    <string name="installed_ver">%s (Instalada %s)</string>
     <string name="scanning">Escaneando %s</string>
 	<string name="no_apk_show">Ningún archivo de aplicación encontrado.</string>
 	<string name="no_apk_selected">Ningún archivo seleccionado.</string>
@@ -209,7 +209,7 @@
     <string name="show_file_size">Mostrar Tamaño de Archivo</string>
     <string name="show_app_date_sum">Mostrar información sobre fecha de cada aplicación</string>
     <string name="show_app_size_sum">Mostrar información sobre tamaño de cada aplicación</string>
-    <string name="show_app_date">Mostrarar Fecha de Aplicación</string>
+    <string name="show_app_date">Mostrar Fecha de Aplicación</string>
     <string name="show_app_size">Mostrar Tamaño de Aplicación</string>
     <string name="run_failed">No se pudo ejecutar esta aplicación.</string>
     <string name="run">Ejecutar</string>
@@ -222,14 +222,14 @@
     <string name="show_file_path">Mostrar Ruta de Archivo</string>
     <string name="search_subdir_sum">Buscar archivos en subdirectorios</string>
     <string name="search_subdir">Buscar Subdirectorios</string>
-    <string name="scan_dir">Recuperar Directorio</string>
+    <string name="scan_dir">Directorio de Recuperación</string>
 	<string name="task_widget_name">Quick Task Killer</string>
 	<string name="widget_bar_name">Quick Info Bar</string>
 	<string name="kill_info">%s tarea finalizada, %s ignoradas.</string>
 	<string name="kill_info2">%s tareas finalizadas, %s ignoradas.</string>
     <string name="auto_start_sum">Mostrar iconos en el área de notificaciones automáticamente después de reiniciar</string>
     <string name="show_task_icon_sum">Mostrar icono de "Quick Task Killer" en el área de notificaciones</string>
-    <string name="show_info_icon_sum">Mostrar iocono de "Quick System Info" en el área de notificaciones</string>
+    <string name="show_info_icon_sum">Mostrar icono de "Quick System Info" en el área de notificaciones</string>
     <string name="auto_start">Iconos Automáticos</string>
     <string name="show_task_icon">Mostrar Icono de "Task Killer"</string>
     <string name="show_info_icon">Mostrar Icono de Información</string>
