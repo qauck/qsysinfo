@@ -56,11 +56,7 @@ public final class QSystemInfo extends TabActivity
 
 		requestWindowFeature( Window.FEATURE_NO_TITLE );
 
-		if ( !( Thread.getDefaultUncaughtExceptionHandler( ) instanceof ErrorHandler ) )
-		{
-			Thread.setDefaultUncaughtExceptionHandler( new ErrorHandler( getApplicationContext( ),
-					Thread.getDefaultUncaughtExceptionHandler( ) ) );
-		}
+		Util.hookExceptionHandler( getApplicationContext( ) );
 
 		TabHost th = getTabHost( );
 
@@ -138,7 +134,7 @@ public final class QSystemInfo extends TabActivity
 	/**
 	 * ErrorHandler
 	 */
-	private static final class ErrorHandler implements
+	static final class ErrorHandler implements
 			UncaughtExceptionHandler,
 			Constants
 	{
@@ -197,11 +193,7 @@ public final class QSystemInfo extends TabActivity
 			getWindow( ).setFlags( WindowManager.LayoutParams.FLAG_FULLSCREEN,
 					WindowManager.LayoutParams.FLAG_FULLSCREEN );
 
-			if ( !( Thread.getDefaultUncaughtExceptionHandler( ) instanceof ErrorHandler ) )
-			{
-				Thread.setDefaultUncaughtExceptionHandler( new ErrorHandler( getApplicationContext( ),
-						Thread.getDefaultUncaughtExceptionHandler( ) ) );
-			}
+			Util.hookExceptionHandler( getApplicationContext( ) );
 
 			OnClickListener listener = new OnClickListener( ) {
 

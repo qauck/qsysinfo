@@ -130,6 +130,12 @@ public final class WidgetProvider extends AppWidgetProvider
 	{
 
 		@Override
+		public void onCreate( )
+		{
+			Util.hookExceptionHandler( getApplicationContext( ) );
+		}
+
+		@Override
 		public IBinder onBind( Intent intent )
 		{
 			return null;
@@ -158,7 +164,7 @@ public final class WidgetProvider extends AppWidgetProvider
 			for ( int i = 0, size = raps.size( ); i < size; i++ )
 			{
 				RunningAppProcessInfo rap = raps.get( i );
-				
+
 				name = rap.processName;
 
 				if ( name.equals( self )

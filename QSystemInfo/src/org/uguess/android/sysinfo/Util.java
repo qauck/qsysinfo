@@ -21,11 +21,13 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.uguess.android.sysinfo.QSystemInfo.ErrorHandler;
 import org.uguess.android.sysinfo.WidgetProvider.EndTaskService;
 
 import android.app.Activity;
@@ -491,4 +493,14 @@ final class Util implements Constants
 		return null;
 	}
 
+	static void hookExceptionHandler( Context ctx )
+	{
+		UncaughtExceptionHandler oldHandler = Thread.getDefaultUncaughtExceptionHandler( );
+
+		if ( !( oldHandler instanceof ErrorHandler ) )
+		{
+			Thread.setDefaultUncaughtExceptionHandler( new ErrorHandler( ctx,
+					oldHandler ) );
+		}
+	}
 }
