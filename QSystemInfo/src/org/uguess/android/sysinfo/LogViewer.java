@@ -856,6 +856,12 @@ public final class LogViewer extends ListActivity implements Constants
 	private static LogItem parseCLog( String line, String tagFilter,
 			int pidFilter )
 	{
+		if ( line.startsWith( "--------" ) ) //$NON-NLS-1$
+		{
+			// skip the header
+			return null;
+		}
+
 		int dayOffset = line.indexOf( ' ' );
 		int timeOffset = line.indexOf( ' ', dayOffset + 1 );
 		int levelOffset = line.indexOf( '/', timeOffset + 1 );
