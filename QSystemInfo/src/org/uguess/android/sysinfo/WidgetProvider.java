@@ -198,6 +198,8 @@ public final class WidgetProvider extends AppWidgetProvider
 			Util.shortToast( this,
 					getString( killed > 1 ? R.string.kill_info2
 							: R.string.kill_info, killed, ignored ) );
+
+			stopSelfResult( startId );
 		}
 	}
 }
