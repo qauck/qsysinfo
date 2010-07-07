@@ -2,9 +2,7 @@
 <resources>
 
 	<string name="app_name">系统信息</string>
-	<string name="all_apps">所有</string>
 	<string name="info_not_available">信息不可用</string>
-	<string name="filter_title">应用程序类型</string>
 	<string name="processor">处理器</string>
 	<string name="memory">内存</string>
 	<string name="sd_storage">记忆卡</string>
@@ -14,18 +12,17 @@
 	<string name="about_phone">关于手机</string>
 	<string name="more_info">更多信息</string>
 	<string name="more_info_summary">查看更多关于手机的详细信息</string>
-	<string name="no_app_show">当前的过滤条件下没有应用程序可以显示.</string>
+	<string name="actions">操作</string>
 	<string name="refresh">刷新</string>
 	<string name="export">导出</string>
 	<string name="select_all">全部选择</string>
 	<string name="deselect_all">取消选择</string>
 	<string name="no_app_selected">没有选中的应用程序.</string>
+	<string name="no_app_show">当前的过滤条件下没有应用程序可以显示.</string>
 	<string name="warning">警告</string>
 	<string name="warning_msg">应用程序会被导出到 \'%s\', 任何已存在的文件会被覆盖, 请确定是否继续?</string>
 	<string name="cont">继续</string>
 	<string name="start_exporting">开始导出...</string>
-	<string name="sys_apps">系统</string>
-	<string name="user_apps">用户</string>
 	<string name="exporting">导出 %s...</string>
 	<string name="copy_error">复制文件时发生错误: %s</string>
 	<string name="exported">共 %s 个应用程序已被导出.</string>
@@ -35,8 +32,11 @@
 	<string name="computing">计算中...</string>
 	<string name="about">关于</string>
 	<string name="about_msg">版本 %s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a href="%s">[ 支持此应用 ]&lt;/a>&lt;br></string>
-	<string name="actions">操作</string>
 	<string name="close">关闭</string>
+	<string name="filter_title">应用程序类型</string>
+	<string name="all_apps">所有</string>
+	<string name="sys_apps">系统</string>
+	<string name="user_apps">用户</string>
 	<string name="version">版本</string>
 	<string name="loading">正在刷新...</string>
 	<string name="end_proc_hint">- 单击列表结束进程\n- 单击此处结束所有进程</string>

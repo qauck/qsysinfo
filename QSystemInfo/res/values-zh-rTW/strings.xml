@@ -2,9 +2,7 @@
 <resources>
 
 	<string name="app_name">系統資訊</string>
-	<string name="all_apps">全體</string>
 	<string name="info_not_available">資訊不可用</string>
-	<string name="filter_title">應用程式類型</string>
 	<string name="processor">處理器</string>
 	<string name="memory">記憶體</string>
 	<string name="sd_storage">記憶卡</string>
@@ -14,18 +12,17 @@
 	<string name="about_phone">關于手機</string>
 	<string name="more_info">更多資訊</string>
 	<string name="more_info_summary">檢視更多關于手機的詳細資訊</string>
-	<string name="no_app_show">當前過濾條件下沒有應用程式可以顯示.</string>
+	<string name="actions">操作</string>
 	<string name="refresh">重新整理</string>
 	<string name="export">匯出</string>
 	<string name="select_all">全部選中</string>
 	<string name="deselect_all">取消選中</string>
 	<string name="no_app_selected">沒有選取的應用程式.</string>
+	<string name="no_app_show">當前過濾條件下沒有應用程式可以顯示.</string>
 	<string name="warning">警示</string>
 	<string name="warning_msg">應用程式將被匯出至 \'%s\', 任何已存在的檔案會被覆蓋, 請確認是否繼續?</string>
 	<string name="cont">繼續</string>
 	<string name="start_exporting">開始匯出...</string>
-	<string name="sys_apps">系統</string>
-	<string name="user_apps">用戶</string>
 	<string name="exporting">匯出 %s...</string>
 	<string name="copy_error">復制檔案時發生錯誤: %s</string>
 	<string name="exported">共 %s 個應用程式已被匯出.</string>
@@ -35,8 +32,11 @@
 	<string name="computing">計算中...</string>
 	<string name="about">關于</string>
 	<string name="about_msg">版本 %s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a href="%s">[ 支持此應用 ]&lt;/a>&lt;br></string>
-	<string name="actions">操作</string>
 	<string name="close">關閉</string>
+	<string name="filter_title">應用程式類型</string>
+	<string name="all_apps">全體</string>
+	<string name="sys_apps">系統</string>
+	<string name="user_apps">用戶</string>
 	<string name="version">版本</string>
 	<string name="loading">正在重新整理...</string>
 	<string name="end_proc_hint">- 單擊列表結束進程\n- 單擊此處結束所有進程</string>
