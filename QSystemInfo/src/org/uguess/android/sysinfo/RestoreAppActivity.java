@@ -364,7 +364,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 				}
 				else
 				{
-					img_type.setImageDrawable( getResources( ).getDrawable( R.drawable.icon ) );
+					img_type.setImageDrawable( getPackageManager( ).getDefaultActivityIcon( ) );
 				}
 
 				ckb_app = (CheckBox) view.findViewById( R.id.ckb_app );
