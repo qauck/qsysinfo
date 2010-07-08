@@ -606,6 +606,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 						PREF_KEY_SHOW_ICON ) )
 				{
 					img_type.setVisibility( View.VISIBLE );
+
 					if ( itm.icon != null )
 					{
 						img_type.setImageDrawable( itm.icon );
@@ -1721,16 +1722,19 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 			if ( holder != null )
 			{
-				holder.size = Formatter.formatFileSize( ac, pStats.codeSize )
-						+ " + " //$NON-NLS-1$
-						+ Formatter.formatFileSize( ac, pStats.dataSize )
-						+ " (" //$NON-NLS-1$
-						+ Formatter.formatFileSize( ac, pStats.cacheSize )
-						+ ')';
+				synchronized ( appCache )
+				{
+					holder.size = Formatter.formatFileSize( ac, pStats.codeSize )
+							+ " + " //$NON-NLS-1$
+							+ Formatter.formatFileSize( ac, pStats.dataSize )
+							+ " (" //$NON-NLS-1$
+							+ Formatter.formatFileSize( ac, pStats.cacheSize )
+							+ ')';
 
-				holder.codeSize = pStats.codeSize;
-				holder.dataSize = pStats.dataSize;
-				holder.cacheSize = pStats.cacheSize;
+					holder.codeSize = pStats.codeSize;
+					holder.dataSize = pStats.dataSize;
+					holder.cacheSize = pStats.cacheSize;
+				}
 			}
 
 			count.countDown( );
@@ -1884,7 +1888,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 				if ( holder != null )
 				{
-					holder.label = label;
+					synchronized ( appCache )
+					{
+						holder.label = label;
+					}
 				}
 			}
 
@@ -2051,17 +2058,20 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 									if ( pi != null )
 									{
-										if ( pi.versionCode < holder.versionCode )
+										synchronized ( appCache )
 										{
-											holder.backupState = 1;
-										}
-										else if ( pi.versionCode == holder.versionCode )
-										{
-											holder.backupState = 2;
-										}
-										else
-										{
-											holder.backupState = 3;
+											if ( pi.versionCode < holder.versionCode )
+											{
+												holder.backupState = 1;
+											}
+											else if ( pi.versionCode == holder.versionCode )
+											{
+												holder.backupState = 2;
+											}
+											else
+											{
+												holder.backupState = 3;
+											}
 										}
 
 										continue;
@@ -2071,7 +2081,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 						}
 					}
 
-					holder.backupState = 0;
+					synchronized ( appCache )
+					{
+						holder.backupState = 0;
+					}
 				}
 			}
 
