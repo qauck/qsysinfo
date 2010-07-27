@@ -301,5 +301,9 @@
     <string name="show_app_icon">显示应用程序图标</string>
     <string name="free">可用</string>
     <string name="load">负载</string>
+    <string name="configure_widgets_sum">启用或禁用小部件</string>
+    <string name="configure_widgets">配置小部件</string>
+    <string name="reboot_warning">设备必须重新启动以使改动生效.</string>
+    <string name="widgets">小部件</string>
 
 </resources>

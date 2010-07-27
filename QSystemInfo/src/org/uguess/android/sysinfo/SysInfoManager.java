@@ -26,10 +26,14 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
+
+import org.uguess.android.sysinfo.WidgetProvider.InfoWidget;
+import org.uguess.android.sysinfo.WidgetProvider.TaskWidget;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -38,6 +42,7 @@ import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
@@ -66,11 +71,14 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
+import android.text.ClipboardManager;
 import android.text.Html;
 import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.Menu;
@@ -80,6 +88,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ScrollView;
@@ -122,6 +131,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 	static final String PREF_KEY_AUTO_START_ICON = "auto_start_icon"; //$NON-NLS-1$
 	static final String PREF_KEY_DEFAULT_EMAIL = "default_email"; //$NON-NLS-1$
 	static final String PREF_KEY_DEFAULT_TAB = "default_tab"; //$NON-NLS-1$
+	static final String PREF_KEY_WIDGET_DISABLED = "widget_disabled"; //$NON-NLS-1$
 
 	private static final int BASIC_INFO = 0;
 	private static final int APPLICATIONS = 1;
@@ -129,6 +139,10 @@ public final class SysInfoManager extends PreferenceActivity implements
 	private static final int NETSTATES = 3;
 	private static final int DMESG_LOG = 4;
 	private static final int LOGCAT_LOG = 5;
+
+	private static final int WIDGET_BAR = 0;
+	private static final int WIDGET_INFO = 1;
+	private static final int WIDGET_TASK = 2;
 
 	ProgressDialog progress;
 
@@ -1080,6 +1094,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 					false );
 			Util.updateStringOption( data, this, PREF_KEY_DEFAULT_EMAIL );
 			Util.updateIntOption( data, this, PREF_KEY_DEFAULT_TAB, 1 );
+			Util.updateStringOption( data, this, PREF_KEY_WIDGET_DISABLED );
 		}
 	}
 
@@ -1109,6 +1124,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 					Util.getStringOption( this, PREF_KEY_DEFAULT_EMAIL, null ) );
 			it.putExtra( PREF_KEY_DEFAULT_TAB,
 					Util.getIntOption( this, PREF_KEY_DEFAULT_TAB, 1 ) );
+			it.putExtra( PREF_KEY_WIDGET_DISABLED,
+					Util.getStringOption( this, PREF_KEY_WIDGET_DISABLED, null ) );
 
 			startActivityForResult( it, 2 );
 
@@ -2322,6 +2339,69 @@ public final class SysInfoManager extends PreferenceActivity implements
 		return true;
 	}
 
+	static int[] getWidgetIds( String names )
+	{
+		if ( names != null )
+		{
+			String[] ss = names.split( "," ); //$NON-NLS-1$
+
+			if ( ss != null && ss.length > 0 )
+			{
+				int[] id = new int[ss.length];
+				int idx = 0;
+
+				for ( String s : ss )
+				{
+					if ( s.equals( WidgetProvider.class.getSimpleName( ) ) )
+					{
+						id[idx] = WIDGET_BAR;
+					}
+					else if ( s.equals( InfoWidget.class.getSimpleName( ) ) )
+					{
+						id[idx] = WIDGET_INFO;
+					}
+					else if ( s.equals( TaskWidget.class.getSimpleName( ) ) )
+					{
+						id[idx] = WIDGET_TASK;
+					}
+
+					idx++;
+				}
+
+				return id;
+			}
+		}
+
+		return null;
+	}
+
+	static String getWidgetName( int id )
+	{
+		Class<?> clz = getWidgetClass( id );
+
+		if ( clz != null )
+		{
+			return clz.getSimpleName( );
+		}
+
+		return null;
+	}
+
+	static Class<?> getWidgetClass( int id )
+	{
+		switch ( id )
+		{
+			case WIDGET_BAR :
+				return WidgetProvider.class;
+			case WIDGET_INFO :
+				return InfoWidget.class;
+			case WIDGET_TASK :
+				return TaskWidget.class;
+		}
+
+		return null;
+	}
+
 	/**
 	 * FormatItem
 	 */
@@ -2436,6 +2516,54 @@ public final class SysInfoManager extends PreferenceActivity implements
 		}
 
 		@Override
+		public void onCreateContextMenu( ContextMenu menu, View v,
+				ContextMenuInfo menuInfo )
+		{
+			menu.setHeaderTitle( R.string.actions );
+			menu.add( R.string.copy_text );
+		}
+
+		@Override
+		public boolean onContextItemSelected( MenuItem item )
+		{
+			View view = ( (AdapterContextMenuInfo) item.getMenuInfo( ) ).targetView;
+
+			if ( view != null )
+			{
+				TextView txtHead = (TextView) view.findViewById( R.id.txt_head );
+				TextView txtMsg = (TextView) view.findViewById( R.id.txt_msg );
+
+				String s = null;
+
+				if ( txtHead != null )
+				{
+					s = txtHead.getText( ).toString( );
+				}
+
+				if ( txtMsg != null )
+				{
+					if ( s != null )
+					{
+						s += '\n' + txtMsg.getText( ).toString( );
+					}
+					else
+					{
+						s = txtMsg.getText( ).toString( );
+					}
+				}
+
+				ClipboardManager cm = (ClipboardManager) getSystemService( CLIPBOARD_SERVICE );
+
+				if ( cm != null && !TextUtils.isEmpty( s ) )
+				{
+					cm.setText( s );
+				}
+			}
+
+			return true;
+		}
+
+		@Override
 		public boolean dispatchTouchEvent( MotionEvent ev )
 		{
 			if ( gestureDetector.onTouchEvent( ev ) )
@@ -2475,6 +2603,12 @@ public final class SysInfoManager extends PreferenceActivity implements
 			perfEmail.setKey( PREF_KEY_DEFAULT_EMAIL );
 			perfEmail.setTitle( R.string.default_email );
 			pc.addPreference( perfEmail );
+
+			Preference perfWidget = new Preference( this );
+			perfWidget.setKey( PREF_KEY_WIDGET_DISABLED );
+			perfWidget.setTitle( R.string.configure_widgets );
+			perfWidget.setSummary( R.string.configure_widgets_sum );
+			pc.addPreference( perfWidget );
 
 			pc = new PreferenceCategory( this );
 			pc.setTitle( R.string.notifications );
@@ -2648,6 +2782,118 @@ public final class SysInfoManager extends PreferenceActivity implements
 						},
 								it.getIntExtra( PREF_KEY_DEFAULT_TAB, 1 ),
 								listener )
+						.create( )
+						.show( );
+
+				return true;
+			}
+			else if ( PREF_KEY_WIDGET_DISABLED.equals( preference.getKey( ) ) )
+			{
+				final boolean[] states = new boolean[4];
+				Arrays.fill( states, true );
+
+				String disabled = it.getStringExtra( PREF_KEY_WIDGET_DISABLED );
+
+				if ( disabled != null )
+				{
+					int[] ids = getWidgetIds( disabled );
+
+					if ( ids != null )
+					{
+						for ( int i : ids )
+						{
+							states[i] = false;
+						}
+					}
+				}
+
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						PackageManager pm = getPackageManager( );
+
+						StringBuilder disabled = new StringBuilder( );
+
+						int idx = 0;
+						for ( boolean b : states )
+						{
+							// record disabled
+							if ( !b )
+							{
+								String name = getWidgetName( idx );
+
+								if ( name != null )
+								{
+									if ( disabled.length( ) > 0 )
+									{
+										disabled.append( ',' );
+									}
+
+									disabled.append( name );
+								}
+							}
+
+							// refresh widget enablement
+							Class<?> clz = getWidgetClass( idx );
+
+							if ( clz != null )
+							{
+								ComponentName comp = new ComponentName( InfoSettings.this,
+										clz );
+
+								int setting = pm.getComponentEnabledSetting( comp );
+
+								if ( b
+										&& setting != PackageManager.COMPONENT_ENABLED_STATE_DEFAULT )
+								{
+									pm.setComponentEnabledSetting( comp,
+											PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+											PackageManager.DONT_KILL_APP );
+								}
+								else if ( !b
+										&& setting != PackageManager.COMPONENT_ENABLED_STATE_DISABLED )
+								{
+									pm.setComponentEnabledSetting( comp,
+											PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+											PackageManager.DONT_KILL_APP );
+								}
+							}
+
+							idx++;
+						}
+
+						String names = disabled.length( ) > 0 ? disabled.toString( )
+								: null;
+
+						it.putExtra( PREF_KEY_WIDGET_DISABLED, names );
+
+						dialog.dismiss( );
+
+						Util.longToast( InfoSettings.this,
+								R.string.reboot_warning );
+					}
+				};
+
+				OnMultiChoiceClickListener multiListener = new OnMultiChoiceClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which,
+							boolean isChecked )
+					{
+						states[which] = isChecked;
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.widgets )
+						.setPositiveButton( android.R.string.ok, listener )
+						.setNegativeButton( android.R.string.cancel, null )
+						.setMultiChoiceItems( new CharSequence[]{
+								getString( R.string.widget_bar_name ),
+								getString( R.string.app_name ),
+								getString( R.string.task_widget_name ),
+						},
+								states,
+								multiListener )
 						.create( )
 						.show( );
 

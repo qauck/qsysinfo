@@ -301,5 +301,9 @@
     <string name="show_app_icon">Show Application Icon</string>
     <string name="free">Free</string>
     <string name="load">Load</string>
+    <string name="configure_widgets_sum">Enable or disable the widgets</string>
+    <string name="configure_widgets">Configure Widgets</string>
+    <string name="reboot_warning">Device must be rebooted to make the change effective.</string>
+    <string name="widgets">Widgets</string>
 
 </resources>

@@ -301,5 +301,9 @@
     <string name="show_app_icon">顯示應用程式圖示</string>
     <string name="free">可用</string>
     <string name="load">負載</string>
+    <string name="configure_widgets_sum">啟用或禁用小工具</string>
+    <string name="configure_widgets">配置小工具</string>
+    <string name="reboot_warning">設備必須重新啟動以使改動生效.</string>
+    <string name="widgets">小工具</string>
 
 </resources>
