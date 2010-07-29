@@ -957,6 +957,15 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 						if ( appName != null )
 						{
+							if ( appName.equals( "pkg.apk" ) //$NON-NLS-1$
+									&& src.startsWith( "/mnt/asec/" ) ) //$NON-NLS-1$
+							{
+								// this app is possibly installed on sdcard,
+								// try use the parent folder name as the app
+								// name
+								appName = getFolderName( src ) + ".apk"; //$NON-NLS-1$
+							}
+
 							File targetOutput = useroutput;
 
 							if ( ( app.flags & ApplicationInfo.FLAG_SYSTEM ) != 0 )
@@ -1011,6 +1020,31 @@ public final class ApplicationManager extends ListActivity implements Constants
 		}
 
 		int idx = fullName.lastIndexOf( '/' );
+		if ( idx == -1 )
+		{
+			return fullName;
+		}
+
+		return fullName.substring( idx + 1 );
+	}
+
+	static String getFolderName( String fullName )
+	{
+		if ( fullName == null )
+		{
+			return null;
+		}
+
+		int idx = fullName.lastIndexOf( '/' );
+		if ( idx == -1 )
+		{
+			return fullName;
+		}
+
+		fullName = fullName.substring( 0, idx );
+
+		// find the second last segment
+		idx = fullName.lastIndexOf( '/' );
 		if ( idx == -1 )
 		{
 			return fullName;
@@ -2049,6 +2083,15 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 							if ( appName != null )
 							{
+								if ( appName.equals( "pkg.apk" ) //$NON-NLS-1$
+										&& src.startsWith( "/mnt/asec/" ) ) //$NON-NLS-1$
+								{
+									// this app is possibly installed on sdcard,
+									// try use the parent folder name as the app
+									// name
+									appName = getFolderName( src ) + ".apk"; //$NON-NLS-1$
+								}
+
 								File destFile = new File( targetOutput, appName );
 
 								if ( destFile.exists( ) )
