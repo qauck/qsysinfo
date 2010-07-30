@@ -39,7 +39,7 @@
 	<string name="user_apps">用戶</string>
 	<string name="version">版本</string>
 	<string name="loading">正在重新整理...</string>
-	<string name="end_proc_hint">- 單擊列表結束進程\n- 單擊此處結束所有進程</string>
+	<string name="end_proc_hint">- 單擊列表結束進程\u00A0\n- 單擊此處結束所有進程\u00A0</string>
 	<string name="switch_to">切換任務</string>
 	<string name="end_task">結束任務</string>
 	<string name="tab_info">基礎資訊</string>

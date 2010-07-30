@@ -39,7 +39,7 @@
 	<string name="user_apps">User</string>
 	<string name="version">Version</string>
 	<string name="loading">Refreshing...</string>
-	<string name="end_proc_hint">- Click a task to end\n- Click me to end all</string>
+	<string name="end_proc_hint">- Click a task to end\u00A0\n- Click me to end all\u00A0</string>
 	<string name="switch_to">Switch To</string>
 	<string name="end_task">End Task</string>
 	<string name="tab_info">Basic Info</string>

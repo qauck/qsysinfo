@@ -39,7 +39,7 @@
 	<string name="user_apps">Utilisateur</string>
 	<string name="version">Version</string>
 	<string name="loading">Rafraîchissement...</string>
-	<string name="end_proc_hint">- Cliquez sur une tâche à terminer\n- Cliquez ici pour tout terminer</string>
+	<string name="end_proc_hint">- Cliquez sur une tâche à terminer\u00A0\n- Cliquez ici pour tout terminer\u00A0</string>
 	<string name="switch_to">Basculer vers</string>
 	<string name="end_task">Fin de tâche</string>
 	<string name="tab_info">Informations de base</string>

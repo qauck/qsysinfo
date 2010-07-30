@@ -39,7 +39,7 @@
 	<string name="user_apps">De Usuario</string>
 	<string name="version">Versión</string>
 	<string name="loading">Actualizando...</string>
-	<string name="end_proc_hint">- Pulsa una tarea para finalizarla\n- Púlsame para finalizar todo</string>
+	<string name="end_proc_hint">- Pulsa una tarea para finalizarla\u00A0\n- Púlsame para finalizar todo\u00A0</string>
 	<string name="switch_to">Cambiar a</string>
 	<string name="end_task">Finalizar Tarea</string>
 	<string name="tab_info">Información Básica</string>

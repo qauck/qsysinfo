@@ -39,7 +39,7 @@
 	<string name="user_apps">用户</string>
 	<string name="version">版本</string>
 	<string name="loading">正在刷新...</string>
-	<string name="end_proc_hint">- 单击列表结束进程\n- 单击此处结束所有进程</string>
+	<string name="end_proc_hint">- 单击列表结束进程\u00A0\n- 单击此处结束所有进程\u00A0</string>
 	<string name="switch_to">切换任务</string>
 	<string name="end_task">结束任务</string>
 	<string name="tab_info">基本信息</string>

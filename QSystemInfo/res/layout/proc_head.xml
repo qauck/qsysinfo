@@ -4,17 +4,16 @@
 	android:layout_width="fill_parent" android:layout_height="wrap_content">
 
 	<TextView android:layout_height="wrap_content" android:text="name"
-		android:paddingLeft="3dip" android:id="@+id/txt_proc_name"
-		android:textAppearance="?android:attr/textAppearanceMedium"
-		android:layout_width="fill_parent" android:layout_marginLeft="30dip"
-		android:layout_alignParentLeft="true" android:textStyle="italic"
-		android:textColor="#ffffffff"></TextView>
+		android:id="@+id/txt_proc_name" android:textAppearance="?android:attr/textAppearanceMedium"
+		android:textStyle="italic" android:textColor="#ffffffff"
+		android:layout_centerHorizontal="true" android:layout_marginLeft="8dip"
+		android:layout_width="wrap_content"></TextView>
 	<TextView android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:textAppearance="?android:attr/textAppearanceSmall"
 		android:layout_below="@+id/txt_proc_name" android:id="@+id/txt_total"
 		android:text="total" android:layout_alignParentLeft="true"
 		android:layout_marginLeft="8dip"></TextView>
-		
+
 	<LinearLayout android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:layout_alignParentRight="true"
 		android:layout_below="@+id/txt_proc_name">
