@@ -301,5 +301,9 @@
     <string name="show_app_icon">Afficher icône application</string>
     <string name="free">Libre</string>
     <string name="load">Load</string>
+    <string name="configure_widgets_sum">Activer ou désactiver les widgets</string>
+    <string name="configure_widgets">Configurer les widgets</string>
+    <string name="reboot_warning">L\'appareil doit être redémarré pour que les changements soient effectifs.</string>
+    <string name="widgets">Widgets</string>
 
 </resources>
