@@ -301,5 +301,9 @@
     <string name="show_app_icon">Mostrar Icono de Aplicación</string>
     <string name="free">Disponible</string>
     <string name="load">Load</string>
+    <string name="configure_widgets_sum">Habilita o deshabilita los widgets</string>
+    <string name="configure_widgets">Configurar Widgets</string>
+    <string name="reboot_warning">El dispositivo debe reiniciarse para que los cambios se hagan efectivos.</string>
+    <string name="widgets">Widgets</string>
 
 </resources>
