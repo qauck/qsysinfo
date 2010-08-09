@@ -955,16 +955,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 						String appName = getFileName( src );
 
-						if ( appName != null )
+						if ( appName != null && app.packageName != null )
 						{
-							if ( appName.equals( "pkg.apk" ) //$NON-NLS-1$
-									&& src.startsWith( "/mnt/asec/" ) ) //$NON-NLS-1$
-							{
-								// this app is possibly installed on sdcard,
-								// try use the parent folder name as the app
-								// name
-								appName = getFolderName( src ) + ".apk"; //$NON-NLS-1$
-							}
+							// always use package name as the file name for versatile match
+							appName = app.packageName + ".apk"; //$NON-NLS-1$
 
 							File targetOutput = useroutput;
 
@@ -2081,16 +2075,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 						{
 							String appName = getFileName( src );
 
-							if ( appName != null )
+							if ( appName != null && ai.packageName != null )
 							{
-								if ( appName.equals( "pkg.apk" ) //$NON-NLS-1$
-										&& src.startsWith( "/mnt/asec/" ) ) //$NON-NLS-1$
-								{
-									// this app is possibly installed on sdcard,
-									// try use the parent folder name as the app
-									// name
-									appName = getFolderName( src ) + ".apk"; //$NON-NLS-1$
-								}
+								// always use package name as the file name for versatile match
+								appName = ai.packageName + ".apk"; //$NON-NLS-1$
 
 								File destFile = new File( targetOutput, appName );
 
