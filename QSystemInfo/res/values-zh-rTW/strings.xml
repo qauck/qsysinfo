@@ -305,5 +305,11 @@
     <string name="configure_widgets">配置小工具</string>
     <string name="reboot_warning">設備必須重新啟動以使改動生效.</string>
     <string name="widgets">小工具</string>
+	<string name="swap_free">可用置換區:</string>
+    <string name="swap_total">總計置換區:</string>
+    <string name="cached">快取:</string>
+    <string name="buffers">緩衝:</string>
+    <string name="idle">空閒:</string>
+    <string name="total">總計:</string>
 
 </resources>

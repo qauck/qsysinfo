@@ -305,5 +305,11 @@
     <string name="configure_widgets">配置小部件</string>
     <string name="reboot_warning">设备必须重新启动以使改动生效.</string>
     <string name="widgets">小部件</string>
+    <string name="swap_free">可用交换区:</string>
+    <string name="swap_total">总计交换区:</string>
+    <string name="cached">缓存:</string>
+    <string name="buffers">缓冲:</string>
+    <string name="idle">空闲:</string>
+    <string name="total">总计:</string>
 
 </resources>

@@ -6,7 +6,7 @@
 	android:paddingRight="15dip" android:paddingTop="10dip">
 	<TextView android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:textAppearance="?android:attr/textAppearanceMedium"
-		android:id="@+id/txt_head" android:minWidth="120dip"></TextView>
+		android:id="@+id/txt_head" android:minWidth="130dip"></TextView>
 	<TextView android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:id="@+id/txt_msg"></TextView>
 </LinearLayout>

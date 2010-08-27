@@ -17,8 +17,7 @@
 	<Preference style="?android:preferenceInformationStyle"
 		android:key="cache_storage" android:title="@string/cache_storage" />
 
-	<Preference style="?android:preferenceInformationStyle"
-		android:key="memory" android:title="@string/memory"></Preference>
+	<Preference android:key="memory" android:title="@string/memory"></Preference>
 
 	<Preference android:key="processor" android:title="@string/processor"></Preference>
 

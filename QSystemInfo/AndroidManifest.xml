@@ -37,6 +37,8 @@
 			android:name=".SensorInfoActivity" android:theme="@android:style/Theme.Dialog"></activity>
 		<activity android:name=".CpuInfoActivity"
 			android:configChanges="keyboardHidden|orientation" android:theme="@android:style/Theme.Dialog"></activity>
+		<activity android:name=".MemInfoActivity"
+			android:configChanges="keyboardHidden|orientation" android:theme="@android:style/Theme.Dialog"></activity>
 		<activity android:name=".NetworkInfoActivity"
 			android:configChanges="keyboardHidden|orientation" android:theme="@android:style/Theme.Dialog"></activity>
 		<activity android:name=".RestoreAppActivity"

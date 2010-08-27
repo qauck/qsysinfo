@@ -427,7 +427,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 		return null;
 	}
 
-	private static long extractMemCount( String line )
+	static long extractMemCount( String line )
 	{
 		if ( line != null )
 		{
@@ -897,6 +897,13 @@ public final class SysInfoManager extends PreferenceActivity implements
 		else if ( "processor".equals( preference.getKey( ) ) ) //$NON-NLS-1$
 		{
 			Intent it = new Intent( this, CpuInfoActivity.class );
+			startActivityForResult( it, 1 );
+
+			return true;
+		}
+		else if ( "memory".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		{
+			Intent it = new Intent( this, MemInfoActivity.class );
 			startActivityForResult( it, 1 );
 
 			return true;
