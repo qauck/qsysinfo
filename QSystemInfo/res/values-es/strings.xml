@@ -305,5 +305,11 @@
     <string name="configure_widgets">Configurar Widgets</string>
     <string name="reboot_warning">El dispositivo debe reiniciarse para que los cambios se hagan efectivos.</string>
     <string name="widgets">Widgets</string>
+    <string name="swap_free">Swap Disponible:</string>
+    <string name="swap_total">Swap Total:</string>
+    <string name="cached">Cache:</string>
+    <string name="buffers">Buffers:</string>
+    <string name="idle">Idle:</string>
+    <string name="total">Total:</string>
 
 </resources>

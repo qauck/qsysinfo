@@ -305,5 +305,11 @@
     <string name="configure_widgets">Widgets konfigurieren</string>
     <string name="reboot_warning">Die Änderung wird erst nach einem Neustart Wirkung zeigen.</string>
     <string name="widgets">Widgets</string>
+    <string name="swap_free">Swap frei:</string>
+    <string name="swap_total">Swap gesamt:</string>
+    <string name="cached">Cache:</string>
+    <string name="buffers">Puffer:</string>
+    <string name="idle">Inaktiv:</string>
+    <string name="total">Gesamt:</string>
 
 </resources>
