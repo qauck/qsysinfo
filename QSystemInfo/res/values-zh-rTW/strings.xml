@@ -311,5 +311,6 @@
     <string name="buffers">緩衝:</string>
     <string name="idle">空閒:</string>
     <string name="total">總計:</string>
+    <string name="version_code">版本代碼</string>
 
 </resources>

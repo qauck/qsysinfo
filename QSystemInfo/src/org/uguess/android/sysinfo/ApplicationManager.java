@@ -957,7 +957,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 						if ( appName != null && app.packageName != null )
 						{
-							// always use package name as the file name for versatile match
+							// always use package name as the file name for
+							// versatile match
 							appName = app.packageName + ".apk"; //$NON-NLS-1$
 
 							File targetOutput = useroutput;
@@ -1350,6 +1351,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 						.append( getString( R.string.pkg_name ) )
 						.append( ": " ) //$NON-NLS-1$
 						.append( appInfo.packageName )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.version_code ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( ai.versionCode )
 						.append( "<br>" ) //$NON-NLS-1$
 						.append( getString( R.string.target_sdk ) )
 						.append( ": " ) //$NON-NLS-1$
@@ -2077,7 +2082,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 							if ( appName != null && ai.packageName != null )
 							{
-								// always use package name as the file name for versatile match
+								// always use package name as the file name for
+								// versatile match
 								appName = ai.packageName + ".apk"; //$NON-NLS-1$
 
 								File destFile = new File( targetOutput, appName );

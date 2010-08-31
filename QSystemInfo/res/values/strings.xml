@@ -311,5 +311,6 @@
     <string name="buffers">Buffers:</string>
     <string name="idle">Idle:</string>
     <string name="total">Total:</string>
+    <string name="version_code">Version Code</string>
 
 </resources>
