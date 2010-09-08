@@ -311,5 +311,6 @@
     <string name="buffers">Tampon:</string>
     <string name="idle">Inactif:</string>
     <string name="total">Total:</string>
+    <string name="version_code">Code Version</string>
 
 </resources>

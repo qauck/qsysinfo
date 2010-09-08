@@ -311,5 +311,6 @@
     <string name="buffers">Puffer:</string>
     <string name="idle">Inaktiv:</string>
     <string name="total">Gesamt:</string>
+    <string name="version_code">Versionscode</string>
 
 </resources>
