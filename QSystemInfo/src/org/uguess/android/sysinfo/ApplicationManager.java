@@ -186,7 +186,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			{
 				case MSG_INIT_OK :
 
-					adapter = (ArrayAdapter<AppInfoHolder>) getListAdapter( );
+					adapter = (ArrayAdapter<AppInfoHolder>) getListView( ).getAdapter( );
 
 					adapter.setNotifyOnChange( false );
 
@@ -315,7 +315,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 				case MSG_REFRESH_PKG_LABEL :
 				case MSG_REFRESH_BACKUP_STATE :
 
-					adapter = (ArrayAdapter<AppInfoHolder>) getListAdapter( );
+					adapter = (ArrayAdapter<AppInfoHolder>) getListView( ).getAdapter( );
 
 					if ( msg.arg1 == 1 )
 					{
@@ -338,7 +338,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 					break;
 				case MSG_REFRESH_PKG_ICON :
 
-					( (ArrayAdapter<AppInfoHolder>) getListAdapter( ) ).notifyDataSetChanged( );
+					( (ArrayAdapter<AppInfoHolder>) getListView( ).getAdapter( ) ).notifyDataSetChanged( );
 					break;
 				case MSG_TOAST :
 
@@ -633,7 +633,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			}
 		};
 
-		setListAdapter( adapter );
+		getListView( ).setAdapter( adapter );
 	}
 
 	@Override
@@ -644,6 +644,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 			progress.dismiss( );
 			progress = null;
 		}
+
+		( (ArrayAdapter<AppInfoHolder>) getListView( ).getAdapter( ) ).clear( );
+
+		appCache.clear( );
+
 		super.onDestroy( );
 	}
 
@@ -2276,6 +2281,12 @@ public final class ApplicationManager extends ListActivity implements Constants
 		{
 			appList = new ArrayList<AppInfoHolder>( );
 			appLookup = new HashMap<String, AppInfoHolder>( );
+		}
+
+		synchronized void clear( )
+		{
+			appList.clear( );
+			appLookup.clear( );
 		}
 
 		synchronized ArrayList<AppInfoHolder> generateLocalList( )

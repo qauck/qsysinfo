@@ -293,6 +293,9 @@ public final class NetStateManager extends ListActivity implements Constants
 			progress.dismiss( );
 			progress = null;
 		}
+
+		( (ArrayAdapter<ConnectionItem>) getListView( ).getAdapter( ) ).clear( );
+
 		super.onDestroy( );
 	}
 

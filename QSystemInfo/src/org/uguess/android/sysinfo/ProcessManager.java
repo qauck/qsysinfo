@@ -526,6 +526,16 @@ public final class ProcessManager extends ListActivity implements Constants
 	}
 
 	@Override
+	protected void onDestroy( )
+	{
+		( (ArrayAdapter<ProcessItem>) getListView( ).getAdapter( ) ).clear( );
+
+		procCache.clear( );
+
+		super.onDestroy( );
+	}
+
+	@Override
 	protected void onResume( )
 	{
 		super.onResume( );
@@ -2208,6 +2218,12 @@ public final class ProcessManager extends ListActivity implements Constants
 		{
 			resCache = new HashMap<String, ProcessItem>( );
 			procList = new ArrayList<ProcessItem>( );
+		}
+
+		synchronized void clear( )
+		{
+			resCache.clear( );
+			procList.clear( );
 		}
 
 		synchronized ArrayList<ProcessItem> generateLocalList( )
