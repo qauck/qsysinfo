@@ -792,6 +792,63 @@ public final class SysInfoManager extends PreferenceActivity implements
 			}
 		}
 
+		return getSystemA2SDStorageInfo( );
+	}
+
+	/**
+	 * This checks the built-in app2sd storage info supported since Froyo
+	 */
+	private String[] getSystemA2SDStorageInfo( )
+	{
+		final PackageManager pm = getPackageManager( );
+		List<ApplicationInfo> allApps = pm.getInstalledApplications( 0 );
+
+		long total = 0;
+		long free = 0;
+
+		for ( int i = 0, size = allApps.size( ); i < size; i++ )
+		{
+			ApplicationInfo info = allApps.get( i );
+
+			if ( ( info.flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE ) != 0 )
+			{
+				String src = info.sourceDir;
+
+				if ( src != null )
+				{
+					File srcFile = new File( src );
+
+					if ( srcFile.canRead( ) )
+					{
+						try
+						{
+							StatFs stat = new StatFs( srcFile.getAbsolutePath( ) );
+							long blockSize = stat.getBlockSize( );
+
+							total += stat.getBlockCount( ) * blockSize;
+							free += stat.getAvailableBlocks( ) * blockSize;
+						}
+						catch ( Exception e )
+						{
+							Log.e( SysInfoManager.class.getName( ),
+									"Cannot access path: " //$NON-NLS-1$
+											+ srcFile.getAbsolutePath( ),
+									e );
+						}
+					}
+				}
+			}
+		}
+
+		if ( total > 0 )
+		{
+			String[] info = new String[2];
+			info[0] = Formatter.formatFileSize( this, total );
+			info[1] = Formatter.formatFileSize( this, free );
+
+			return info;
+		}
+
 		return null;
 	}
 
