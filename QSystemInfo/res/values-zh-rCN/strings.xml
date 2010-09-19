@@ -312,5 +312,6 @@
     <string name="idle">空闲:</string>
     <string name="total">总计:</string>
     <string name="version_code">版本代码</string>
+	<string name="threshold">阈值:</string>
 
 </resources>
