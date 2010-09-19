@@ -177,17 +177,20 @@ public final class MemInfoActivity extends PopActivity
 			ActivityManager am = (ActivityManager) ctx.getSystemService( Context.ACTIVITY_SERVICE );
 			MemoryInfo mi = new MemoryInfo( );
 			am.getMemoryInfo( mi );
-			long available = mi.availMem;
 
 			data.add( new String[]{
 					ctx.getString( R.string.total ), formatSize( total, ctx )
 			} );
 			data.add( new String[]{
 					ctx.getString( R.string.free ) + ":", //$NON-NLS-1$
-					formatSize( available, ctx )
+					formatSize( mi.availMem, ctx )
 			} );
 			data.add( new String[]{
 					ctx.getString( R.string.idle ), formatSize( free, ctx )
+			} );
+			data.add( new String[]{
+					ctx.getString( R.string.threshold ),
+					formatSize( mi.threshold, ctx )
 			} );
 			data.add( new String[]{
 					ctx.getString( R.string.buffers ),
