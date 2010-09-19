@@ -255,10 +255,6 @@ public final class NetStateManager extends ListActivity implements Constants
 				{
 					txt_ip.setText( itm.local );
 
-					setFont( txt_proto, Typeface.BOLD );
-					setFont( txt_ip, Typeface.BOLD );
-					setFont( txt_state, Typeface.BOLD );
-
 					txt_proto.setTextColor( Color.WHITE );
 					txt_ip.setTextColor( Color.WHITE );
 					txt_state.setTextColor( Color.WHITE );

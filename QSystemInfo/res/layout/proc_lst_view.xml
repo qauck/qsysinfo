@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:myapp="http://schemas.android.com/apk/res/org.uguess.android.sysinfo.pro"
+	android:layout_height="fill_parent" android:layout_width="fill_parent"
+	android:orientation="vertical">
+
+	<RelativeLayout android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:id="@+id/list_head"
+		android:focusable="true" android:focusableInTouchMode="true"
+		android:layout_marginBottom="2dip">
+
+		<TextView android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:textAppearance="?android:attr/textAppearanceSmall"
+			android:layout_alignParentLeft="true" android:layout_marginLeft="8dip"
+			android:id="@+id/txt_head_total" android:textColor="@android:color/primary_text_dark"></TextView>
+
+		<LinearLayout android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:layout_alignParentRight="true">
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:layout_marginLeft="2dip"
+				android:textAppearance="?android:attr/textAppearanceSmall"
+				android:paddingLeft="3dip" android:paddingRight="3dip"
+				android:layout_marginRight="2dip" android:gravity="right"
+				android:text="MEM" android:id="@+id/txt_head_mem" android:textColor="@android:color/primary_text_dark"
+				android:visibility="invisible"></TextView>
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:layout_marginRight="2dip"
+				android:textAppearance="?android:attr/textAppearanceSmall"
+				android:gravity="right" android:text="CPU%" android:minWidth="40dip"
+				android:paddingRight="5dip" android:id="@+id/txt_head_cpu"
+				android:textColor="@android:color/primary_text_dark"
+				android:visibility="invisible"></TextView>
+		</LinearLayout>
+	</RelativeLayout>
+
+	<ListView android:layout_width="fill_parent" android:id="@android:id/list"
+		android:layout_weight="1" android:layout_height="0dip"></ListView>
+
+</LinearLayout>
