@@ -163,11 +163,14 @@ final class Util implements Constants
 	static boolean updateIntOption( Intent data, Activity ac, String key,
 			int defValue )
 	{
-		int t = data.getIntExtra( key, defValue );
-		if ( t != getIntOption( ac, key, defValue ) )
+		if ( data != null )
 		{
-			setIntOption( ac, key, t );
-			return true;
+			int t = data.getIntExtra( key, defValue );
+			if ( t != getIntOption( ac, key, defValue ) )
+			{
+				setIntOption( ac, key, t );
+				return true;
+			}
 		}
 		return false;
 	}
@@ -180,33 +183,39 @@ final class Util implements Constants
 	static boolean updateBooleanOption( Intent data, Activity ac, String key,
 			boolean defValue )
 	{
-		boolean b = data.getBooleanExtra( key, defValue );
-		if ( b != getBooleanOption( ac, key, defValue ) )
+		if ( data != null )
 		{
-			setBooleanOption( ac, key, b );
-			return true;
+			boolean b = data.getBooleanExtra( key, defValue );
+			if ( b != getBooleanOption( ac, key, defValue ) )
+			{
+				setBooleanOption( ac, key, b );
+				return true;
+			}
 		}
 		return false;
 	}
 
 	static boolean updateStringOption( Intent data, Activity ac, String key )
 	{
-		String s = data.getStringExtra( key );
-
-		if ( s != null )
+		if ( data != null )
 		{
-			s = s.trim( );
+			String s = data.getStringExtra( key );
 
-			if ( s.length( ) == 0 )
+			if ( s != null )
 			{
-				s = null;
-			}
-		}
+				s = s.trim( );
 
-		if ( !TextUtils.equals( s, getStringOption( ac, key, null ) ) )
-		{
-			setStringOption( ac, key, s );
-			return true;
+				if ( s.length( ) == 0 )
+				{
+					s = null;
+				}
+			}
+
+			if ( !TextUtils.equals( s, getStringOption( ac, key, null ) ) )
+			{
+				setStringOption( ac, key, s );
+				return true;
+			}
 		}
 		return false;
 	}
