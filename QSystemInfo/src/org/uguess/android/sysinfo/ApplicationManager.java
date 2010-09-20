@@ -1076,7 +1076,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 	protected void onActivityResult( int requestCode, int resultCode,
 			Intent data )
 	{
-		if ( requestCode == REQUEST_SETTINGS )
+		if ( requestCode == REQUEST_SETTINGS && data != null )
 		{
 			Util.updateStringOption( data, this, PREF_KEY_APP_EXPORT_DIR );
 

@@ -478,7 +478,7 @@ public final class LogViewer extends ListActivity implements Constants
 	protected void onActivityResult( int requestCode, int resultCode,
 			Intent data )
 	{
-		if ( requestCode == 1 )
+		if ( requestCode == 1 && data != null )
 		{
 			boolean needRefresh = false;
 

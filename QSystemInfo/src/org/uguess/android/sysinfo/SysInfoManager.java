@@ -1148,7 +1148,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 	protected void onActivityResult( int requestCode, int resultCode,
 			Intent data )
 	{
-		if ( requestCode == 2 )
+		if ( requestCode == 2 && data != null )
 		{
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_INFO_ICON );
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_TASK_ICON );
