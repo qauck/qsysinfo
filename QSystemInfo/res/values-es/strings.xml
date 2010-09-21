@@ -313,5 +313,9 @@
     <string name="total">Total:</string>
     <string name="version_code">Código de Versión</string>
     <string name="threshold">Umbral:</string>
+    <string name="main">Main</string>
+    <string name="radio">Radio</string>
+    <string name="events">Events</string>
+    <string name="ring_buffer">Ring Buffer</string>
 
 </resources>

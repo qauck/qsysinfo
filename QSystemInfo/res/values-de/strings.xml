@@ -313,5 +313,9 @@
     <string name="total">Gesamt:</string>
     <string name="version_code">Versionscode</string>
     <string name="threshold">Schwelle:</string>
+    <string name="main">Main</string>
+    <string name="radio">Radio</string>
+    <string name="events">Events</string>
+    <string name="ring_buffer">Ring Buffer</string>
 
 </resources>

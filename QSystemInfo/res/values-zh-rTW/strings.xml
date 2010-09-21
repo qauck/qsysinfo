@@ -313,5 +313,9 @@
     <string name="total">總計:</string>
     <string name="version_code">版本代碼</string>
 	<string name="threshold">閾值:</string>
+    <string name="main">Main</string>
+    <string name="radio">Radio</string>
+    <string name="events">Events</string>
+    <string name="ring_buffer">Ring Buffer</string>
 
 </resources>

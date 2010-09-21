@@ -38,7 +38,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceGroup;
+import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.text.ClipboardManager;
 import android.text.Html;
@@ -69,6 +69,7 @@ public final class LogViewer extends ListActivity implements Constants
 
 	private static final String PREF_KEY_CLOG_LEVL = "clog_level"; //$NON-NLS-1$
 	private static final String PREF_KEY_DLOG_LEVL = "dlog_level"; //$NON-NLS-1$
+	private static final String PREF_KEY_RING_BUFFER = "ring_buffer"; //$NON-NLS-1$
 	private static final String PREF_KEY_TAG_FILTER = "tag_filter"; //$NON-NLS-1$
 	private static final String PREF_KEY_PID_FILTER = "pid_filter"; //$NON-NLS-1$
 
@@ -80,6 +81,10 @@ public final class LogViewer extends ListActivity implements Constants
 	private static final int DM_LVL_NOTICE = 5;
 	private static final int DM_LVL_INFORMATION = 6;
 	private static final int DM_LVL_DEBUG = 7;
+
+	private static final int RING_BUFFER_MAIN = 0;
+	private static final int RING_BUFFER_RADIO = 1;
+	private static final int RING_BUFFER_EVENTS = 2;
 
 	static final String DMESG_MODE = "dmesgMode"; //$NON-NLS-1$
 
@@ -362,6 +367,9 @@ public final class LogViewer extends ListActivity implements Constants
 
 			it.putExtra( PREF_KEY_CLOG_LEVL,
 					Util.getIntOption( this, PREF_KEY_CLOG_LEVL, Log.VERBOSE ) );
+			it.putExtra( PREF_KEY_RING_BUFFER, Util.getIntOption( this,
+					PREF_KEY_RING_BUFFER,
+					RING_BUFFER_MAIN ) );
 			it.putExtra( PREF_KEY_TAG_FILTER,
 					Util.getStringOption( LogViewer.this,
 							PREF_KEY_TAG_FILTER,
@@ -486,6 +494,14 @@ public final class LogViewer extends ListActivity implements Constants
 					this,
 					PREF_KEY_CLOG_LEVL,
 					Log.VERBOSE ) )
+			{
+				needRefresh = true;
+			}
+
+			if ( Util.updateIntOption( data,
+					this,
+					PREF_KEY_RING_BUFFER,
+					RING_BUFFER_MAIN ) )
 			{
 				needRefresh = true;
 			}
@@ -786,6 +802,9 @@ public final class LogViewer extends ListActivity implements Constants
 						: collectCLog( Util.getIntOption( LogViewer.this,
 								PREF_KEY_CLOG_LEVL,
 								Log.VERBOSE ),
+								Util.getIntOption( LogViewer.this,
+										PREF_KEY_RING_BUFFER,
+										RING_BUFFER_MAIN ),
 								Util.getStringOption( LogViewer.this,
 										PREF_KEY_TAG_FILTER,
 										null ),
@@ -971,8 +990,8 @@ public final class LogViewer extends ListActivity implements Constants
 		return null;
 	}
 
-	static ArrayList<LogItem> collectCLog( int logLevel, String tagFilter,
-			int pidFilter )
+	static ArrayList<LogItem> collectCLog( int logLevel, int ringBuffer,
+			String tagFilter, int pidFilter )
 	{
 		char cl = 'V';
 
@@ -998,8 +1017,18 @@ public final class LogViewer extends ListActivity implements Constants
 		BufferedReader reader = null;
 		try
 		{
-			Process proc = Runtime.getRuntime( )
-					.exec( "logcat -d -v time *:" + cl ); //$NON-NLS-1$
+			String cmd = "logcat -d -v time *:"; //$NON-NLS-1$
+
+			if ( ringBuffer == RING_BUFFER_RADIO )
+			{
+				cmd = "logcat -d -b radio -v time *:"; //$NON-NLS-1$
+			}
+			else if ( ringBuffer == RING_BUFFER_EVENTS )
+			{
+				cmd = "logcat -d -b events -v time *:"; //$NON-NLS-1$
+			}
+
+			Process proc = Runtime.getRuntime( ).exec( cmd + cl );
 
 			reader = new BufferedReader( new InputStreamReader( proc.getInputStream( ) ),
 					8192 * 4 );
@@ -1071,17 +1100,37 @@ public final class LogViewer extends ListActivity implements Constants
 
 			super.onCreate( savedInstanceState );
 
-			addPreferencesFromResource( R.xml.log_pref );
+			setPreferenceScreen( getPreferenceManager( ).createPreferenceScreen( this ) );
 
 			dmesgMode = getIntent( ).getBooleanExtra( DMESG_MODE, false );
 
-			if ( dmesgMode )
+			PreferenceCategory pc = new PreferenceCategory( this );
+			pc.setTitle( R.string.preference );
+			getPreferenceScreen( ).addPreference( pc );
+
+			Preference perfLevel = new Preference( this );
+			perfLevel.setKey( "level_filter" ); //$NON-NLS-1$
+			perfLevel.setTitle( R.string.log_level );
+			pc.addPreference( perfLevel );
+
+			if ( !dmesgMode )
 			{
-				( (PreferenceGroup) getPreferenceScreen( ).getPreference( 0 ) ).removePreference( findPreference( "tag_filter" ) ); //$NON-NLS-1$
-				( (PreferenceGroup) getPreferenceScreen( ).getPreference( 0 ) ).removePreference( findPreference( "pid_filter" ) ); //$NON-NLS-1$
-			}
-			else
-			{
+				Preference perfRingBuffer = new Preference( this );
+				perfRingBuffer.setKey( PREF_KEY_RING_BUFFER );
+				perfRingBuffer.setTitle( R.string.ring_buffer );
+				pc.addPreference( perfRingBuffer );
+
+				Preference perfTagFilter = new Preference( this );
+				perfTagFilter.setKey( PREF_KEY_TAG_FILTER );
+				perfTagFilter.setTitle( R.string.tag_filter );
+				pc.addPreference( perfTagFilter );
+
+				Preference perfPidFilter = new Preference( this );
+				perfPidFilter.setKey( PREF_KEY_PID_FILTER );
+				perfPidFilter.setTitle( R.string.pid_filter );
+				pc.addPreference( perfPidFilter );
+
+				refreshRingBuffer( );
 				refreshTagFilter( );
 				refreshPidFilter( );
 			}
@@ -1155,17 +1204,37 @@ public final class LogViewer extends ListActivity implements Constants
 			}
 		}
 
+		void refreshRingBuffer( )
+		{
+			int buffer = getIntent( ).getIntExtra( PREF_KEY_RING_BUFFER,
+					RING_BUFFER_MAIN );
+
+			int label = R.string.main;
+
+			switch ( buffer )
+			{
+				case RING_BUFFER_RADIO :
+					label = R.string.radio;
+					break;
+				case RING_BUFFER_EVENTS :
+					label = R.string.events;
+					break;
+			}
+
+			findPreference( PREF_KEY_RING_BUFFER ).setSummary( label );
+		}
+
 		void refreshTagFilter( )
 		{
 			String tag = getIntent( ).getStringExtra( PREF_KEY_TAG_FILTER );
 
 			if ( tag == null )
 			{
-				findPreference( "tag_filter" ).setSummary( R.string.none ); //$NON-NLS-1$
+				findPreference( PREF_KEY_TAG_FILTER ).setSummary( R.string.none );
 			}
 			else
 			{
-				findPreference( "tag_filter" ).setSummary( tag ); //$NON-NLS-1$
+				findPreference( PREF_KEY_TAG_FILTER ).setSummary( tag );
 			}
 		}
 
@@ -1175,11 +1244,11 @@ public final class LogViewer extends ListActivity implements Constants
 
 			if ( pid == 0 )
 			{
-				findPreference( "pid_filter" ).setSummary( R.string.none ); //$NON-NLS-1$
+				findPreference( PREF_KEY_PID_FILTER ).setSummary( R.string.none );
 			}
 			else
 			{
-				findPreference( "pid_filter" ).setSummary( String.valueOf( pid ) ); //$NON-NLS-1$
+				findPreference( PREF_KEY_PID_FILTER ).setSummary( String.valueOf( pid ) );
 			}
 		}
 
@@ -1269,7 +1338,36 @@ public final class LogViewer extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( "tag_filter".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+			else if ( PREF_KEY_RING_BUFFER.equals( preference.getKey( ) ) )
+			{
+				OnClickListener listener = new OnClickListener( ) {
+
+					public void onClick( DialogInterface dialog, int which )
+					{
+						it.putExtra( PREF_KEY_RING_BUFFER, which );
+
+						dialog.dismiss( );
+
+						refreshRingBuffer( );
+					}
+				};
+
+				new AlertDialog.Builder( this ).setTitle( R.string.ring_buffer )
+						.setNeutralButton( R.string.close, null )
+						.setSingleChoiceItems( new CharSequence[]{
+								getString( R.string.main ),
+								getString( R.string.radio ),
+								getString( R.string.events ),
+						},
+								it.getIntExtra( PREF_KEY_RING_BUFFER,
+										RING_BUFFER_MAIN ),
+								listener )
+						.create( )
+						.show( );
+
+				return true;
+			}
+			else if ( PREF_KEY_TAG_FILTER.equals( preference.getKey( ) ) )
 			{
 				final EditText txt = new EditText( this );
 				txt.setText( it.getStringExtra( PREF_KEY_TAG_FILTER ) );
@@ -1307,7 +1405,7 @@ public final class LogViewer extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( "pid_filter".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+			else if ( PREF_KEY_PID_FILTER.equals( preference.getKey( ) ) )
 			{
 				final EditText txt = new EditText( this );
 				txt.setFilters( new InputFilter[]{
