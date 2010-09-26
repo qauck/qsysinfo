@@ -208,7 +208,7 @@ public final class MemInfoActivity extends PopActivity
 					formatSize( swapFree, ctx )
 			} );
 		}
-		catch ( IOException e )
+		catch ( Exception e )
 		{
 			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
 		}

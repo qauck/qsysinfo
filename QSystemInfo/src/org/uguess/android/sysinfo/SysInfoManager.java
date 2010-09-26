@@ -403,7 +403,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 			return mem;
 		}
-		catch ( IOException e )
+		catch ( Exception e )
 		{
 			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
 		}
@@ -641,7 +641,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 						"Incompatible cpu format" ); //$NON-NLS-1$
 			}
 		}
-		catch ( IOException e )
+		catch ( Exception e )
 		{
 			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
 		}

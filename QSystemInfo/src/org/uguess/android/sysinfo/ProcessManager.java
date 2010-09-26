@@ -1403,7 +1403,7 @@ public final class ProcessManager extends ListActivity implements Constants
 					stateMsg, uidMsg, gidMsg, threadsMsg
 			};
 		}
-		catch ( IOException e )
+		catch ( Exception e )
 		{
 			Log.e( ProcessManager.class.getName( ), e.getLocalizedMessage( ), e );
 		}
