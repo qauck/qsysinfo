@@ -23,11 +23,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -36,6 +39,9 @@ import android.widget.TextView;
  */
 public final class BatteryInfoActivity extends SysInfoManager.PopActivity
 {
+
+	private static final String PUS = "com.android.settings.fuelgauge.PowerUsageSummary"; //$NON-NLS-1$
+	private static final String BH = "com.android.settings.battery_history.BatteryHistory"; //$NON-NLS-1$
 
 	private BroadcastReceiver mBatteryInfoReceiver = new BroadcastReceiver( ) {
 
@@ -168,6 +174,22 @@ public final class BatteryInfoActivity extends SysInfoManager.PopActivity
 						getString( R.string.batt_plugged ), pStr
 				} );
 
+				PackageManager pm = getPackageManager( );
+
+				if ( Util.getSettingsIntent( pm, PUS ) != null )
+				{
+					data.add( new String[]{
+							PUS, null
+					} );
+				}
+
+				if ( Util.getSettingsIntent( pm, BH ) != null )
+				{
+					data.add( new String[]{
+							BH, null
+					} );
+				}
+
 				ListView contentView = (ListView) findViewById( R.id.content_list );
 
 				ArrayAdapter<String[]> adapter = (ArrayAdapter<String[]>) contentView.getAdapter( );
@@ -202,26 +224,55 @@ public final class BatteryInfoActivity extends SysInfoManager.PopActivity
 			public View getView( int position, View convertView,
 					ViewGroup parent )
 			{
-				View v;
+				View v = null;
 
-				if ( convertView == null )
+				final String[] item = getItem( position );
+
+				if ( PUS.equals( item[0] ) || BH.equals( item[0] ) )
+				{
+					v = getLayoutInflater( ).inflate( R.layout.pub_info,
+							contentView,
+							false );
+
+					Button btn = (Button) v.findViewById( R.id.btn_action );
+
+					if ( PUS.equals( item[0] ) )
+					{
+						btn.setText( R.string.power_usage );
+					}
+					else
+					{
+						btn.setText( R.string.battery_history );
+					}
+
+					btn.setOnClickListener( new OnClickListener( ) {
+
+						public void onClick( View v )
+						{
+							eventConsumed = true;
+
+							Intent it = Util.getSettingsIntent( getPackageManager( ),
+									item[0] );
+
+							if ( it != null )
+							{
+								startActivity( it );
+							}
+						}
+					} );
+				}
+				else
 				{
 					v = getLayoutInflater( ).inflate( R.layout.battery_item,
 							contentView,
 							false );
+
+					TextView t1 = (TextView) v.findViewById( R.id.txt_head );
+					TextView t2 = (TextView) v.findViewById( R.id.txt_msg );
+
+					t1.setText( item[0] );
+					t2.setText( item[1] );
 				}
-				else
-				{
-					v = convertView;
-				}
-
-				String[] item = getItem( position );
-
-				TextView t1 = (TextView) v.findViewById( R.id.txt_head );
-				TextView t2 = (TextView) v.findViewById( R.id.txt_msg );
-
-				t1.setText( item[0] );
-				t2.setText( item[1] );
 
 				return v;
 			}

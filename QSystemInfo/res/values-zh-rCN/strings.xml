@@ -312,10 +312,13 @@
     <string name="idle">空闲:</string>
     <string name="total">总计:</string>
     <string name="version_code">版本代码</string>
-	<string name="threshold">阈值:</string>
+    <string name="threshold">阈值:</string>
     <string name="main">Main</string>
     <string name="radio">Radio</string>
     <string name="events">Events</string>
     <string name="ring_buffer">Ring Buffer</string>
+    <string name="battery_history">电池历史</string>
+    <string name="power_usage">电力使用</string>
+    <string name="usage_stats">使用统计</string>
 
 </resources>

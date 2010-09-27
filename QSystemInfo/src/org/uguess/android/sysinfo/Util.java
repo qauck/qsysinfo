@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Field;
 import java.util.Date;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -42,6 +43,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
@@ -511,5 +514,20 @@ final class Util implements Constants
 			Thread.setDefaultUncaughtExceptionHandler( new ErrorHandler( ctx,
 					oldHandler ) );
 		}
+	}
+
+	static Intent getSettingsIntent( PackageManager pm, String clzName )
+	{
+		Intent it = new Intent( Intent.ACTION_MAIN );
+		it.setClassName( "com.android.settings", clzName ); //$NON-NLS-1$
+
+		List<ResolveInfo> acts = pm.queryIntentActivities( it, 0 );
+
+		if ( acts.size( ) > 0 )
+		{
+			return it;
+		}
+
+		return null;
 	}
 }

@@ -1116,6 +1116,16 @@ public final class ApplicationManager extends ListActivity implements Constants
 		mi = menu.add( Menu.NONE, MI_SHARE, Menu.NONE, R.string.share );
 		mi.setIcon( android.R.drawable.ic_menu_share );
 
+		if ( Util.getSettingsIntent( getPackageManager( ),
+				"com.android.settings.UsageStats" ) != null ) //$NON-NLS-1$
+		{
+			mi = menu.add( Menu.NONE,
+					MI_USAGE_STATS,
+					Menu.NONE,
+					R.string.usage_stats );
+			mi.setIcon( android.R.drawable.ic_menu_recent_history );
+		}
+
 		mi = menu.add( Menu.NONE, MI_REVERT, Menu.NONE, R.string.restore );
 		mi.setIcon( android.R.drawable.ic_menu_revert );
 
@@ -1176,6 +1186,18 @@ public final class ApplicationManager extends ListActivity implements Constants
 							DEFAULT_EXPORT_FOLDER ), ARCHIVED ).getAbsolutePath( ) );
 
 			startActivityForResult( it, REQUEST_RESTORE );
+
+			return true;
+		}
+		else if ( item.getItemId( ) == MI_USAGE_STATS )
+		{
+			Intent it = Util.getSettingsIntent( getPackageManager( ),
+					"com.android.settings.UsageStats" ); //$NON-NLS-1$
+
+			if ( it != null )
+			{
+				startActivity( it );
+			}
 
 			return true;
 		}

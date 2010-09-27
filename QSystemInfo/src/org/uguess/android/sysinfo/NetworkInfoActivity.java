@@ -82,6 +82,7 @@ public class NetworkInfoActivity extends PopActivity
 					LinearLayout cv = (LinearLayout) getLayoutInflater( ).inflate( R.layout.pub_info,
 							(LinearLayout) v,
 							false );
+					cv.setPadding( 0, 0, 0, 0 );
 
 					Button btn = (Button) cv.findViewById( R.id.btn_action );
 
