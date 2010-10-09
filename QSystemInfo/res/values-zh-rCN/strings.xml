@@ -320,5 +320,7 @@
     <string name="battery_history">电池历史</string>
     <string name="power_usage">电力使用</string>
     <string name="usage_stats">使用统计</string>
+    <string name="show_local_addr_sum">显示每个连接的本地地址</string>
+    <string name="show_local_addr">显示本地地址</string>
 
 </resources>

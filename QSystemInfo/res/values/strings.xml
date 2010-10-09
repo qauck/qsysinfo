@@ -320,5 +320,7 @@
     <string name="battery_history">Battery History</string>
     <string name="power_usage">Power Usage</string>
     <string name="usage_stats">Usage Stats</string>
+    <string name="show_local_addr_sum">Show local address for each connection</string>
+    <string name="show_local_addr">Show Local Address</string>
 
 </resources>

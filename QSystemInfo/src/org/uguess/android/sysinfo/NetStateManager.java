@@ -78,6 +78,7 @@ public final class NetStateManager extends ListActivity implements Constants
 
 	private static final String PREF_KEY_REMOTE_QUERY = "remote_query"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_REMOTE_NAME = "show_remote_name"; //$NON-NLS-1$
+	private static final String PREF_KEY_SHOW_LOCAL_ADDRESS = "show_local_address"; //$NON-NLS-1$
 
 	private static final int ORDER_TYPE_PROTO = 0;
 	private static final int ORDER_TYPE_LOCAL = 1;
@@ -251,9 +252,19 @@ public final class NetStateManager extends ListActivity implements Constants
 				txt_proto.setText( itm.proto );
 				txt_state.setText( itm.state );
 
+				boolean showLocal = Util.getBooleanOption( NetStateManager.this,
+						PREF_KEY_SHOW_LOCAL_ADDRESS );
+
 				if ( itm == dummyInfo )
 				{
-					txt_ip.setText( itm.local );
+					if ( showLocal )
+					{
+						txt_ip.setText( R.string.local_remote_addr );
+					}
+					else
+					{
+						txt_ip.setText( R.string.remote_address );
+					}
 
 					txt_proto.setTextColor( Color.WHITE );
 					txt_ip.setTextColor( Color.WHITE );
@@ -261,10 +272,18 @@ public final class NetStateManager extends ListActivity implements Constants
 				}
 				else
 				{
-					txt_ip.setText( itm.local
-							+ '\n'
-							+ ( itm.remoteName == null ? itm.remote
-									: itm.remoteName ) );
+					if ( showLocal )
+					{
+						txt_ip.setText( itm.local
+								+ '\n'
+								+ ( itm.remoteName == null ? itm.remote
+										: itm.remoteName ) );
+					}
+					else
+					{
+						txt_ip.setText( itm.remoteName == null ? itm.remote
+								: itm.remoteName );
+					}
 
 					txt_proto.setTextAppearance( NetStateManager.this,
 							android.R.style.TextAppearance_Small );
@@ -342,6 +361,8 @@ public final class NetStateManager extends ListActivity implements Constants
 					Util.getIntOption( this, PREF_KEY_REMOTE_QUERY, ENABLED ) );
 			it.putExtra( PREF_KEY_SHOW_REMOTE_NAME,
 					Util.getBooleanOption( this, PREF_KEY_SHOW_REMOTE_NAME ) );
+			it.putExtra( PREF_KEY_SHOW_LOCAL_ADDRESS,
+					Util.getBooleanOption( this, PREF_KEY_SHOW_LOCAL_ADDRESS ) );
 			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_PROTO ) );
@@ -414,6 +435,7 @@ public final class NetStateManager extends ListActivity implements Constants
 					PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC );
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_REMOTE_NAME );
+			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_LOCAL_ADDRESS );
 		}
 	}
 
@@ -1015,6 +1037,12 @@ public final class NetStateManager extends ListActivity implements Constants
 			perfRemoteName.setSummary( R.string.show_remote_msg );
 			pc.addPreference( perfRemoteName );
 
+			CheckBoxPreference perfShowLocal = new CheckBoxPreference( this );
+			perfShowLocal.setKey( PREF_KEY_SHOW_LOCAL_ADDRESS );
+			perfShowLocal.setTitle( R.string.show_local_addr );
+			perfShowLocal.setSummary( R.string.show_local_addr_sum );
+			pc.addPreference( perfShowLocal );
+
 			pc = new PreferenceCategory( this );
 			pc.setTitle( R.string.sort );
 			getPreferenceScreen( ).addPreference( pc );
@@ -1031,7 +1059,8 @@ public final class NetStateManager extends ListActivity implements Constants
 
 			refreshInterval( );
 			refreshRemoteQuery( );
-			refreshRemoteName( );
+			refreshBooleanOption( PREF_KEY_SHOW_REMOTE_NAME );
+			refreshBooleanOption( PREF_KEY_SHOW_LOCAL_ADDRESS );
 			refreshSortType( );
 			refreshSortDirection( );
 
@@ -1079,12 +1108,11 @@ public final class NetStateManager extends ListActivity implements Constants
 			findPreference( PREF_KEY_REMOTE_QUERY ).setSummary( label );
 		}
 
-		void refreshRemoteName( )
+		void refreshBooleanOption( String key )
 		{
-			boolean showName = getIntent( ).getBooleanExtra( PREF_KEY_SHOW_REMOTE_NAME,
-					true );
+			boolean val = getIntent( ).getBooleanExtra( key, true );
 
-			( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_REMOTE_NAME ) ).setChecked( showName );
+			( (CheckBoxPreference) findPreference( key ) ).setChecked( val );
 		}
 
 		void refreshSortType( )
@@ -1191,6 +1219,13 @@ public final class NetStateManager extends ListActivity implements Constants
 			{
 				it.putExtra( PREF_KEY_SHOW_REMOTE_NAME,
 						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_REMOTE_NAME ) ).isChecked( ) );
+
+				return true;
+			}
+			else if ( PREF_KEY_SHOW_LOCAL_ADDRESS.equals( preference.getKey( ) ) )
+			{
+				it.putExtra( PREF_KEY_SHOW_LOCAL_ADDRESS,
+						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_LOCAL_ADDRESS ) ).isChecked( ) );
 
 				return true;
 			}
