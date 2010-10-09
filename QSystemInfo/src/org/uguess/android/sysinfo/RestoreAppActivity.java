@@ -207,7 +207,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 		versionPrefix = getResources( ).getString( R.string.version );
 
-		setContentView( R.layout.app_view );
+		setContentView( R.layout.app_lst_view );
 
 		Button btnAction = ( (Button) findViewById( R.id.btn_export ) );
 		btnAction.setText( R.string.restore );

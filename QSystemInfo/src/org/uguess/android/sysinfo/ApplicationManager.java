@@ -453,7 +453,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 		appCache = new AppCache( );
 
-		setContentView( R.layout.app_view );
+		setContentView( R.layout.app_lst_view );
 
 		( (Button) findViewById( R.id.btn_export ) ).setOnClickListener( new View.OnClickListener( ) {
 
