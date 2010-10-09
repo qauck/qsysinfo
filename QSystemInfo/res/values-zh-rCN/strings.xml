@@ -112,7 +112,7 @@
 	<string name="pkg_name">包名</string>
 	<string name="app_label">应用程序名称</string>
 	<string name="flags">标注</string>
-	<string name="source">源地址</string>
+	<string name="source">来源</string>
 	<string name="importance">重要性</string>
 	<string name="proc_name">进程名称</string>
 	<string name="no_cpu_info">没有找到 CPU 信息.</string>
