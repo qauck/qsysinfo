@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-	<string name="app_name">Quick System Info</string>
+	<!--string name="app_name">Quick System Info</string-->
 	<string name="info_not_available">Información no disponible</string>
 	<string name="processor">Procesador</string>
 	<string name="memory">Memoria</string>
@@ -50,15 +50,15 @@
 	<string name="error_create_folder">No se pudo crear el directorio %s.</string>
 	<string name="error_switch_task">No se pudo cambiar a esta tarea.</string>
 	<string name="net_address">Dirección de Red</string>
-	<string name="verbose">Verbose</string>
+	<!--string name="verbose">Verbose</string>
 	<string name="debug">Debug</string>
 	<string name="info">Info</string>
 	<string name="error">Error</string>
-	<string name="asser_t">Fatal</string>
+	<string name="asser_t">Fatal</string-->
 	<string name="emmergency">Emergencia</string>
 	<string name="alert">Alerta</string>
 	<string name="critical">Crítico</string>
-	<string name="notice">Notice</string>
+	<!--string name="notice">Notice</string-->
 	<string name="log_level">Nivel de Log</string>
 	<string name="tag_filter">Filtrado por etiqueta</string>
 	<string name="pid_filter">Filtrado por PID</string>
@@ -69,13 +69,13 @@
 	<string name="view_logs">Ver Logs</string>
 	<string name="send_log">Enviar Log</string>
 	<string name="plain_text">Texto sin formato</string>
-	<string name="csv">CSV</string>
-	<string name="html">HTML</string>
+	<!--string name="csv">CSV</string>
+	<string name="html">HTML</string-->
 	<string name="copy_text">Copiar Texto</string>
 	<string name="tab_netstat">Estados de Red</string>
 	<string name="update_speed">Velocidad de Actualización</string>
 	<string name="high">Alta</string>
-	<string name="normal">Normal</string>
+	<!--string name="normal">Normal</string-->
 	<string name="low">Baja</string>
 	<string name="paused">Pausada</string>
 	<string name="no_ip_info">No hay información pública disponible para esta dirección IP en este momento.</string>
@@ -93,16 +93,16 @@
 	<string name="wifi_only">Sólo con Wi-Fi</string>
 	<string name="compressed">(Comprimido)</string>
 	<string name="send_report">Enviar informe</string>
-	<string name="log">Log</string>
+	<!--string name="log">Log</string-->
 	<string name="no_report">Ningún informe fué generado.</string>
 	<string name="no_report_item">Ningún campo de informe seleccionado.</string>
 	<string name="device">Dispositivo</string>
 	<string name="model">Modelo</string>
 	<string name="product">Producto</string>
 	<string name="brand">Marca</string>
-	<string name="release">Release</string>
+	<!--string name="release">Release</string>
 	<string name="build">Build</string>
-	<string name="locale">Locale</string>
+	<string name="locale">Locale</string-->
 	<string name="device_info">Información de Dispositivo</string>
 	<string name="sys_version">Versión del Sistema</string>
 	<string name="time">Tiempo</string>
@@ -120,9 +120,9 @@
 	<string name="no_sc_freq_info">Estado de escalado de frecuencia de CPU no encontrado.</string>
 	<string name="sc_freq">Escalado de frecuencia de CPU: </string>
 	<string name="size_warning">Estás enviando datos de mucho tamaño. Para evitar problemas de memoria, se recomienda enviarlo comprimido.\n\n¿Quieres enviar los datos comprimidos?</string>
-	<string name="idle_info">, Idle: %s</string>
+	<!--string name="idle_info">, Idle: %s</string>
 	<string name="sensors">Sensor</string>
-	<string name="gps">GPS</string>
+	<string name="gps">GPS</string-->
 	<string name="batt_plugged">Conectado:</string>
 	<string name="unplugged">Desconectado</string>
 	<string name="batt_temp">Temperatura:</string>
@@ -173,7 +173,7 @@
     <string name="network_type">Tipo de Red</string>
     <string name="extra_info">Información Adicional</string>
     <string name="not_roaming">No en roaming</string>
-    <string name="roaming">Roaming</string>
+    <!--string name="roaming">Roaming</string-->
     <string name="roaming_state">Estado de Roaming</string>
     <string name="local_address">Dirección Local</string>
     <string name="public_address">Dirección Pública</string>
@@ -223,8 +223,8 @@
     <string name="search_subdir_sum">Buscar archivos en subdirectorios</string>
     <string name="search_subdir">Buscar Subdirectorios</string>
     <string name="scan_dir">Directorio de Recuperación</string>
-	<string name="task_widget_name">Quick Task Killer</string>
-	<string name="widget_bar_name">Quick Info Bar</string>
+	<!--string name="task_widget_name">Quick Task Killer</string>
+	<string name="widget_bar_name">Quick Info Bar</string-->
 	<string name="kill_info">%s tarea finalizada, %s ignoradas.</string>
 	<string name="kill_info2">%s tareas finalizadas, %s ignoradas.</string>
     <string name="auto_start_sum">Mostrar iconos en el área de notificaciones automáticamente después de reiniciar</string>
@@ -245,12 +245,12 @@
 	<string name="exported_skip">%s aplicaciones exportadas, %s protegidas fueron descartadas.</string>
 	<string name="exported_to_skip">%s aplicaciones exportadas a \'%s\', %s protegidas fueron descartadas.</string>
     <string name="threads">Hilos</string>
-    <string name="gid">Group ID</string>
-    <string name="uid">User ID</string>
+    <!--string name="gid">Group ID</string>
+    <string name="uid">User ID</string-->
     <string name="no_mount_info">Información sobre MOUNT no encontrada.</string>
     <string name="show_sys_process_sum">El proceso del sistema está siempre protegido y no puede ser finalizado</string>
     <string name="show_sys_process">Mostrar Proceso del Sistema</string>
-    <string name="target_sdk">Target SDK</string>
+    <!--string name="target_sdk">Target SDK</string-->
     <string name="public_source">Origen Público</string>
     <string name="data">Datos</string>
     <string name="process">Proceso</string>
@@ -300,22 +300,22 @@
     <string name="show_app_icon_sum">Mostrar icono de cada aplicación</string>
     <string name="show_app_icon">Mostrar Icono de Aplicación</string>
     <string name="free">Disponible</string>
-    <string name="load">Load</string>
+    <!--string name="load">Load</string-->
     <string name="configure_widgets_sum">Habilita o deshabilita los widgets</string>
     <string name="configure_widgets">Configurar Widgets</string>
     <string name="reboot_warning">El dispositivo debe reiniciarse para que los cambios se hagan efectivos.</string>
-    <string name="widgets">Widgets</string>
+    <!--string name="widgets">Widgets</string-->
     <string name="swap_free">Swap Disponible:</string>
-    <string name="swap_total">Swap Total:</string>
+    <!--string name="swap_total">Swap Total:</string-->
     <string name="cached">Cache:</string>
-    <string name="buffers">Buffers:</string>
+    <!--string name="buffers">Buffers:</string>
     <string name="idle">Idle:</string>
-    <string name="total">Total:</string>
+    <string name="total">Total:</string-->
     <string name="version_code">Código de Versión</string>
     <string name="threshold">Umbral:</string>
-    <string name="main">Main</string>
+    <!--string name="main">Main</string>
     <string name="radio">Radio</string>
     <string name="events">Events</string>
-    <string name="ring_buffer">Ring Buffer</string>
+    <string name="ring_buffer">Ring Buffer</string-->
 
 </resources>

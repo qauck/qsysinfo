@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-	<string name="app_name">Quick System Info</string>
+	<!--string name="app_name">Quick System Info</string-->
 	<string name="info_not_available">Information non disponible</string>
 	<string name="processor">Processeur</string>
 	<string name="memory">Mémoire</string>
@@ -12,7 +12,7 @@
 	<string name="about_phone">A propos du téléphone</string>
 	<string name="more_info">Plus d\'informations</string>
 	<string name="more_info_summary">Voir informations détaillées</string>
-	<string name="actions">Actions</string>
+	<!--string name="actions">Actions</string-->
 	<string name="refresh">Rafraîchir</string>
 	<string name="export">Exporter</string>
 	<string name="select_all">Tout sélectionner</string>
@@ -37,13 +37,13 @@
 	<string name="all_apps">Tout</string>
 	<string name="sys_apps">Système</string>
 	<string name="user_apps">Utilisateur</string>
-	<string name="version">Version</string>
+	<!--string name="version">Version</string-->
 	<string name="loading">Rafraîchissement...</string>
 	<string name="end_proc_hint">- Cliquez sur une tâche à terminer\u00A0\n- Cliquez ici pour tout terminer\u00A0</string>
 	<string name="switch_to">Basculer vers</string>
 	<string name="end_task">Fin de tâche</string>
 	<string name="tab_info">Informations de base</string>
-	<string name="tab_apps">Applications</string>
+	<!--string name="tab_apps">Applications</string-->
 	<string name="tab_procs">Processus</string>
 	<string name="preference">Préférences</string>
 	<string name="export_dir">Dossier de sauvegarde</string>
@@ -54,7 +54,7 @@
 	<string name="debug">Débogage</string>
 	<string name="info">Information</string>
 	<string name="error">Erreur</string>
-	<string name="asser_t">Fatal</string>
+	<!--string name="asser_t">Fatal</string-->
 	<string name="emmergency">Urgence</string>
 	<string name="alert">Alerte</string>
 	<string name="critical">Critique</string>
@@ -69,8 +69,8 @@
 	<string name="view_logs">Afficher journaux</string>
 	<string name="send_log">Envoyer journal</string>
 	<string name="plain_text">Plein texte</string>
-	<string name="csv">CSV</string>
-	<string name="html">HTML</string>
+	<!--string name="csv">CSV</string>
+	<string name="html">HTML</string-->
 	<string name="copy_text">Copier text</string>
 	<string name="tab_netstat">États réseau</string>
 	<string name="update_speed">Fréquence de rafraîchissement</string>
@@ -100,20 +100,20 @@
 	<string name="model">Modèle</string>
 	<string name="product">Produit</string>
 	<string name="brand">Marque</string>
-	<string name="release">Release</string>
+	<!--string name="release">Release</string>
 	<string name="build">Build</string>
-	<string name="locale">Locale</string>
+	<string name="locale">Locale</string-->
 	<string name="device_info">Informations appareil</string>
 	<string name="sys_version">Version système</string>
 	<string name="time">Heure</string>
-	<string name="message">Message</string>
+	<!--string name="message">Message</string-->
 	<string name="pid">ID processus</string>
 	<string name="tag">Étiquette</string>
 	<string name="pkg_name">Nom de paquet</string>
 	<string name="app_label">Label de l\'application</string>
 	<string name="flags">Drapeaux</string>
-	<string name="source">Source</string>
-	<string name="importance">Importance</string>
+	<!--string name="source">Source</string>
+	<string name="importance">Importance</string-->
 	<string name="proc_name">Nom de processus</string>
 	<string name="no_cpu_info">Information CPU non trouvée.</string>
 	<string name="no_mem_info">Information MEM non trouvée.</string>
@@ -122,7 +122,7 @@
 	<string name="size_warning">Vous êtes sur le point d\'envoyer un contenu de taille très grande. Pour éviter des problèmes de mémoire potentiels, il est recommandé d\'envoyer les données dans un format compressé.\n\nVoulez-vous envoyer le contenu dans un format compressé ?</string>
 	<string name="idle_info">, Inactif : %s</string>
 	<string name="sensors">Senseur</string>
-	<string name="gps">GPS</string>
+	<!--string name="gps">GPS</string-->
 	<string name="batt_plugged">Branché :</string>
 	<string name="unplugged">Débranché</string>
 	<string name="batt_temp">Température :</string>
@@ -148,7 +148,7 @@
 	<string name="sensor_msg">Vendeur : %s\nVersion : %s\nPuissance : %smA\nRésolution : %s\nIntervalle max. : %s</string>
 	<string name="sort">Tri</string>
 	<string name="sort_type">Tri par</string>
-	<string name="sort_direction">Direction</string>
+	<!--string name="sort_direction">Direction</string-->
     <string name="descending">Descendant</string>
     <string name="ascending">Ascendant</string>
     <string name="total_size">Taille totale</string>
@@ -256,7 +256,7 @@
     <string name="process">Processus</string>
     <string name="app_class">Classe d\'application</string>
     <string name="task_affinity">Affinité tâche</string>
-    <string name="permission">Permission</string>
+    <!--string name="permission">Permission</string-->
     <string name="manage_space_ac">Gérer activité espace</string>
     <string name="end_others">Terminer autres</string>
     <string name="show_menu">Afficher menu</string>
@@ -267,7 +267,7 @@
     <string name="end_prompt">Êtes-vous sûr(e) de vouloir terminer cette tâche ?</string>
     <string name="end_all_prompt">Êtes-vous sûr(e) de vouloir terminer toutes les tâches ?</string>
     <string name="last_active">Dernière active</string>
-    <string name="notifications">Notifications</string>
+    <!--string name="notifications">Notifications</string-->
     <string name="default_tab">Onglet par défaut</string>
     <string name="system_storage">Stockage système</string>
     <string name="share">Partager</string>
@@ -281,7 +281,7 @@
     <string name="fail_create_archive_folder">Échec lors de la création du dossier d\'archive \'%s\'.</string>
     <string name="dup_archived">Le fichier sélectionné est déjà archivé.</string>
     <string name="no_archive_path">Le chemin d\'archive n\'a pas été configuré.</string>
-    <string name="archive">Archive</string>
+    <!--string name="archive">Archive</string-->
 	<string name="wifi_state">État Wi-Fi</string>
     <string name="seconds">secondes</string>
     <string name="lease_duration">Durée bail</string>
@@ -300,22 +300,22 @@
     <string name="show_app_icon_sum">Afficher l\'icône de chaque application</string>
     <string name="show_app_icon">Afficher icône application</string>
     <string name="free">Libre</string>
-    <string name="load">Load</string>
+    <!--string name="load">Load</string-->
     <string name="configure_widgets_sum">Activer ou désactiver les widgets</string>
     <string name="configure_widgets">Configurer les widgets</string>
     <string name="reboot_warning">L\'appareil doit être redémarré pour que les changements soient effectifs.</string>
-    <string name="widgets">Widgets</string>
+    <!--string name="widgets">Widgets</string-->
     <string name="swap_free">Échange Libre:</string>
     <string name="swap_total">Échange Total:</string>
     <string name="cached">Cache:</string>
     <string name="buffers">Tampon:</string>
     <string name="idle">Inactif:</string>
-    <string name="total">Total:</string>
+    <!--string name="total">Total:</string-->
     <string name="version_code">Code Version</string>
     <string name="threshold">Seuil:</string>
-    <string name="main">Main</string>
+    <!--string name="main">Main</string>
     <string name="radio">Radio</string>
     <string name="events">Events</string>
-    <string name="ring_buffer">Ring Buffer</string>
+    <string name="ring_buffer">Ring Buffer</string-->
 
 </resources>

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-	<string name="app_name">Quick System Info</string>
+	<!--string name="app_name">Quick System Info</string-->
 	<string name="info_not_available">Information nicht verfügbar</string>
 	<string name="processor">Prozessor</string>
 	<string name="memory">Hauptspeicher</string>
@@ -35,9 +35,9 @@
 	<string name="close">Schließen</string>
 	<string name="filter_title">Anwendungstyp</string>
 	<string name="all_apps">Alle</string>
-	<string name="sys_apps">System</string>
+	<!--string name="sys_apps">System</string-->
 	<string name="user_apps">Benutzer</string>
-	<string name="version">Version</string>
+	<!--string name="version">Version</string-->
 	<string name="loading">Aktualisiere...</string>
 	<string name="end_proc_hint">- Task zum Beenden antippen\u00A0\n- Hier antippen um alle zu beenden\u00A0</string>
 	<string name="switch_to">Zu Task wechseln</string>
@@ -50,9 +50,9 @@
 	<string name="error_create_folder">Fehler beim Anlegen von Verzeichnis %s.</string>
 	<string name="error_switch_task">Zu diesem Task kann nicht gewechselt werden.</string>
 	<string name="net_address">Netzwerkadresse</string>
-	<string name="verbose">Verbose</string>
+	<!--string name="verbose">Verbose</string>
 	<string name="debug">Debug</string>
-	<string name="info">Info</string>
+	<string name="info">Info</string-->
 	<string name="error">Fehler</string>
 	<string name="asser_t">Schwerwiegender Fehler</string>
 	<string name="emmergency">Notfall</string>
@@ -69,13 +69,13 @@
 	<string name="view_logs">Logs anzeigen</string>
 	<string name="send_log">Log versenden</string>
 	<string name="plain_text">Text</string>
-	<string name="csv">CSV</string>
-	<string name="html">HTML</string>
+	<!--string name="csv">CSV</string>
+	<string name="html">HTML</string-->
 	<string name="copy_text">Text kopieren</string>
 	<string name="tab_netstat">Netzwerk</string>
 	<string name="update_speed">Update-Frequenz</string>
 	<string name="high">Hoch</string>
-	<string name="normal">Normal</string>
+	<!--string name="normal">Normal</string-->
 	<string name="low">Niedrig</string>
 	<string name="paused">Kein autom. Update</string>
 	<string name="no_ip_info">Für diese IP-Adresse ist derzeit keine Information verfügbar.</string>
@@ -100,18 +100,18 @@
 	<string name="model">Modell</string>
 	<string name="product">Produkt</string>
 	<string name="brand">Marke</string>
-	<string name="release">Release</string>
-	<string name="build">Build</string>
+	<!--string name="release">Release</string>
+	<string name="build">Build</string-->
 	<string name="locale">Sprache/Gebietsschema</string>
 	<string name="device_info">Geräteinfo</string>
 	<string name="sys_version">Systemversion</string>
 	<string name="time">Zeit</string>
 	<string name="message">Nachricht</string>
 	<string name="pid">PID</string>
-	<string name="tag">Tag</string>
+	<!--string name="tag">Tag</string-->
 	<string name="pkg_name">Paketname</string>
 	<string name="app_label">Anwendungsbezeichnung</string>
-	<string name="flags">Flags</string>
+	<!--string name="flags">Flags</string-->
 	<string name="source">Quelle</string>
 	<string name="importance">Relevanz</string>
 	<string name="proc_name">Prozessname</string>
@@ -121,14 +121,14 @@
 	<string name="sc_freq">Geregelte CPU-Taktfrequenz: </string>
 	<string name="size_warning">Zu sendende Daten sind sehr groß. Um potenzielle Speicherprobleme zu vermeiden wird empfohlen, die Daten in komprimierter Form zu senden.\n\nWollen Sie die Daten komprimiert senden?</string>
 	<string name="idle_info">, Inaktiv: %s</string>
-	<string name="sensors">Sensor</string>
-	<string name="gps">GPS</string>
+	<!--string name="sensors">Sensor</string>
+	<string name="gps">GPS</string-->
 	<string name="batt_plugged">Eingesteckt:</string>
 	<string name="unplugged">Nicht eingesteckt</string>
 	<string name="batt_temp">Temperatur:</string>
 	<string name="batt_voltage">Spannung:</string>
 	<string name="batt_tech">Batterieart:</string>
-	<string name="batt_status">Status:</string>
+	<!--string name="batt_status">Status:</string-->
 	<string name="batt_level">Ladestand:</string>
 	<string name="not_charging">wird nicht geladen</string>
 	<string name="full">Geladen</string>
@@ -155,7 +155,7 @@
     <string name="cache_size">Cache</string>
     <string name="data_size">Daten</string>
     <string name="code_size">Anwendung</string>
-    <string name="name">Name</string>
+    <!--string name="name">Name</string-->
     <string name="help">Online-Hilfe</string>
     <string name="cpu_usage">CPU-Auslastung</string>
     <string name="memory_usage">Speicherbelegung</string>
@@ -173,11 +173,11 @@
     <string name="network_type">Netzwerkverbindungsart</string>
     <string name="extra_info">Zusätzliche Informationen</string>
     <string name="not_roaming">Kein Roaming</string>
-    <string name="roaming">Roaming</string>
+    <!--string name="roaming">Roaming</string-->
     <string name="roaming_state">Roaming-Status</string>
     <string name="local_address">Lokale Adresse</string>
     <string name="public_address">Öffentliche Adresse</string>
-    <string name="details">Details</string>
+    <!--string name="details">Details</string-->
     <string name="show_remote_msg">Nach der Remote-Informationsabfrage den Hostnamen anstatt der IP-Adresse anzeigen</string>
     <string name="display_remote_name">Remote-Name anzeigen</string>
     <string name="remote_address">Remote-Adresse</string>
@@ -223,8 +223,8 @@
     <string name="search_subdir_sum">Dateien in Unterverzeichnissen suchen</string>
     <string name="search_subdir">In Unterverzeichnissen suchen</string>
     <string name="scan_dir">Verzeichnis wiederherstellen</string>
-	<string name="task_widget_name">Quick Task Killer</string>
-	<string name="widget_bar_name">Quick Info Bar</string>
+	<!--string name="task_widget_name">Quick Task Killer</string>
+	<string name="widget_bar_name">Quick Info Bar</string-->
 	<string name="kill_info">%s Task beendet, %s ignoriert.</string>
 	<string name="kill_info2">%s Tasks beendet, %s ignoriert.</string>
     <string name="auto_start_sum">Symbole in der Benachrichtigungsleiste nach Neustart automatisch anzeigen</string>
@@ -244,9 +244,9 @@
     <string name="search_market">Market-Suche</string>
 	<string name="exported_skip">%s Anwendungen exportiert, %s geschützte übersprungen.</string>
 	<string name="exported_to_skip">%s Anwendungen nach \'%s\' exportiert, %s geschützte übersprungen.</string>
-    <string name="threads">Threads</string>
+    <!--string name="threads">Threads</string>
     <string name="gid">Group ID</string>
-    <string name="uid">User ID</string>
+    <string name="uid">User ID</string-->
     <string name="no_mount_info">Mount-Information nicht gefunden.</string>
     <string name="show_sys_process_sum">Der System-Prozess ist geschützt, und kann nicht beendet werden.</string>
     <string name="show_sys_process">System-Prozess anzeigen</string>
@@ -255,7 +255,7 @@
     <string name="data">Daten</string>
     <string name="process">Prozess</string>
     <string name="app_class">Anwendungsklasse</string>
-    <string name="task_affinity">Task Affinity</string>
+    <!--string name="task_affinity">Task Affinity</string-->
     <string name="permission">Genehmigung</string>
     <string name="manage_space_ac">Speicherplatz verwalten Aktivität</string>
     <string name="end_others">Alle anderen beenden</string>
@@ -287,8 +287,8 @@
     <string name="lease_duration">Lease-Dauer</string>
     <string name="netmask">Netzmaske</string>
     <string name="ip_addr">IP-Adresse</string>
-    <string name="gateway">Gateway</string>
-    <string name="dhcp_srv">DHCP Server</string>
+    <!--string name="gateway">Gateway</string>
+    <string name="dhcp_srv">DHCP Server</string-->
     <string name="sig_strength">Signalstärke</string>
     <string name="link_speed">Verbindungsgeschwindigkeit</string>
     <string name="mac_addr">MAC-Adresse</string>
@@ -304,7 +304,7 @@
     <string name="configure_widgets_sum">Widgets aktivieren oder deaktivieren</string>
     <string name="configure_widgets">Widgets konfigurieren</string>
     <string name="reboot_warning">Die Änderung wird erst nach einem Neustart Wirkung zeigen.</string>
-    <string name="widgets">Widgets</string>
+    <!--string name="widgets">Widgets</string-->
     <string name="swap_free">Swap frei:</string>
     <string name="swap_total">Swap gesamt:</string>
     <string name="cached">Cache:</string>
@@ -313,9 +313,9 @@
     <string name="total">Gesamt:</string>
     <string name="version_code">Versionscode</string>
     <string name="threshold">Schwelle:</string>
-    <string name="main">Main</string>
+    <!--string name="main">Main</string>
     <string name="radio">Radio</string>
     <string name="events">Events</string>
-    <string name="ring_buffer">Ring Buffer</string>
+    <string name="ring_buffer">Ring Buffer</string-->
 
 </resources>
