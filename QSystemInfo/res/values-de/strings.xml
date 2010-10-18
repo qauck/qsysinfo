@@ -317,5 +317,10 @@
     <string name="radio">Radio</string>
     <string name="events">Events</string>
     <string name="ring_buffer">Ring Buffer</string-->
+    <string name="battery_history">Akkuprotokoll</string>
+    <string name="power_usage">Stromverbrauch</string>
+    <string name="usage_stats">Verbrauchsstatistik</string>
+    <string name="show_local_addr_sum">Lokale Adresse für alle Verbindungen anzeigen</string>
+    <string name="show_local_addr">Lokale Adresse anzeigen</string>
 
 </resources>
