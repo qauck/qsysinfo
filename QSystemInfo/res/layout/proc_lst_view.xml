@@ -7,15 +7,17 @@
 	<RelativeLayout android:layout_width="fill_parent"
 		android:layout_height="wrap_content" android:id="@+id/list_head"
 		android:focusable="true" android:focusableInTouchMode="true"
-		android:layout_marginBottom="2dip">
+		android:layout_marginBottom="2dip" android:minHeight="25dip">
 
 		<TextView android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:textAppearance="?android:attr/textAppearanceSmall"
 			android:layout_alignParentLeft="true" android:layout_marginLeft="8dip"
-			android:id="@+id/txt_head_total" android:textColor="@android:color/primary_text_dark"></TextView>
+			android:id="@+id/txt_head_total" android:textColor="@android:color/primary_text_dark"
+			android:layout_centerVertical="true"></TextView>
 
 		<LinearLayout android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_alignParentRight="true">
+			android:layout_height="wrap_content" android:layout_alignParentRight="true"
+			android:layout_centerVertical="true">
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_marginLeft="2dip"
 				android:textAppearance="?android:attr/textAppearanceSmall"

@@ -2,7 +2,9 @@
 <LinearLayout android:layout_width="fill_parent"
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_height="wrap_content" android:orientation="horizontal"
-	android:paddingBottom="2dip" android:paddingTop="2dip">
+	android:paddingBottom="2dip" android:paddingTop="2dip"
+	android:minHeight="25dip">
+
 	<TextView android:layout_height="wrap_content" android:id="@+id/txt_proto"
 		android:text="proto" android:layout_gravity="center_vertical"
 		android:layout_marginLeft="5dip" android:layout_width="60dip"
@@ -13,4 +15,5 @@
 	<TextView android:layout_height="wrap_content" android:id="@+id/txt_state"
 		android:text="state" android:layout_gravity="center_vertical"
 		android:layout_marginRight="5dip" android:layout_width="85dip"></TextView>
+
 </LinearLayout>
