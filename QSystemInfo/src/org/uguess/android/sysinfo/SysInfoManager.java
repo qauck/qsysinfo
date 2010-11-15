@@ -1228,7 +1228,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 			sv.addView( txt );
 
-			String href = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=qauck%2eaa%40gmail%2ecom&lc=US&item_name=Support%20Quick%20System%20Info&item_number=qsysinfo&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted"; //$NON-NLS-1$
+			String href = "http://qsysinfo.appspot.com/donate.jsp"; //$NON-NLS-1$
 
 			txt.setText( Html.fromHtml( getString( R.string.about_msg,
 					getVersionName( getPackageManager( ), getPackageName( ) ),
