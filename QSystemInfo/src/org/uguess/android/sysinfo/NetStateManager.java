@@ -895,11 +895,11 @@ public final class NetStateManager extends ListActivity implements Constants
 
 			if ( info.ip == null )
 			{
-				url = new URL( "http://ipinfodb.com/ip_query.php" ); //$NON-NLS-1$
+				url = new URL( "http://api.ipinfodb.com/v2/ip_query.php?key=a1d74831f68f12aa61307b387b0d17cf2501d9c368172a9c73ad120f149c73d4" ); //$NON-NLS-1$
 			}
 			else
 			{
-				url = new URL( "http://ipinfodb.com/ip_query.php?ip=" //$NON-NLS-1$
+				url = new URL( "http://api.ipinfodb.com/v2/ip_query.php?key=a1d74831f68f12aa61307b387b0d17cf2501d9c368172a9c73ad120f149c73d4&ip=" //$NON-NLS-1$
 						+ info.ip );
 			}
 
@@ -928,7 +928,10 @@ public final class NetStateManager extends ListActivity implements Constants
 						if ( !"OK".equals( value ) ) //$NON-NLS-1$
 						{
 							Log.d( NetStateManager.class.getName( ),
-									"Invalid ip?: " + info.ip ); //$NON-NLS-1$
+									"Status returned: [" //$NON-NLS-1$
+											+ value
+											+ "] for ip: " //$NON-NLS-1$
+											+ info.ip );
 
 							break;
 						}
