@@ -26,12 +26,12 @@
 	<string name="exporting">匯出 %s...</string>
 	<string name="copy_error">復制檔案時發生錯誤: %s</string>
 	<string name="exported">共 %s 個應用程式已被匯出.</string>
-	<string name="exported_to">共 %s 個應用程式已被匯出至 \'%s\'.</string>
+	<string name="exported_to" formatted="false">共 %s 個應用程式已被匯出至 \'%s\'.</string>
 	<string name="export_complete">匯出完成</string>
 	<string name="error_sdcard">請確認SD存儲卡已正確載入并有足夠的可寫入空間.</string>
 	<string name="computing">計算中...</string>
 	<string name="about">關于</string>
-	<string name="about_msg">版本 %s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a href="%s">[ 支持此應用 ]&lt;/a>&lt;br></string>
+	<string name="about_msg" formatted="false">版本 %s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a href="%s">[ 支持此應用 ]&lt;/a>&lt;br></string>
 	<string name="close">關閉</string>
 	<string name="filter_title">應用程式類型</string>
 	<string name="all_apps">全體</string>
@@ -65,7 +65,7 @@
 	<string name="none">無</string>
 	<string name="no_log_info">沒有日誌項.</string>
 	<!--string name="collector_head">#Created by %s version %s\n\n</string-->
-	<string name="storage_summary">總計: %s, 可用: %s</string>
+	<string name="storage_summary" formatted="false">總計: %s, 可用: %s</string>
 	<string name="view_logs">檢視日誌</string>
 	<string name="send_log">發送日誌</string>
 	<string name="plain_text">純文本</string>
@@ -85,7 +85,7 @@
 	<string name="local_remote_addr">本地/遠端位址</string>
 	<string name="state">狀態</string>
 	<string name="copy_ip">復制遠端位址</string>
-	<string name="location_info">&lt;b>%s&lt;/b>&lt;br>%s&lt;br>國家: %s&lt;br>區域: %s&lt;br>城市: %s</string>
+	<string name="location_info" formatted="false">&lt;b>%s&lt;/b>&lt;br>%s&lt;br>國家: %s&lt;br>區域: %s&lt;br>城市: %s</string>
 	<string name="view_map">檢視地圖</string>
 	<string name="remote_query">遠端資訊獲取</string>
 	<string name="enabled">開啟</string>
@@ -145,7 +145,7 @@
 	<string name="sensor_info2">%s 個感應器</string>
 	<string name="wait_data">等待數據中</string>
 	<string name="cache_storage">系統快取</string>
-	<string name="sensor_msg">廠商: %s\n版本: %s\n電力: %smA\n解析度: %s\n最大范圍: %s</string>
+	<string name="sensor_msg" formatted="false">廠商: %s\n版本: %s\n電力: %smA\n解析度: %s\n最大范圍: %s</string>
 	<string name="sort">排序</string>
 	<string name="sort_type">排序按</string>
 	<string name="sort_direction">方向</string>
@@ -184,7 +184,7 @@
     <string name="restore">還原</string>
     <string name="file_size">檔案大小</string>
     <string name="installation">安裝狀態</string>
-    <string name="installed_ver">%s (已安裝 %s)</string>
+    <string name="installed_ver" formatted="false">%s (已安裝 %s)</string>
     <string name="scanning">正在掃描 %s</string>
 	<string name="no_apk_show">沒有發現應用程式檔案.</string>
 	<string name="no_apk_selected">沒有選取的檔案.</string>
@@ -225,8 +225,8 @@
     <string name="scan_dir">還原資料夾</string>
 	<string name="task_widget_name">任務終結器</string>
 	<string name="widget_bar_name">系統資訊列</string>
-	<string name="kill_info">結束了 %s 個任務, 忽略 %s 個.</string>
-	<string name="kill_info2">結束了 %s 個任務, 忽略 %s 個.</string>
+	<string name="kill_info" formatted="false">結束了 %s 個任務, 忽略 %s 個.</string>
+	<string name="kill_info2" formatted="false">結束了 %s 個任務, 忽略 %s 個.</string>
     <string name="auto_start_sum">重啟後自動在通知區域顯示圖示</string>
     <string name="show_task_icon_sum">在通知區域顯示任務終結器圖示</string>
     <string name="show_info_icon_sum">在通知區域顯示系統資訊圖示</string>
@@ -242,8 +242,8 @@
     <string name="no_content_sent">沒有可發送的內容.</string>
     <string name="no_cat_selected">沒有選中的分類.</string>
     <string name="search_market">搜尋市場</string>
-	<string name="exported_skip">%s 個應用程式已被匯出, 跳過 %s 個受保護程式.</string>
-	<string name="exported_to_skip">%s 個應用程式被匯出到 \'%s\', 跳過 %s 個受保護程式.</string>
+	<string name="exported_skip" formatted="false">%s 個應用程式已被匯出, 跳過 %s 個受保護程式.</string>
+	<string name="exported_to_skip" formatted="false">%s 個應用程式被匯出到 \'%s\', 跳過 %s 個受保護程式.</string>
     <string name="threads">執行緒數</string>
     <string name="gid">組 ID</string>
     <string name="uid">使用者 ID</string>
