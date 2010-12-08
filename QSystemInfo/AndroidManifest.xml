@@ -90,6 +90,7 @@
 
 	<supports-screens android:smallScreens="true"
 		android:largeScreens="true" android:normalScreens="true"
-		android:anyDensity="true" android:resizeable="true"></supports-screens>
+		android:anyDensity="true" android:resizeable="true"
+		android:xlargeScreens="true"></supports-screens>
 
 </manifest> 
