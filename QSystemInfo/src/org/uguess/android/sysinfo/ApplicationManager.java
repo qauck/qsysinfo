@@ -1314,8 +1314,21 @@ public final class ApplicationManager extends ListActivity implements Constants
 				}
 				else
 				{
-					Log.d( ApplicationManager.class.getName( ),
-							"Failed to resolve activity for InstalledAppDetails" ); //$NON-NLS-1$
+					// for ginger bread
+					it = new Intent( "android.settings.APPLICATION_DETAILS_SETTINGS", //$NON-NLS-1$
+							Uri.fromParts( "package", pkgName, null ) ); //$NON-NLS-1$
+
+					acts = getPackageManager( ).queryIntentActivities( it, 0 );
+
+					if ( acts.size( ) > 0 )
+					{
+						startActivity( it );
+					}
+					else
+					{
+						Log.d( ApplicationManager.class.getName( ),
+								"Failed to resolve activity for InstalledAppDetails" ); //$NON-NLS-1$
+					}
 				}
 
 				break;
