@@ -26,12 +26,12 @@
 	<string name="exporting">Exportando %s...</string>
 	<string name="copy_error">Error en el proceso de copiado: %s</string>
 	<string name="exported">Un total de %s aplicaciones fueron exportadas.</string>
-	<string name="exported_to" formatted="false">Un total de %s aplicaciones fueron exportadas a \'%s\'.</string>
+	<string name="exported_to">Un total de %1$s aplicaciones fueron exportadas a \'%2$s\'.</string>
 	<string name="export_complete">Exportación completada</string>
 	<string name="error_sdcard">Por favor, asegúrese que la tarjeta SD está montada como escribible y con suficiente espacio disponible.</string>
 	<string name="computing">Calculando...</string>
 	<string name="about">Acerca de</string>
-	<string name="about_msg" formatted="false">Versión %s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a href="%s">[ Mantenga esta aplicación ]&lt;/a>&lt;br></string>
+	<string name="about_msg">Versión %1$s&lt;br>&lt;br>Shawn Q.&lt;br>&lt;a href="mailto:qauck.aa@gmail.com">qauck.aa@gmail.com&lt;/a>&lt;br>&lt;br>&lt;a href="%2$s">[ Mantenga esta aplicación ]&lt;/a>&lt;br></string>
 	<string name="close">Cerrar</string>
 	<string name="filter_title">Tipo de Aplicación</string>
 	<string name="all_apps">Todas</string>
@@ -64,8 +64,8 @@
 	<string name="pid_filter">Filtrado por PID</string>
 	<string name="none">Ninguno</string>
 	<string name="no_log_info">Ningún Log encontrado.</string>
-	<string name="collector_head" formatted="false">#Creado por %s versión %s\n\n</string>
-	<string name="storage_summary" formatted="false">Total: %s, Disponible: %s</string>
+	<string name="collector_head">#Creado por %1$s versión %2$s\n\n</string>
+	<string name="storage_summary">Total: %1$s, Disponible: %2$s</string>
 	<string name="view_logs">Ver Logs</string>
 	<string name="send_log">Enviar Log</string>
 	<string name="plain_text">Texto sin formato</string>
@@ -85,7 +85,7 @@
 	<string name="local_remote_addr">Dirección Local/Remota</string>
 	<string name="state">Estado</string>
 	<string name="copy_ip">Copiar Dirección Remota</string>
-	<string name="location_info" formatted="false">&lt;b>%s&lt;/b>&lt;br>%s&lt;br>País: %s&lt;br>Región: %s&lt;br>Ciudad: %s</string>
+	<string name="location_info">&lt;b>%1$s&lt;/b>&lt;br>%2$s&lt;br>País: %3$s&lt;br>Región: %4$s&lt;br>Ciudad: %5$s</string>
 	<string name="view_map">Ver en Mapa</string>
 	<string name="remote_query">Consulta de Información Remota</string>
 	<string name="enabled">Activado</string>
@@ -145,7 +145,7 @@
 	<string name="sensor_info2">%s sensores encontrados</string>
 	<string name="wait_data">Obteniendo información</string>
 	<string name="cache_storage">Caché del Sistema</string>
-	<string name="sensor_msg" formatted="false">Vendor: %s\nVersión: %s\nPotencia: %smA\nResolución: %s\nRango Máximo: %s</string>
+	<string name="sensor_msg">Vendor: %1$s\nVersión: %2$s\nPotencia: %3$smA\nResolución: %4$s\nRango Máximo: %5$s</string>
 	<string name="sort">Orden</string>
 	<string name="sort_type">Ordenar por</string>
 	<string name="sort_direction">Dirección</string>
@@ -184,7 +184,7 @@
     <string name="restore">Restablecer</string>
     <string name="file_size">Tamaño del Archivo</string>
     <string name="installation">Estado de Instalación</string>
-    <string name="installed_ver" formatted="false">%s (Instalada %s)</string>
+    <string name="installed_ver">%1$s (Instalada %2$s)</string>
     <string name="scanning">Escaneando %s</string>
 	<string name="no_apk_show">Ningún archivo de aplicación encontrado.</string>
 	<string name="no_apk_selected">Ningún archivo seleccionado.</string>
@@ -225,8 +225,8 @@
     <string name="scan_dir">Directorio de Recuperación</string>
 	<!--string name="task_widget_name">Quick Task Killer</string>
 	<string name="widget_bar_name">Quick Info Bar</string-->
-	<string name="kill_info" formatted="false">%s tarea finalizada, %s ignoradas.</string>
-	<string name="kill_info2" formatted="false">%s tareas finalizadas, %s ignoradas.</string>
+	<string name="kill_info">%1$s tarea finalizada, %2$s ignoradas.</string>
+	<string name="kill_info2">%1$s tareas finalizadas, %2$s ignoradas.</string>
     <string name="auto_start_sum">Mostrar iconos en el área de notificaciones automáticamente después de reiniciar</string>
     <string name="show_task_icon_sum">Mostrar icono de "Quick Task Killer" en el área de notificaciones</string>
     <string name="show_info_icon_sum">Mostrar icono de "Quick System Info" en el área de notificaciones</string>
@@ -242,8 +242,8 @@
     <string name="no_content_sent">No se pude enviar el contenido.</string>
     <string name="no_cat_selected">Ninguna categoría seleccionada.</string>
     <string name="search_market">Buscar en el Market</string>
-	<string name="exported_skip" formatted="false">%s aplicaciones exportadas, %s protegidas fueron descartadas.</string>
-	<string name="exported_to_skip" formatted="false">%s aplicaciones exportadas a \'%s\', %s protegidas fueron descartadas.</string>
+	<string name="exported_skip">%1$s aplicaciones exportadas, %2$s protegidas fueron descartadas.</string>
+	<string name="exported_to_skip">%1$s aplicaciones exportadas a \'%2$s\', %3$s protegidas fueron descartadas.</string>
     <string name="threads">Hilos</string>
     <!--string name="gid">Group ID</string>
     <string name="uid">User ID</string-->
