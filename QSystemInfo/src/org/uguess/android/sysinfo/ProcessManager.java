@@ -369,6 +369,7 @@ public final class ProcessManager extends ListActivity implements Constants
 					case RunningAppProcessInfo.IMPORTANCE_FOREGROUND :
 						txt_name.setTextColor( Color.CYAN );
 						break;
+					case RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE :
 					case RunningAppProcessInfo.IMPORTANCE_VISIBLE :
 						txt_name.setTextColor( Color.GREEN );
 						break;
