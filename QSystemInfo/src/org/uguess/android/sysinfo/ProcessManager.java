@@ -955,7 +955,6 @@ public final class ProcessManager extends ListActivity implements Constants
 
 	void refreshHeader( )
 	{
-		TextView txt_head_total = (TextView) findViewById( R.id.txt_head_total );
 		TextView txt_head_mem = (TextView) findViewById( R.id.txt_head_mem );
 		TextView txt_head_cpu = (TextView) findViewById( R.id.txt_head_cpu );
 
@@ -1022,16 +1021,19 @@ public final class ProcessManager extends ListActivity implements Constants
 			txt_head_cpu.setVisibility( View.GONE );
 		}
 
+		View header = findViewById( R.id.list_head );
+
 		if ( totalString == null )
 		{
-			txt_head_total.setVisibility( View.GONE );
+			header.setVisibility( View.GONE );
 		}
 		else
 		{
-			txt_head_total.setVisibility( View.VISIBLE );
+			TextView txt_head_total = (TextView) findViewById( R.id.txt_head_total );
 			txt_head_total.setText( totalString );
-		}
 
+			header.setVisibility( View.VISIBLE );
+		}
 	}
 
 	void updateProcess( List<RunningAppProcessInfo> list )
