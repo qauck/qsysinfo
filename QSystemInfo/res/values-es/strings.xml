@@ -49,7 +49,7 @@
 	<string name="export_dir">Directorio de Backup</string>
 	<string name="error_create_folder">No se pudo crear el directorio %s.</string>
 	<string name="error_switch_task">No se pudo cambiar a esta tarea.</string>
-	<string name="net_address">Dirección de Red</string>
+	<string name="net_address">Red</string>
 	<!--string name="verbose">Verbose</string>
 	<string name="debug">Debug</string>
 	<string name="info">Info</string>

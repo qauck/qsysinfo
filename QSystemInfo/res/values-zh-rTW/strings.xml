@@ -49,7 +49,7 @@
 	<string name="export_dir">備份資料夾</string>
 	<string name="error_create_folder">創建資料夾 %s 失敗.</string>
 	<string name="error_switch_task">無法切換至該任務.</string>
-	<string name="net_address">網路位址</string>
+	<string name="net_address">網路</string>
 	<string name="verbose">詳細</string>
 	<string name="debug">除错</string>
 	<string name="info">資訊</string>

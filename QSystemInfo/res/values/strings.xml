@@ -49,7 +49,7 @@
 	<string name="export_dir">Backup Folder</string>
 	<string name="error_create_folder">Failed to create folder %s.</string>
 	<string name="error_switch_task">Cannot switch to this task.</string>
-	<string name="net_address">Network address</string>
+	<string name="net_address">Network</string>
 	<string name="verbose">Verbose</string>
 	<string name="debug">Debug</string>
 	<string name="info">Info</string>

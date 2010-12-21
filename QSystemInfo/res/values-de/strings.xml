@@ -49,7 +49,7 @@
 	<string name="export_dir">Backup-Verzeichnis</string>
 	<string name="error_create_folder">Fehler beim Anlegen von Verzeichnis %s.</string>
 	<string name="error_switch_task">Zu diesem Task kann nicht gewechselt werden.</string>
-	<string name="net_address">Netzwerkadresse</string>
+	<string name="net_address">Netzwerk</string>
 	<!--string name="verbose">Verbose</string>
 	<string name="debug">Debug</string>
 	<string name="info">Info</string-->

@@ -49,7 +49,7 @@
 	<string name="export_dir">Dossier de sauvegarde</string>
 	<string name="error_create_folder">Échec de la création du dossier %s.</string>
 	<string name="error_switch_task">Impossible de basculer vers cette tâche.</string>
-	<string name="net_address">Adresse réseau</string>
+	<string name="net_address">Réseau</string>
 	<string name="verbose">Verbeux</string>
 	<string name="debug">Débogage</string>
 	<string name="info">Information</string>
