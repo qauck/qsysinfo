@@ -494,7 +494,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 				int action = Util.getIntOption( ApplicationManager.this,
 						PREF_KEY_DEFAULT_TAP_ACTION,
-						ACTION_MANAGE );
+						ACTION_MENU );
 
 				handleAction( holder, action );
 			}
@@ -1095,7 +1095,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			Util.updateIntOption( data,
 					this,
 					PREF_KEY_DEFAULT_TAP_ACTION,
-					ACTION_MANAGE );
+					ACTION_MENU );
 
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_SIZE );
 			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_DATE );
@@ -1166,7 +1166,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 					Util.getBooleanOption( this, PREF_KEY_SHOW_BACKUP_STATE ) );
 			it.putExtra( PREF_KEY_DEFAULT_TAP_ACTION, Util.getIntOption( this,
 					PREF_KEY_DEFAULT_TAP_ACTION,
-					ACTION_MANAGE ) );
+					ACTION_MENU ) );
 
 			startActivityForResult( it, REQUEST_SETTINGS );
 
@@ -2537,7 +2537,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		void refreshDefaultAction( )
 		{
 			int type = getIntent( ).getIntExtra( PREF_KEY_DEFAULT_TAP_ACTION,
-					ACTION_MANAGE );
+					ACTION_MENU );
 
 			String label = null;
 			switch ( type )
@@ -2736,7 +2736,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 								getString( R.string.details ),
 						},
 								it.getIntExtra( PREF_KEY_DEFAULT_TAP_ACTION,
-										ACTION_MANAGE ),
+										ACTION_MENU ),
 								listener )
 						.create( )
 						.show( );
