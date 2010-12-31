@@ -613,7 +613,17 @@ public final class ApplicationManager extends ListActivity implements Constants
 					}
 					else
 					{
-						img_type.setImageDrawable( getPackageManager( ).getDefaultActivityIcon( ) );
+						try
+						{
+							img_type.setImageDrawable( getPackageManager( ).getDefaultActivityIcon( ) );
+						}
+						catch ( Exception fe )
+						{
+							img_type.setImageDrawable( null );
+
+							Log.e( ApplicationManager.class.getName( ),
+									fe.getLocalizedMessage( ) );
+						}
 					}
 				}
 				else

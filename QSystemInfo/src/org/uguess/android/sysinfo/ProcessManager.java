@@ -1580,7 +1580,15 @@ public final class ProcessManager extends ListActivity implements Constants
 
 							if ( icon == null )
 							{
-								icon = pm.getDefaultActivityIcon( );
+								try
+								{
+									icon = pm.getDefaultActivityIcon( );
+								}
+								catch ( Exception e )
+								{
+									Log.e( ProcessManager.class.getName( ),
+											e.getLocalizedMessage( ) );
+								}
 							}
 
 							proc.icon = icon;
