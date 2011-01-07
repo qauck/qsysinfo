@@ -475,10 +475,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		mi = menu.add( Menu.NONE, MI_ARCHIVE, Menu.NONE, R.string.archive );
 		mi.setIcon( R.drawable.archive );
 
-		mi = menu.add( Menu.NONE,
-				R.id.mi_preference,
-				Menu.NONE,
-				R.string.preference );
+		mi = menu.add( Menu.NONE, MI_PREFERENCE, Menu.NONE, R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );
 
 		return true;
@@ -487,7 +484,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 	@Override
 	public boolean onOptionsItemSelected( MenuItem item )
 	{
-		if ( item.getItemId( ) == R.id.mi_preference )
+		if ( item.getItemId( ) == MI_PREFERENCE )
 		{
 			Intent it = new Intent( this, RestoreAppSettings.class );
 

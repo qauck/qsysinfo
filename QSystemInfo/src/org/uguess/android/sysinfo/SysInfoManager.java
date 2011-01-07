@@ -82,7 +82,6 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -1165,15 +1164,22 @@ public final class SysInfoManager extends PreferenceActivity implements
 	@Override
 	public boolean onCreateOptionsMenu( Menu menu )
 	{
-		MenuInflater inflater = getMenuInflater( );
-		inflater.inflate( R.menu.main_options, menu );
+		MenuItem mi = menu.add( Menu.NONE, MI_ABOUT, Menu.NONE, R.string.about );
+		mi.setIcon( android.R.drawable.ic_menu_info_details );
+
+		mi = menu.add( Menu.NONE, MI_HELP, Menu.NONE, R.string.help );
+		mi.setIcon( android.R.drawable.ic_menu_help );
+
+		mi = menu.add( Menu.NONE, MI_PREFERENCE, Menu.NONE, R.string.preference );
+		mi.setIcon( android.R.drawable.ic_menu_preferences );
+
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected( MenuItem item )
 	{
-		if ( item.getItemId( ) == R.id.mi_preference )
+		if ( item.getItemId( ) == MI_PREFERENCE )
 		{
 			Intent it = new Intent( this, InfoSettings.class );
 
@@ -1195,7 +1201,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 			return true;
 		}
-		else if ( item.getItemId( ) == R.id.mi_help )
+		else if ( item.getItemId( ) == MI_HELP )
 		{
 			Intent it = new Intent( Intent.ACTION_VIEW );
 
@@ -1218,7 +1224,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 			return true;
 		}
-		if ( item.getItemId( ) == R.id.mi_about )
+		if ( item.getItemId( ) == MI_ABOUT )
 		{
 			ScrollView sv = new ScrollView( this );
 
