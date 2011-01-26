@@ -759,9 +759,19 @@ public final class ProcessManager extends ListActivity implements Constants
 								it.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK )
 										.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
 
-								startActivity( it );
+								try
+								{
+									startActivity( it );
 
-								started = true;
+									started = true;
+								}
+								catch ( Exception e )
+								{
+									Log.e( ProcessManager.class.getName( ),
+											"Cannot start activity: " + pkgName, //$NON-NLS-1$
+											e );
+								}
+								
 								break;
 							}
 						}
