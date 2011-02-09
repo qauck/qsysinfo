@@ -884,6 +884,18 @@ public final class LogViewer extends ListActivity implements Constants
 		int pidOffset = line.indexOf( "):" ); //$NON-NLS-1$
 		int tagOffset = line.lastIndexOf( '(', pidOffset );
 
+		if ( dayOffset == -1
+				|| timeOffset == -1
+				|| levelOffset == -1
+				|| pidOffset == -1
+				|| tagOffset == -1 )
+		{
+			Log.d( LogViewer.class.getName( ),
+					"Unexpected logcat line format: " + line ); //$NON-NLS-1$
+
+			return null;
+		}
+
 		int pid = -1;
 		try
 		{
