@@ -51,7 +51,7 @@
     <string name="error_switch_task">Не могу переключится на эту задачу.</string>
     <string name="net_address">Сеть</string>
     <string name="verbose">Подробности</string>
-    <string name="debug">Откладка</string>
+    <string name="debug">Отладка</string>
     <string name="info">Информация</string>
     <string name="error">Ошибка</string>
     <string name="asser_t">Фатальная</string>
@@ -87,7 +87,7 @@
     <string name="copy_ip">Копировать удалённый адрес</string>
     <string name="location_info">&lt;b>%1$s&lt;/b>&lt;br>%2$s&lt;br>Страна: %3$s&lt;br>Регион: %4$s&lt;br>Город: %5$s</string>
     <string name="view_map">Посмотреть на Карте</string>
-    <string name="remote_query">Запрос удаленной информации</string>
+    <string name="remote_query">Запрос удалённой информации</string>
     <string name="enabled">Включено</string>
     <string name="disabled">Отключено</string>
     <string name="wifi_only">Только Wi-Fi</string>
@@ -157,7 +157,7 @@
     <string name="code_size">Размер кода</string>
     <string name="name">Название</string>
     <string name="help">Помощь он-лайн</string>
-    <string name="cpu_usage">Испрользование CPU</string>
+    <string name="cpu_usage">Использование CPU</string>
     <string name="memory_usage">Использование памяти</string>
     <string name="remove">Удалить</string>
     <string name="no_item_remove">Ничего не выбрано для удаления</string>
@@ -183,7 +183,7 @@
     <string name="remote_address">Удалённый адрес</string>
     <string name="restore">Восстановление</string>
     <string name="file_size">Размер файла</string>
-    <string name="installation">Сосотояние установки</string>
+    <string name="installation">Состояние установки</string>
     <string name="installed_ver">%1$s (Установленная %2$s)</string>
     <string name="scanning">Сканирование %s</string>
     <string name="no_apk_show">Не найден файл приложения.</string>
@@ -193,7 +193,7 @@
     <string name="show_cpu_usage">Показать использование CPU</string>
     <string name="show_memory_usage">Показать использование памяти</string>
     <string name="bug_failed">Ошибка при создании отчёта ошибки, отправьте автору вручную.</string>
-    <string name="bug_detail">Исключение было обнаружено во время последнего запуска Quick System Info . Вы хотите отправить сведения об ошибках автору, чтобы помочь дальнейшему решению этого вопроса? \n\nИнформация собрана только для откладки, не содержит никаких данных вашей конфиденциальности.</string>
+    <string name="bug_detail">Исключение было обнаружено во время последнего запуска Quick System Info. Вы хотите отправить сведения об ошибках автору, чтобы помочь дальнейшему решению этого вопроса? \n\nИнформация собрана только для отладки, не содержит никаких данных вашей конфиденциальности.</string>
     <string name="bug_title">Сообщение об ошибке</string>
     <string name="oops_msg">Нажмите, чтобы сообщить об этой ошибке.</string>
     <string name="oops">К сожалению, ошибка.</string>
@@ -209,7 +209,7 @@
     <string name="show_file_size">Показать размер файла</string>
     <string name="show_app_date_sum">Показать дату установки для каждого приложения</string>
     <string name="show_app_size_sum">Показать информацию о размере для каждого приложения </string>
-    <string name="show_app_date">Показать даты прилолжения</string>
+    <string name="show_app_date">Показать даты приложений</string>
     <string name="show_app_size">Показать размер приложения</string>
     <string name="run_failed">Ошибка при запуске приложения.</string>
     <string name="run">Запуск</string>
@@ -220,7 +220,7 @@
     <string name="file_path">Путь файла</string>
     <string name="show_file_path_sum">Показать путь для каждого файла</string>
     <string name="show_file_path">Показать путь файла</string>
-    <string name="search_subdir_sum">Поиск файл</string>
+    <string name="search_subdir_sum">Поиск файла</string>
     <string name="search_subdir">Поиск подпапок</string>
     <string name="scan_dir">Восстановление папки</string>
     <string name="task_widget_name">Быстый Сброс Приложений</string>
@@ -228,7 +228,7 @@
     <string name="kill_info">%1$s приложений завершено, %2$s игнорировано.</string>
     <string name="kill_info2">%1$s приложений завершено, %2$s игнорировано.</string>
     <string name="auto_start_sum">Показать значки в области уведомлений автоматически после перезагрузки</string>
-    <string name="show_task_icon_sum">Показать панель быстроо сброса приложений в области уведомлений </string>
+    <string name="show_task_icon_sum">Показать панель быстрого сброса приложений в области уведомлений</string>
     <string name="show_info_icon_sum">Показать Иконку приложения в области уведомлений</string>
     <string name="auto_start">Автоматические Иконки</string>
     <string name="show_task_icon">Показать иконку Сброс Приложений</string>
@@ -299,8 +299,8 @@
     <string name="manage">Управление</string>
     <string name="show_app_icon_sum">Показать иконку для каждого приложения</string>
     <string name="show_app_icon">Показать Иконку приложения</string>
-    <string name="free">Свободно</string>
-    <string name="load">Загружено</string>
+    <string name="free">Своб.</string>
+    <string name="load">Загр.</string>
     <string name="configure_widgets_sum">Вкл./Откл. виджеты</string>
     <string name="configure_widgets">Настроить Виджеты</string>
     <string name="reboot_warning">Устройство требует перезагрузки.</string>
