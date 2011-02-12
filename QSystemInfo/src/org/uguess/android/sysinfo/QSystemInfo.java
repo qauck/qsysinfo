@@ -95,7 +95,7 @@ public final class QSystemInfo extends TabActivity
 
 		if ( sp != null )
 		{
-			int tab = sp.getInt( SysInfoManager.PREF_KEY_DEFAULT_TAB, 1 );
+			int tab = sp.getInt( SysInfoManager.PREF_KEY_DEFAULT_TAB, 0 );
 
 			if ( tab == 0 )
 			{
@@ -117,7 +117,7 @@ public final class QSystemInfo extends TabActivity
 
 		if ( sp != null )
 		{
-			int tab = sp.getInt( SysInfoManager.PREF_KEY_DEFAULT_TAB, 1 );
+			int tab = sp.getInt( SysInfoManager.PREF_KEY_DEFAULT_TAB, 0 );
 
 			if ( tab == 0 )
 			{

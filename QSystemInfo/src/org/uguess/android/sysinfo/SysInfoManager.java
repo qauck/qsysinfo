@@ -1156,7 +1156,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 					PREF_KEY_AUTO_START_ICON,
 					false );
 			Util.updateStringOption( data, this, PREF_KEY_DEFAULT_EMAIL );
-			Util.updateIntOption( data, this, PREF_KEY_DEFAULT_TAB, 1 );
+			Util.updateIntOption( data, this, PREF_KEY_DEFAULT_TAB, 0 );
 			Util.updateStringOption( data, this, PREF_KEY_WIDGET_DISABLED );
 		}
 	}
@@ -1193,7 +1193,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 			it.putExtra( PREF_KEY_DEFAULT_EMAIL,
 					Util.getStringOption( this, PREF_KEY_DEFAULT_EMAIL, null ) );
 			it.putExtra( PREF_KEY_DEFAULT_TAB,
-					Util.getIntOption( this, PREF_KEY_DEFAULT_TAB, 1 ) );
+					Util.getIntOption( this, PREF_KEY_DEFAULT_TAB, 0 ) );
 			it.putExtra( PREF_KEY_WIDGET_DISABLED,
 					Util.getStringOption( this, PREF_KEY_WIDGET_DISABLED, null ) );
 
@@ -2734,7 +2734,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 		void refreshTab( )
 		{
-			int tab = getIntent( ).getIntExtra( PREF_KEY_DEFAULT_TAB, 1 );
+			int tab = getIntent( ).getIntExtra( PREF_KEY_DEFAULT_TAB, 0 );
 
 			CharSequence label = getString( R.string.last_active );
 			switch ( tab )
@@ -2850,7 +2850,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 								getString( R.string.tab_procs ),
 								getString( R.string.tab_netstat )
 						},
-								it.getIntExtra( PREF_KEY_DEFAULT_TAB, 1 ),
+								it.getIntExtra( PREF_KEY_DEFAULT_TAB, 0 ),
 								listener )
 						.create( )
 						.show( );
