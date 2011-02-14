@@ -473,7 +473,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		mi.setIcon( android.R.drawable.ic_menu_delete );
 
 		mi = menu.add( Menu.NONE, MI_ARCHIVE, Menu.NONE, R.string.archive );
-		mi.setIcon( R.drawable.archive );
+		mi.setIcon( android.R.drawable.ic_menu_save );
 
 		mi = menu.add( Menu.NONE, MI_PREFERENCE, Menu.NONE, R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );

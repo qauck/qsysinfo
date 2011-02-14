@@ -345,7 +345,7 @@ public final class LogViewer extends ListActivity implements Constants
 		mi.setIcon( android.R.drawable.ic_menu_share );
 
 		mi = menu.add( Menu.NONE, MI_REFRESH, Menu.NONE, R.string.refresh );
-		mi.setIcon( R.drawable.refresh );
+		mi.setIcon( android.R.drawable.ic_menu_rotate );
 
 		mi = menu.add( Menu.NONE, MI_PREFERENCE, Menu.NONE, R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );
