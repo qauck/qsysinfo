@@ -2094,6 +2094,9 @@ public final class SysInfoManager extends PreferenceActivity implements
 			case RunningAppProcessInfo.IMPORTANCE_FOREGROUND :
 				impt = "Foreground"; //$NON-NLS-1$
 				break;
+			case RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE :
+				impt = "Perceptible"; //$NON-NLS-1$
+				break;
 			case RunningAppProcessInfo.IMPORTANCE_SERVICE :
 				impt = "Service"; //$NON-NLS-1$
 				break;
