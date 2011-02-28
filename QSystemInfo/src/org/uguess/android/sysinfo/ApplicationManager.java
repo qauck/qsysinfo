@@ -521,6 +521,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 					view = convertView;
 				}
 
+				if ( position >= getCount( ) )
+				{
+					return view;
+				}
+
 				AppInfoHolder itm = getItem( position );
 
 				txt_name = (TextView) view.findViewById( R.id.app_name );
@@ -1377,7 +1382,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 											"Cannot start activity: " + pkgName, //$NON-NLS-1$
 											e );
 								}
-								
+
 								break;
 							}
 						}

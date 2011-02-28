@@ -340,6 +340,11 @@ public final class ProcessManager extends ListActivity implements Constants
 					view = convertView;
 				}
 
+				if ( position >= getCount( ) )
+				{
+					return view;
+				}
+
 				ProcessItem itm = getItem( position );
 
 				img_type = (ImageView) view.findViewById( R.id.img_proc_icon );
@@ -771,7 +776,7 @@ public final class ProcessManager extends ListActivity implements Constants
 											"Cannot start activity: " + pkgName, //$NON-NLS-1$
 											e );
 								}
-								
+
 								break;
 							}
 						}

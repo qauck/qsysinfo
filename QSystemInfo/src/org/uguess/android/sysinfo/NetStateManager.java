@@ -243,6 +243,11 @@ public final class NetStateManager extends ListActivity implements Constants
 					view = convertView;
 				}
 
+				if ( position >= getCount( ) )
+				{
+					return view;
+				}
+
 				ConnectionItem itm = getItem( position );
 
 				txt_proto = (TextView) view.findViewById( R.id.txt_proto );
