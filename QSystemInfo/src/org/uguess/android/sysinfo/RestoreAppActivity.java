@@ -48,6 +48,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.text.Html;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -723,6 +724,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		menu.add( Menu.NONE, MI_DELETE, Menu.NONE, R.string.delete_file );
 		menu.add( Menu.NONE, MI_ARCHIVE, Menu.NONE, R.string.archive );
 		menu.add( Menu.NONE, MI_SEARCH, Menu.NONE, R.string.search_market );
+		menu.add( Menu.NONE, MI_DETAILS, Menu.NONE, R.string.details );
 	}
 
 	@Override
@@ -850,6 +852,40 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 				return true;
 			}
+			else if ( item.getItemId( ) == MI_DETAILS )
+			{
+				StringBuffer sb = new StringBuffer( ).append( "<small>" ) //$NON-NLS-1$
+						.append( getString( R.string.pkg_name ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( ai.pkgName )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.version_code ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( ai.versionCode )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.file_size ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( ai.sizeString != null ? ai.sizeString
+								: getString( R.string.unknown ) )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.file_date ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( dateFormatter.format( new Date( ai.file.lastModified( ) ) ) )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.file_path ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( ai.file.getAbsolutePath( ) )
+						.append( "</small>" ); //$NON-NLS-1$
+
+				new AlertDialog.Builder( this ).setTitle( ai.label == null ? ai.file.getName( )
+						: ai.label )
+						.setNeutralButton( R.string.close, null )
+						.setMessage( Html.fromHtml( sb.toString( ) ) )
+						.create( )
+						.show( );
+
+				return true;
+			}
 		}
 
 		return false;
@@ -969,6 +1005,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 									holder.size );
 							holder.version = pi.versionName == null ? String.valueOf( pi.versionCode )
 									: pi.versionName;
+							holder.versionCode = pi.versionCode;
 
 							if ( pi.packageName != null )
 							{
@@ -1235,6 +1272,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		CharSequence label;
 		String pkgName;
 		String version;
+		int versionCode;
 		String sizeString;
 		long size;
 		Drawable icon;

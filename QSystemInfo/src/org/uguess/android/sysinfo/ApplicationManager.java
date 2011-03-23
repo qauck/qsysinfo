@@ -1410,6 +1410,20 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 				ApplicationInfo appInfo = ai.appInfo;
 
+				String installDate;
+				String fileSize;
+
+				if ( appInfo.sourceDir != null )
+				{
+					File f = new File( appInfo.sourceDir );
+					installDate = dateFormatter.format( new Date( f.lastModified( ) ) );
+					fileSize = Formatter.formatFileSize( this, f.length( ) );
+				}
+				else
+				{
+					installDate = fileSize = getString( R.string.unknown );
+				}
+
 				StringBuffer sb = new StringBuffer( ).append( "<small>" ) //$NON-NLS-1$
 						.append( getString( R.string.pkg_name ) )
 						.append( ": " ) //$NON-NLS-1$
@@ -1427,6 +1441,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 						.append( ": " ) //$NON-NLS-1$
 						.append( appInfo.uid )
 						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.file_size ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( fileSize )
+						.append( "<br>" ) //$NON-NLS-1$
 						.append( getString( R.string.public_source ) )
 						.append( ": " ) //$NON-NLS-1$
 						.append( appInfo.publicSourceDir )
@@ -1438,6 +1456,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 						.append( getString( R.string.data ) )
 						.append( ": " ) //$NON-NLS-1$
 						.append( appInfo.dataDir )
+						.append( "<br>" ) //$NON-NLS-1$
+						.append( getString( R.string.installed_date ) )
+						.append( ": " ) //$NON-NLS-1$
+						.append( installDate )
 						.append( "<br>" ) //$NON-NLS-1$
 						.append( getString( R.string.process ) )
 						.append( ": " ) //$NON-NLS-1$
