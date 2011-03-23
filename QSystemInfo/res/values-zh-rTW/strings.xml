@@ -322,5 +322,7 @@
     <string name="usage_stats">使用統計</string>
     <string name="show_local_addr_sum">顯示每個連接的本地位址</string>
     <string name="show_local_addr">顯示本地位址</string>
+    <string name="deleting">正在移除...</string>
+    <string name="archiving">正在歸檔...</string>
 
 </resources>

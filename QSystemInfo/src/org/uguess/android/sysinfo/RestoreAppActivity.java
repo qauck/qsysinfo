@@ -78,6 +78,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 	private static final int MSG_SCAN = MSG_PRIVATE + 1;
 	private static final int MSG_PRE_SCAN = MSG_PRIVATE + 2;
+	private static final int MSG_REMOVE = MSG_PRIVATE + 3;
 
 	private static final String PREF_KEY_DEFAULT_RESTORE_DIR = "default_restore_dir"; //$NON-NLS-1$
 	private static final String PREF_KEY_APP_RESTORE_DIR = "app_restore_dir"; //$NON-NLS-1$
@@ -169,6 +170,33 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 					progress.setProgressStyle( ProgressDialog.STYLE_HORIZONTAL );
 					progress.setMax( msg.arg1 );
 					progress.show( );
+					break;
+				case MSG_TOAST :
+
+					Util.shortToast( RestoreAppActivity.this, (String) msg.obj );
+					break;
+				case MSG_REMOVE :
+
+					adapter = (ArrayAdapter<ApkInfo>) getListAdapter( );
+
+					ArrayList<ApkInfo> removed = (ArrayList<ApkInfo>) msg.obj;
+
+					adapter.setNotifyOnChange( false );
+
+					for ( ApkInfo ai : removed )
+					{
+						adapter.remove( ai );
+					}
+
+					adapter.notifyDataSetChanged( );
+
+					if ( getSelectedCount( ) == 0 )
+					{
+						hideButtons( );
+					}
+
+					sendEmptyMessage( MSG_DISMISS_PROGRESS );
+
 					break;
 			}
 		}
@@ -524,33 +552,44 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 					public void onClick( DialogInterface dialog, int which )
 					{
-						ArrayAdapter adapter = (ArrayAdapter) getListAdapter( );
-						adapter.setNotifyOnChange( false );
-
-						for ( int i = 0, size = apks.size( ); i < size; i++ )
+						if ( progress != null )
 						{
-							ApkInfo ai = apks.get( i );
-
-							boolean deleted = ai.file.delete( );
-
-							if ( deleted )
-							{
-								adapter.remove( ai );
-							}
-							else
-							{
-								Util.shortToast( RestoreAppActivity.this,
-										getString( R.string.delete_file_failed,
-												ai.file.getAbsolutePath( ) ) );
-							}
+							progress.dismiss( );
 						}
+						progress = new ProgressDialog( RestoreAppActivity.this );
+						progress.setMessage( getString( R.string.deleting ) );
+						progress.setIndeterminate( true );
+						progress.show( );
 
-						adapter.notifyDataSetChanged( );
+						new Thread( new Runnable( ) {
 
-						if ( getSelectedCount( ) == 0 )
-						{
-							hideButtons( );
-						}
+							public void run( )
+							{
+								ArrayList<ApkInfo> removed = new ArrayList<ApkInfo>( );
+
+								for ( int i = 0, size = apks.size( ); i < size; i++ )
+								{
+									ApkInfo ai = apks.get( i );
+
+									boolean deleted = ai.file.delete( );
+
+									if ( deleted )
+									{
+										removed.add( ai );
+									}
+									else
+									{
+										handler.sendMessage( handler.obtainMessage( MSG_TOAST,
+												getString( R.string.delete_file_failed,
+														ai.file.getAbsolutePath( ) ) ) );
+									}
+								}
+
+								handler.sendMessage( handler.obtainMessage( MSG_REMOVE,
+										removed ) );
+							}
+						},
+								"DeleteWorker" ).start( ); //$NON-NLS-1$
 					}
 				};
 
@@ -602,48 +641,61 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 						public void onClick( DialogInterface dialog, int which )
 						{
-							File f = new File( archivePath );
-
-							if ( !f.exists( ) )
+							if ( progress != null )
 							{
-								if ( !f.mkdirs( ) )
-								{
-									Util.shortToast( RestoreAppActivity.this,
-											getString( R.string.fail_create_archive_folder,
-													f.getAbsolutePath( ) ) );
-
-									return;
-								}
+								progress.dismiss( );
 							}
+							progress = new ProgressDialog( RestoreAppActivity.this );
+							progress.setMessage( getString( R.string.archiving ) );
+							progress.setIndeterminate( true );
+							progress.show( );
 
-							ArrayAdapter adapter = (ArrayAdapter) getListAdapter( );
-							adapter.setNotifyOnChange( false );
+							new Thread( new Runnable( ) {
 
-							for ( int i = 0, size = apks.size( ); i < size; i++ )
-							{
-								ApkInfo ai = apks.get( i );
-
-								boolean moved = ai.file.renameTo( new File( f,
-										ai.file.getName( ) ) );
-
-								if ( moved )
+								public void run( )
 								{
-									adapter.remove( ai );
-								}
-								else
-								{
-									Util.shortToast( RestoreAppActivity.this,
-											getString( R.string.archive_fail,
-													ai.file.getAbsolutePath( ) ) );
-								}
-							}
+									File f = new File( archivePath );
 
-							adapter.notifyDataSetChanged( );
+									if ( !f.exists( ) )
+									{
+										if ( !f.mkdirs( ) )
+										{
+											handler.sendMessage( handler.obtainMessage( MSG_TOAST,
+													getString( R.string.fail_create_archive_folder,
+															f.getAbsolutePath( ) ) ) );
 
-							if ( getSelectedCount( ) == 0 )
-							{
-								hideButtons( );
-							}
+											handler.sendEmptyMessage( MSG_DISMISS_PROGRESS );
+
+											return;
+										}
+									}
+
+									ArrayList<ApkInfo> removed = new ArrayList<ApkInfo>( );
+
+									for ( int i = 0, size = apks.size( ); i < size; i++ )
+									{
+										ApkInfo ai = apks.get( i );
+
+										boolean moved = ai.file.renameTo( new File( f,
+												ai.file.getName( ) ) );
+
+										if ( moved )
+										{
+											removed.add( ai );
+										}
+										else
+										{
+											handler.sendMessage( handler.obtainMessage( MSG_TOAST,
+													getString( R.string.archive_fail,
+															ai.file.getAbsolutePath( ) ) ) );
+										}
+									}
+
+									handler.sendMessage( handler.obtainMessage( MSG_REMOVE,
+											removed ) );
+								}
+							},
+									"ArchiveWorker" ).start( ); //$NON-NLS-1$
 						}
 					};
 
@@ -868,10 +920,11 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 			return;
 		}
 
-		if ( progress == null )
+		if ( progress != null )
 		{
-			progress = new ProgressDialog( this );
+			progress.dismiss( );
 		}
+		progress = new ProgressDialog( RestoreAppActivity.this );
 		progress.setMessage( getResources( ).getText( R.string.loading ) );
 		progress.setIndeterminate( true );
 		progress.show( );

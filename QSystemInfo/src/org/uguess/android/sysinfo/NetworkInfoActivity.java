@@ -23,6 +23,7 @@ import org.uguess.android.sysinfo.NetStateManager.IpInfo;
 import org.uguess.android.sysinfo.SysInfoManager.PopActivity;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.DhcpInfo;
@@ -92,30 +93,52 @@ public class NetworkInfoActivity extends PopActivity
 						{
 							eventConsumed = true;
 
-							IpInfo info = NetStateManager.getIpInfo( null );
+							final ProgressDialog progress = new ProgressDialog( NetworkInfoActivity.this );
+							progress.setMessage( getString( R.string.query_ip_msg ) );
+							progress.setIndeterminate( true );
+							progress.show( );
 
-							NetStateManager.showIpInfo( info,
-									NetworkInfoActivity.this );
+							new Thread( new Runnable( ) {
 
-							if ( info != null
-									&& !TextUtils.isEmpty( info.latitude )
-									&& !TextUtils.isEmpty( info.longitude ) )
-							{
-								if ( info.host == null )
+								public void run( )
 								{
-									item[1] = info.ip;
-								}
-								else
-								{
-									item[1] = info.ip + '\n' + info.host;
-								}
-							}
-							else
-							{
-								item[1] = getString( R.string.info_not_available );
-							}
+									final IpInfo info = NetStateManager.getIpInfo( null );
 
-							( (ArrayAdapter<String[]>) contentView.getAdapter( ) ).notifyDataSetChanged( );
+									progress.dismiss( );
+
+									contentView.post( new Runnable( ) {
+
+										public void run( )
+										{
+											NetStateManager.showIpInfo( info,
+													NetworkInfoActivity.this );
+
+											if ( info != null
+													&& !TextUtils.isEmpty( info.latitude )
+													&& !TextUtils.isEmpty( info.longitude ) )
+											{
+												if ( info.host == null )
+												{
+													item[1] = info.ip;
+												}
+												else
+												{
+													item[1] = info.ip
+															+ '\n'
+															+ info.host;
+												}
+											}
+											else
+											{
+												item[1] = getString( R.string.info_not_available );
+											}
+
+											( (ArrayAdapter<String[]>) contentView.getAdapter( ) ).notifyDataSetChanged( );
+										}
+									} );
+								}
+							},
+									"IpInfoRequester" ).start( ); //$NON-NLS-1$
 						}
 					} );
 
