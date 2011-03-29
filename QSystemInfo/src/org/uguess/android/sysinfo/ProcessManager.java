@@ -718,8 +718,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 					if ( self.equals( rap.procInfo.processName ) )
 					{
-						ProcessManager.this.finish( );
-						am.restartPackage( self );
+						Util.killSelf( handler, ProcessManager.this, am, self );
 					}
 					else
 					{
@@ -958,8 +957,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 		if ( !ignoreList.contains( self ) && !self.equals( exception ) )
 		{
-			ProcessManager.this.finish( );
-			am.restartPackage( self );
+			Util.killSelf( handler, ProcessManager.this, am, self );
 		}
 		else
 		{

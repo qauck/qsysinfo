@@ -65,6 +65,7 @@ interface Constants
 	int MI_HELP = 108;
 	//int MI_UNLOCK = 109;
 	int MI_PREFERENCE = 110;
+	int MI_EXIT = 111;
 
 	// message
 	int MSG_INIT_OK = 1;

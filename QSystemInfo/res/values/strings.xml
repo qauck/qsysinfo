@@ -324,5 +324,8 @@
     <string name="show_local_addr">Show Local Address</string>
     <string name="deleting">Deleting...</string>
     <string name="archiving">Archiving...</string>
+    <string name="exit">Exit</string>
+    <string name="prompt">Prompt</string>
+    <string name="exit_prompt">Are you sure to force stopping this application?</string>
 
 </resources>

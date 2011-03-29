@@ -32,6 +32,7 @@ import org.uguess.android.sysinfo.QSystemInfo.ErrorHandler;
 import org.uguess.android.sysinfo.WidgetProvider.EndTaskService;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -46,8 +47,10 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -88,6 +91,42 @@ final class Util implements Constants
 		}
 
 		return ctx.getString( R.string.unknown );
+	}
+
+	static void killSelf( Handler handler, Activity ac, ActivityManager am,
+			String pkgName )
+	{
+		int sdkInt = 0;
+
+		try
+		{
+			sdkInt = Integer.parseInt( Build.VERSION.SDK );
+		}
+		catch ( Exception e )
+		{
+			Log.e( Util.class.getName( ), e.getLocalizedMessage( ), e );
+		}
+
+		if ( sdkInt < 8 )
+		{
+			ac.finish( );
+			am.restartPackage( pkgName );
+		}
+		else
+		{
+			ac.finish( );
+
+			updateInfoIcon( ac, false );
+			updateTaskIcon( ac, false );
+
+			handler.postDelayed( new Runnable( ) {
+
+				public void run( )
+				{
+					Process.killProcess( Process.myPid( ) );
+				}
+			}, 500 );
+		}
 	}
 
 	static int getIntOption( Activity ac, String key, int defValue )

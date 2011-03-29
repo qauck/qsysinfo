@@ -324,5 +324,8 @@
     <string name="show_local_addr">顯示本地位址</string>
     <string name="deleting">正在移除...</string>
     <string name="archiving">正在歸檔...</string>
+    <string name="exit">退出</string>
+    <string name="prompt">提示</string>
+    <string name="exit_prompt">是否確認強制結束當前應用程式?</string>
 
 </resources>

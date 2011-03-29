@@ -1173,6 +1173,9 @@ public final class SysInfoManager extends PreferenceActivity implements
 		mi = menu.add( Menu.NONE, MI_PREFERENCE, Menu.NONE, R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );
 
+		mi = menu.add( Menu.NONE, MI_EXIT, Menu.NONE, R.string.exit );
+		mi.setIcon( android.R.drawable.ic_lock_power_off );
+
 		return true;
 	}
 
@@ -1224,7 +1227,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 			return true;
 		}
-		if ( item.getItemId( ) == MI_ABOUT )
+		else if ( item.getItemId( ) == MI_ABOUT )
 		{
 			ScrollView sv = new ScrollView( this );
 
@@ -1245,6 +1248,28 @@ public final class SysInfoManager extends PreferenceActivity implements
 					.setIcon( R.drawable.icon_m )
 					.setView( sv )
 					.setNegativeButton( R.string.close, null )
+					.create( )
+					.show( );
+
+			return true;
+		}
+		else if ( item.getItemId( ) == MI_EXIT )
+		{
+			OnClickListener listener = new OnClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which )
+				{
+					Util.killSelf( handler,
+							SysInfoManager.this,
+							(ActivityManager) getSystemService( ACTIVITY_SERVICE ),
+							getPackageName( ) );
+				}
+			};
+
+			new AlertDialog.Builder( this ).setTitle( R.string.prompt )
+					.setMessage( R.string.exit_prompt )
+					.setPositiveButton( android.R.string.yes, listener )
+					.setNegativeButton( android.R.string.no, null )
 					.create( )
 					.show( );
 
