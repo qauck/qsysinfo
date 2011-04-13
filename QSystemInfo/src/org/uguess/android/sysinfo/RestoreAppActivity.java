@@ -20,11 +20,9 @@ package org.uguess.android.sysinfo;
 import java.io.File;
 import java.io.FileFilter;
 import java.text.Collator;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 import android.app.AlertDialog;
@@ -49,6 +47,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.text.Html;
+import android.text.format.DateUtils;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -97,8 +96,6 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 	String versionPrefix;
 
 	private boolean skipUpdate;
-
-	DateFormat dateFormatter = DateFormat.getDateTimeInstance( );
 
 	Handler handler = new Handler( ) {
 
@@ -379,7 +376,11 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 				{
 					txt_time.setVisibility( View.VISIBLE );
 
-					txt_time.setText( dateFormatter.format( new Date( itm.file.lastModified( ) ) ) );
+					txt_time.setText( DateUtils.formatDateTime( RestoreAppActivity.this,
+							itm.file.lastModified( ),
+							DateUtils.FORMAT_SHOW_YEAR
+									| DateUtils.FORMAT_SHOW_DATE
+									| DateUtils.FORMAT_SHOW_TIME ) );
 				}
 				else
 				{
@@ -870,7 +871,11 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 						.append( "<br>" ) //$NON-NLS-1$
 						.append( getString( R.string.file_date ) )
 						.append( ": " ) //$NON-NLS-1$
-						.append( dateFormatter.format( new Date( ai.file.lastModified( ) ) ) )
+						.append( DateUtils.formatDateTime( this,
+								ai.file.lastModified( ),
+								DateUtils.FORMAT_SHOW_YEAR
+										| DateUtils.FORMAT_SHOW_DATE
+										| DateUtils.FORMAT_SHOW_TIME ) )
 						.append( "<br>" ) //$NON-NLS-1$
 						.append( getString( R.string.file_path ) )
 						.append( ": " ) //$NON-NLS-1$

@@ -27,11 +27,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.text.Collator;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -70,6 +68,7 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.text.ClipboardManager;
 import android.text.Html;
+import android.text.format.DateUtils;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -166,8 +165,6 @@ public final class ApplicationManager extends ListActivity implements Constants
 	String versionPrefix;
 
 	AppCache appCache;
-
-	DateFormat dateFormatter = DateFormat.getDateTimeInstance( );
 
 	PkgSizeUpdaterThread sizeUpdater;
 
@@ -594,7 +591,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 					if ( itm.appInfo.sourceDir != null )
 					{
 						File f = new File( itm.appInfo.sourceDir );
-						txt_time.setText( dateFormatter.format( new Date( f.lastModified( ) ) ) );
+						txt_time.setText( DateUtils.formatDateTime( ApplicationManager.this,
+								f.lastModified( ),
+								DateUtils.FORMAT_SHOW_YEAR
+										| DateUtils.FORMAT_SHOW_DATE
+										| DateUtils.FORMAT_SHOW_TIME ) );
 					}
 					else
 					{
@@ -1416,7 +1417,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 				if ( appInfo.sourceDir != null )
 				{
 					File f = new File( appInfo.sourceDir );
-					installDate = dateFormatter.format( new Date( f.lastModified( ) ) );
+					installDate = DateUtils.formatDateTime( this,
+							f.lastModified( ),
+							DateUtils.FORMAT_SHOW_YEAR
+									| DateUtils.FORMAT_SHOW_DATE
+									| DateUtils.FORMAT_SHOW_TIME );
 					fileSize = Formatter.formatFileSize( this, f.length( ) );
 				}
 				else
