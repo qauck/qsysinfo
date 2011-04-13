@@ -322,5 +322,10 @@
     <string name="usage_stats">Статистика использвания</string>
     <string name="show_local_addr_sum">Показать локальный адрес для других соединений</string>
     <string name="show_local_addr">Показать локальный адрес</string>
+    <string name="deleting">Удаление...</string>
+    <string name="archiving">Архивация...</string>
+    <string name="exit">Выход</string>
+    <string name="prompt">Напоминание</string>
+    <string name="exit_prompt">Вы уверенны, что хотите форсированно остановить приложение?</string>
     
 </resources>
