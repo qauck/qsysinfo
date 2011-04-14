@@ -322,5 +322,10 @@
     <string name="usage_stats">Estadísticas de Uso</string>
     <string name="show_local_addr_sum">Muestra la dirección local para cada conexión</string>
     <string name="show_local_addr">Mostrar Dirección Local</string>
+    <string name="deleting">Borrando...</string>
+    <string name="archiving">Archivando...</string>
+    <string name="exit">Salir</string>
+    <string name="prompt">Aviso</string>
+    <string name="exit_prompt">¿Está seguro de querer forzar la detención de esta aplicación?</string>
 
 </resources>

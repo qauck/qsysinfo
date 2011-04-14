@@ -322,5 +322,10 @@
     <string name="usage_stats">Verbrauchsstatistik</string>
     <string name="show_local_addr_sum">Lokale Adresse für alle Verbindungen anzeigen</string>
     <string name="show_local_addr">Lokale Adresse anzeigen</string>
+    <string name="deleting">Löschen...</string>
+    <string name="archiving">Archivieren...</string>
+    <string name="exit">Beenden</string>
+    <string name="prompt">Frage</string>
+    <string name="exit_prompt">Sind Sie sicher, dass Sie diese Applikation zwangsbeenden wollen?</string>
 
 </resources>
