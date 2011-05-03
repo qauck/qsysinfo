@@ -191,7 +191,7 @@
     <string name="show_cpu_summary">CPU-Auslastung für alle Prozesse anzeigen</string>
     <string name="show_memory_summary">Speicherbelegung für alle Prozesse anzeigen</string>
     <string name="show_cpu_usage">CPU-Auslastung anzeigen</string>
-    <string name="show_memory_usage">Speicherbelegung anzeigen</string>
+    <string name="show_memory_usage">Speicherbelegung anz.</string>
     <string name="bug_failed">Erstellung des Bug-Reports fehlgeschlagen, bitte senden Sie das Logcat-Protokoll manuell dem Autor zu.</string>
 	<string name="bug_detail">Es gab während der letzten Quick System Info Sitzung einen Fehler. Wollen Sie die Fehler-Informationen zum Autor senden, sodass er das Problem analysieren kann?\n\nDie gesammelten Informationen sind nur für Debug-Zwecke, es sind keine Daten enthalten, die Ihre Privatsphäre verletzen könnten.</string>
 	<string name="bug_title">Bug-Report</string>
@@ -209,8 +209,8 @@
     <string name="show_file_size">Dateigröße anzeigen</string>
     <string name="show_app_date_sum">Installationsdatum für jede Anwendung anzeigen</string>
     <string name="show_app_size_sum">Größe für jede Anwendung anzeigen</string>
-    <string name="show_app_date">Installationsdatum anzeigen</string>
-    <string name="show_app_size">Größe der Anwendung anzeigen</string>
+    <string name="show_app_date">Inst.datum anzeigen</string>
+    <string name="show_app_size">Anw.größe anzeigen</string>
     <string name="run_failed">Diese Anwendung konnte nicht gestartet werden.</string>
     <string name="run">Starten</string>
     <string name="install_fail">Es konnte keine Aktivität gefunden werden, die die Installationsanforderung verarbeiten kann.</string>
@@ -230,8 +230,8 @@
     <string name="auto_start_sum">Symbole in der Benachrichtigungsleiste nach Neustart automatisch anzeigen</string>
     <string name="show_task_icon_sum">Quick Task Killer Symbol in der Benachrichtigungsleiste anzeigen</string>
     <string name="show_info_icon_sum">Quick System Info Symbol in der Benachrichtigungsleiste anzeigen</string>
-    <string name="auto_start">Automatisch geladene Symbole</string>
-    <string name="show_task_icon">Task Killer Symbol anzeigen</string>
+    <string name="auto_start">Autostart f. Symbole</string>
+    <string name="show_task_icon">Task Killer Symbol anz.</string>
     <string name="show_info_icon">Info Symbol anzeigen</string>
     <string name="task_icon_hint">Antippen, um alle Tasks zu beenden.</string>
     <string name="info_icon_hint">Antippen, um Quick System Info anzuzeigen.</string>
@@ -298,7 +298,7 @@
     <string name="cur_freq">Aktuelle Frequenz</string>
     <string name="manage">Verwalten</string>
     <string name="show_app_icon_sum">Symbole für alle Anwendungen anzeigen</string>
-    <string name="show_app_icon">Anwendungssymbol anzeigen</string>
+    <string name="show_app_icon">Anwendungssymbol anz.</string>
     <string name="free">Frei</string>
     <string name="load">Auslastung</string>
     <string name="configure_widgets_sum">Widgets aktivieren oder deaktivieren</string>

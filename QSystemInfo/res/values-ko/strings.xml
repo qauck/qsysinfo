@@ -322,5 +322,10 @@
     <string name="usage_stats">사용 통계</string>
     <string name="show_local_addr_sum">각 연결마다 로컬 주소를 표시합니다.</string>
     <string name="show_local_addr">로컬 주소 표시</string>
+    <!--string name="deleting">Deleting...</string>
+    <string name="archiving">Archiving...</string>
+    <string name="exit">Exit</string>
+    <string name="prompt">Prompt</string>
+    <string name="exit_prompt">Are you sure to force stopping this application?</string-->
 
 </resources>
