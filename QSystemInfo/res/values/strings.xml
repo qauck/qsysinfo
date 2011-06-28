@@ -211,7 +211,7 @@
     <string name="show_app_size_sum">Show size info for each application</string>
     <string name="show_app_date">Show Application Date</string>
     <string name="show_app_size">Show Application Size</string>
-    <string name="run_failed">Cannot launch this application.</string>
+    <string name="run_failed">Cannot launch the application.</string>
     <string name="run">Launch</string>
     <string name="install_fail">No activity found to handle the install request.</string>
     <string name="uninstall_fail">No activity found to handle the uninstall request.</string>
