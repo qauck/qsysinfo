@@ -325,7 +325,7 @@
     <string name="exit">Salir</string>
     <string name="prompt">Aviso</string>
     <string name="exit_prompt">¿Está seguro de querer forzar la detención de esta aplicación?</string>
-	<string name="kill_info">%1$s tarea finalizada, %2$s ignoradas.</string>
-	<string name="kill_info2">%1$s tareas finalizadas, %2$s ignoradas.</string>
+	<string name="kill_info">%1$s tarea finalizada, %2$s ignoradas, %3$s liberadas.</string>
+	<string name="kill_info2">%1$s tareas finalizadas, %2$s ignoradas, %3$s liberadas.</string>
 
 </resources>

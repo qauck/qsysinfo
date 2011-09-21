@@ -325,7 +325,7 @@
     <string name="exit">Выход</string>
     <string name="prompt">Напоминание</string>
     <string name="exit_prompt">Вы уверенны, что хотите форсированно остановить приложение?</string>
-    <string name="kill_info">%1$s приложений завершено, %2$s игнорировано.</string>
-    <string name="kill_info2">%1$s приложений завершено, %2$s игнорировано.</string>
+	<string name="kill_info">%1$s закончено, %2$s игнорировано, %3$s выпущено.</string>
+	<string name="kill_info2">%1$s закончено, %2$s игнорировано, %3$s выпущено.</string>
 
 </resources>

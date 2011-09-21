@@ -325,7 +325,7 @@
     <string name="exit">Beenden</string>
     <string name="prompt">Frage</string>
     <string name="exit_prompt">Sind Sie sicher, dass Sie diese Applikation zwangsbeenden wollen?</string>
-	<string name="kill_info">%1$s Task beendet, %2$s ignoriert.</string>
-	<string name="kill_info2">%1$s Tasks beendet, %2$s ignoriert.</string>
+	<string name="kill_info">%1$s Task beendet, %2$s ignoriert, %3$s freigegeben.</string>
+	<string name="kill_info2">%1$s Tasks beendet, %2$s ignoriert, %3$s freigegeben.</string>
 
 </resources>
