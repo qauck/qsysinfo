@@ -225,8 +225,6 @@
     <string name="scan_dir">Directorio de Recuperación</string>
 	<!--string name="task_widget_name">Quick Task Killer</string>
 	<string name="widget_bar_name">Quick Info Bar</string-->
-	<string name="kill_info">%1$s tarea finalizada, %2$s ignoradas.</string>
-	<string name="kill_info2">%1$s tareas finalizadas, %2$s ignoradas.</string>
     <string name="auto_start_sum">Mostrar iconos en el área de notificaciones automáticamente después de reiniciar</string>
     <string name="show_task_icon_sum">Mostrar icono de "Quick Task Killer" en el área de notificaciones</string>
     <string name="show_info_icon_sum">Mostrar icono de "Quick System Info" en el área de notificaciones</string>
@@ -327,5 +325,7 @@
     <string name="exit">Salir</string>
     <string name="prompt">Aviso</string>
     <string name="exit_prompt">¿Está seguro de querer forzar la detención de esta aplicación?</string>
+	<string name="kill_info">%1$s tarea finalizada, %2$s ignoradas.</string>
+	<string name="kill_info2">%1$s tareas finalizadas, %2$s ignoradas.</string>
 
 </resources>

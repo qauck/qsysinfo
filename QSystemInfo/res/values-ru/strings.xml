@@ -225,8 +225,6 @@
     <string name="scan_dir">Восстановление папки</string>
     <string name="task_widget_name">Быстый Сброс Приложений</string>
     <string name="widget_bar_name">Панель Quick Info</string>
-    <string name="kill_info">%1$s приложений завершено, %2$s игнорировано.</string>
-    <string name="kill_info2">%1$s приложений завершено, %2$s игнорировано.</string>
     <string name="auto_start_sum">Показать значки в области уведомлений автоматически после перезагрузки</string>
     <string name="show_task_icon_sum">Показать панель быстрого сброса приложений в области уведомлений</string>
     <string name="show_info_icon_sum">Показать Иконку приложения в области уведомлений</string>
@@ -327,5 +325,7 @@
     <string name="exit">Выход</string>
     <string name="prompt">Напоминание</string>
     <string name="exit_prompt">Вы уверенны, что хотите форсированно остановить приложение?</string>
-    
+    <string name="kill_info">%1$s приложений завершено, %2$s игнорировано.</string>
+    <string name="kill_info2">%1$s приложений завершено, %2$s игнорировано.</string>
+
 </resources>

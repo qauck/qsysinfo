@@ -225,8 +225,6 @@
     <string name="scan_dir">Ripristina cartella</string>
 	<string name="task_widget_name">Terminazione rapida processo</string>
 	<string name="widget_bar_name">Barra Info rapida</string>
-	<string name="kill_info">%1$s processi terminati, %2$s ignorati.</string>
-	<string name="kill_info2">%1$s processi terminati, %2$s ignorati.</string>
     <string name="auto_start_sum">Mostra notifiche automaticamente dopo il riavvio</string>
     <string name="show_task_icon_sum">Mostra quick task killer nell\'area notifica</string>
     <string name="show_info_icon_sum">Mostra quick system info nell\'area notifica</string>
@@ -327,5 +325,7 @@
     <string name="exit">Esci</string>
     <!--string name="prompt">Prompt</string-->
     <string name="exit_prompt">Sei sicuro di voler chiudere brutalmente questa applicazione?</string>
+	<string name="kill_info">%1$s processi terminati, %2$s ignorati.</string>
+	<string name="kill_info2">%1$s processi terminati, %2$s ignorati.</string>
 
 </resources>

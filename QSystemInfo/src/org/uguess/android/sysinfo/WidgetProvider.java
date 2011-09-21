@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.app.ActivityManager;
+import android.app.ActivityManager.MemoryInfo;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -28,7 +29,10 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
 import android.os.IBinder;
+import android.text.format.Formatter;
+import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -129,6 +133,8 @@ public final class WidgetProvider extends AppWidgetProvider
 	public static final class EndTaskService extends Service
 	{
 
+		private Handler handler = new Handler( );
+
 		@Override
 		public void onCreate( )
 		{
@@ -142,9 +148,9 @@ public final class WidgetProvider extends AppWidgetProvider
 		}
 
 		@Override
-		public void onStart( Intent intent, int startId )
+		public void onStart( Intent intent, final int startId )
 		{
-			ActivityManager am = (ActivityManager) getSystemService( ACTIVITY_SERVICE );
+			final ActivityManager am = (ActivityManager) getSystemService( ACTIVITY_SERVICE );
 
 			List<RunningAppProcessInfo> raps = am.getRunningAppProcesses( );
 
@@ -160,6 +166,8 @@ public final class WidgetProvider extends AppWidgetProvider
 
 			ArrayList<String> ignoreList = ProcessManager.getIgnoreList( getSharedPreferences( ProcessManager.class.getSimpleName( ),
 					Context.MODE_PRIVATE ) );
+
+			final long oldMem = getAvailableMem( am );
 
 			for ( int i = 0, size = raps.size( ); i < size; i++ )
 			{
@@ -195,11 +203,62 @@ public final class WidgetProvider extends AppWidgetProvider
 				}
 			}
 
-			Util.shortToast( this,
-					getString( killed > 1 ? R.string.kill_info2
-							: R.string.kill_info, killed, ignored ) );
+			final int bKilled = killed;
+			final int bIgnored = ignored;
 
-			stopSelfResult( startId );
+			handler.postDelayed( new Runnable( ) {
+
+				public void run( )
+				{
+					long gain = 0;
+
+					if ( oldMem != -1 )
+					{
+						long newMem = getAvailableMem( am );
+
+						if ( newMem != -1 )
+						{
+							gain = newMem - oldMem;
+						}
+
+						if ( gain < 0 )
+						{
+							gain = 0;
+						}
+					}
+
+					Util.shortToast( EndTaskService.this,
+							getString( bKilled > 1 ? R.string.kill_info2
+									: R.string.kill_info,
+									bKilled,
+									bIgnored,
+									Formatter.formatFileSize( EndTaskService.this,
+											gain ) ) );
+
+					stopSelfResult( startId );
+				}
+			},
+					300 );
+		}
+
+		static long getAvailableMem( ActivityManager am )
+		{
+			long mem = -1;
+
+			try
+			{
+				MemoryInfo mi = new MemoryInfo( );
+				am.getMemoryInfo( mi );
+				mem = mi.availMem;
+			}
+			catch ( Exception e )
+			{
+				Log.d( EndTaskService.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+
+			return mem;
 		}
 	}
 }

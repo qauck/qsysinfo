@@ -225,8 +225,6 @@
     <string name="scan_dir">Restaurar pasta</string>
 	<string name="task_widget_name">Gerenciador de tarefas</string>
 	<string name="widget_bar_name">Barra de informações</string>
-	<string name="kill_info">%1$s tarefa encerrada, %2$s ignoradas.</string>
-	<string name="kill_info2">%1$s tarefas encerradas, %2$s ignoradas.</string>
     <string name="auto_start_sum">Iniciar notificações após o boot</string>
     <string name="show_task_icon_sum">Mostrar gerenciador de tarefas na área de notificações</string>
     <string name="show_info_icon_sum">Mostrar informações do sistema na área de notificações</string>
@@ -327,5 +325,7 @@
     <string name="exit">Sair</string>
     <!--string name="prompt">Prompt</string-->
     <string name="exit_prompt">Tem certeza que deseja parar este aplicativo?</string>
-	
+	<string name="kill_info">%1$s tarefa encerrada, %2$s ignoradas.</string>
+	<string name="kill_info2">%1$s tarefas encerradas, %2$s ignoradas.</string>
+
 </resources>

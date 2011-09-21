@@ -225,8 +225,6 @@
     <string name="scan_dir">還原資料夾</string>
 	<string name="task_widget_name">任務終結器</string>
 	<string name="widget_bar_name">系統資訊列</string>
-	<string name="kill_info">結束了 %1$s 個任務, 忽略 %2$s 個.</string>
-	<string name="kill_info2">結束了 %1$s 個任務, 忽略 %2$s 個.</string>
     <string name="auto_start_sum">重啟後自動在通知區域顯示圖示</string>
     <string name="show_task_icon_sum">在通知區域顯示任務終結器圖示</string>
     <string name="show_info_icon_sum">在通知區域顯示系統資訊圖示</string>
@@ -327,5 +325,7 @@
     <string name="exit">退出</string>
     <string name="prompt">提示</string>
     <string name="exit_prompt">是否確認強制結束當前應用程式?</string>
+	<string name="kill_info">結束了 %1$s 個任務, 忽略 %2$s 個.</string>
+	<string name="kill_info2">結束了 %1$s 個任務, 忽略 %2$s 個.</string>
 
 </resources>

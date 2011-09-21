@@ -225,8 +225,6 @@
     <string name="scan_dir">Verzeichnis wiederherstellen</string>
 	<!--string name="task_widget_name">Quick Task Killer</string>
 	<string name="widget_bar_name">Quick Info Bar</string-->
-	<string name="kill_info">%1$s Task beendet, %2$s ignoriert.</string>
-	<string name="kill_info2">%1$s Tasks beendet, %2$s ignoriert.</string>
     <string name="auto_start_sum">Symbole in der Benachrichtigungsleiste nach Neustart automatisch anzeigen</string>
     <string name="show_task_icon_sum">Quick Task Killer Symbol in der Benachrichtigungsleiste anzeigen</string>
     <string name="show_info_icon_sum">Quick System Info Symbol in der Benachrichtigungsleiste anzeigen</string>
@@ -327,5 +325,7 @@
     <string name="exit">Beenden</string>
     <string name="prompt">Frage</string>
     <string name="exit_prompt">Sind Sie sicher, dass Sie diese Applikation zwangsbeenden wollen?</string>
+	<string name="kill_info">%1$s Task beendet, %2$s ignoriert.</string>
+	<string name="kill_info2">%1$s Tasks beendet, %2$s ignoriert.</string>
 
 </resources>

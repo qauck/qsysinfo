@@ -325,7 +325,7 @@
 	<!--string name="exit">Exit</string>
 	<string name="prompt">Prompt</string-->
 	<string name="exit_prompt">Weet je zeker dat je deze applicatie wilt laten stoppen?</string>
-	<string name="kill_info">%1$s taken beëindigd, %2$s genegeerd.</string>
-	<string name="kill_info2">%1$s taken beëindigd, %2$s genegeerd.</string>
+	<string name="kill_info">%1$s taken beëindigd, %2$s genegeerd, %3$s gerealiseerd.</string>
+	<string name="kill_info2">%1$s taken beëindigd, %2$s genegeerd, %3$s gerealiseerd.</string>
 	
 </resources>
