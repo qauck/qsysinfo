@@ -325,7 +325,7 @@
     <string name="exit">Esci</string>
     <!--string name="prompt">Prompt</string-->
     <string name="exit_prompt">Sei sicuro di voler chiudere brutalmente questa applicazione?</string>
-	<string name="kill_info">%1$s processi terminati, %2$s ignorati.</string>
-	<string name="kill_info2">%1$s processi terminati, %2$s ignorati.</string>
+	<string name="kill_info">%1$s task terminato, %2$s ignorato, %3$s rilasciato.</string>
+	<string name="kill_info2">%1$s task terminati, %2$s ignorati, %3$s rilasciati.</string>
 
 </resources>
