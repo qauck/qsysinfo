@@ -104,12 +104,12 @@ public class NetworkInfoActivity extends PopActivity
 								{
 									final IpInfo info = NetStateManager.getIpInfo( null );
 
-									progress.dismiss( );
-
 									contentView.post( new Runnable( ) {
 
 										public void run( )
 										{
+											progress.dismiss( );
+
 											NetStateManager.showIpInfo( info,
 													NetworkInfoActivity.this );
 
