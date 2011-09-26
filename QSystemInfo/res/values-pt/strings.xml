@@ -325,7 +325,7 @@
     <string name="exit">Sair</string>
     <!--string name="prompt">Prompt</string-->
     <string name="exit_prompt">Tem certeza que deseja parar este aplicativo?</string>
-	<string name="kill_info">%1$s tarefa encerrada, %2$s ignoradas.</string>
-	<string name="kill_info2">%1$s tarefas encerradas, %2$s ignoradas.</string>
+	<string name="kill_info">%1$s processo encerrado, %2$s ignorados, %3$s liberado.</string>
+	<string name="kill_info2">%1$s processos encerrados, %2$s ignorados, %3$s liberado.</string>
 
 </resources>
