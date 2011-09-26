@@ -722,7 +722,7 @@ public final class ProcessManager extends ListActivity implements Constants
 					}
 					else
 					{
-						endProcess( am, rap.procInfo.pkgList );
+						endProcess( am, rap.procInfo.pkgList, self );
 
 						handler.removeCallbacks( task );
 						handler.post( task );
@@ -917,7 +917,7 @@ public final class ProcessManager extends ListActivity implements Constants
 		}
 	}
 
-	void endProcess( ActivityManager am, String[] pkgs )
+	private void endProcess( ActivityManager am, String[] pkgs, String self )
 	{
 		if ( pkgs != null )
 		{
@@ -925,7 +925,12 @@ public final class ProcessManager extends ListActivity implements Constants
 			{
 				if ( pkg != null )
 				{
-					am.restartPackage( pkg );
+					int subKillType = Util.killable( pkg, self, ignoreList );
+
+					if ( subKillType == 0 )
+					{
+						am.restartPackage( pkg );
+					}
 				}
 			}
 		}
@@ -951,7 +956,7 @@ public final class ProcessManager extends ListActivity implements Constants
 					&& !rap.sys
 					&& !procName.equals( exception ) )
 			{
-				endProcess( am, rap.procInfo.pkgList );
+				endProcess( am, rap.procInfo.pkgList, self );
 			}
 		}
 
@@ -1099,12 +1104,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 					name = rap.processName;
 
-					isSys = name.startsWith( "com.google.process" ) //$NON-NLS-1$
-							|| name.startsWith( "com.android.phone" ) //$NON-NLS-1$
-							|| name.startsWith( "android.process" ) //$NON-NLS-1$
-							|| name.startsWith( "system" ) //$NON-NLS-1$
-							|| name.startsWith( "com.android.inputmethod" ) //$NON-NLS-1$
-							|| name.startsWith( "com.android.alarmclock" ); //$NON-NLS-1$
+					isSys = Util.isSysProcess( name );
 
 					if ( isSys && !showSys )
 					{

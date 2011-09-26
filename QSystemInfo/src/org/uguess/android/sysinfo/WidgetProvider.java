@@ -175,18 +175,14 @@ public final class WidgetProvider extends AppWidgetProvider
 
 				name = rap.processName;
 
-				if ( name.equals( self )
-						|| name.startsWith( "com.google.process" ) //$NON-NLS-1$
-						|| name.startsWith( "com.android.phone" ) //$NON-NLS-1$
-						|| name.startsWith( "android.process" ) //$NON-NLS-1$
-						|| name.startsWith( "system" ) //$NON-NLS-1$
-						|| name.startsWith( "com.android.inputmethod" ) //$NON-NLS-1$
-						|| name.startsWith( "com.android.alarmclock" ) ) //$NON-NLS-1$
+				int killType = Util.killable( name, self, ignoreList );
+
+				if ( killType == -1 )
 				{
 					continue;
 				}
 
-				if ( ignoreList != null && ignoreList.contains( name ) )
+				if ( killType == 1 )
 				{
 					ignored++;
 				}
@@ -196,8 +192,15 @@ public final class WidgetProvider extends AppWidgetProvider
 					{
 						if ( pkg != null )
 						{
-							am.restartPackage( pkg );
-							killed++;
+							int subKillType = Util.killable( pkg,
+									self,
+									ignoreList );
+
+							if ( subKillType == 0 )
+							{
+								am.restartPackage( pkg );
+								killed++;
+							}
 						}
 					}
 				}

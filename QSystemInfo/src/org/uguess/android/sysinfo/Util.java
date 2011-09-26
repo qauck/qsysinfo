@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -127,6 +128,35 @@ final class Util implements Constants
 				}
 			}, 500 );
 		}
+	}
+
+	/**
+	 * @return -1->sys ignored, 1->user ignored, 0->killable
+	 */
+	static int killable( String pkgName, String self,
+			Collection<String> ignoreList )
+	{
+		if ( pkgName.equals( self ) || isSysProcess( pkgName ) )
+		{
+			return -1;
+		}
+
+		if ( ignoreList != null && ignoreList.contains( pkgName ) )
+		{
+			return 1;
+		}
+
+		return 0;
+	}
+
+	static boolean isSysProcess( String pkgName )
+	{
+		return pkgName.startsWith( "com.google.process" ) //$NON-NLS-1$
+				|| pkgName.startsWith( "com.android.phone" ) //$NON-NLS-1$
+				|| pkgName.startsWith( "android.process" ) //$NON-NLS-1$
+				|| pkgName.startsWith( "system" ) //$NON-NLS-1$
+				|| pkgName.startsWith( "com.android.inputmethod" ) //$NON-NLS-1$
+				|| pkgName.startsWith( "com.android.alarmclock" ); //$NON-NLS-1$
 	}
 
 	static int getIntOption( Activity ac, String key, int defValue )
