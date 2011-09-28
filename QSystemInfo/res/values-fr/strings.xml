@@ -325,7 +325,7 @@
     <string name="exit">Sortir</string>
     <string name="prompt">Question</string>
     <string name="exit_prompt">Êtes-vous sûr(e) de vouloir stopper cette application?</string>
-	<string name="kill_info">%1$s tâche terminée, %2$s ignorées.</string>
-	<string name="kill_info2">%1$s tâches terminées, %2$s ignorées.</string>
+	<string name="kill_info">%1$s tâche(s) terminée(s), %2$s ignorée(s), %3$s relachée(s).</string>
+	<string name="kill_info2">%1$s tâche(s) terminée(s), %2$s ignorée(s), %3$s relachée(s).</string>
 
 </resources>
