@@ -1641,6 +1641,9 @@ public final class ApplicationManager extends ListActivity implements Constants
 		progress.setIndeterminate( true );
 		progress.show( );
 
+		// move this out of the thread code to avoid exception under honeycomb
+		final ClipboardManager cm = (ClipboardManager) getSystemService( CLIPBOARD_SERVICE );
+
 		new Thread( new Runnable( ) {
 
 			public void run( )
@@ -1649,8 +1652,6 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 				if ( isCopy )
 				{
-					ClipboardManager cm = (ClipboardManager) getSystemService( CLIPBOARD_SERVICE );
-
 					if ( cm != null && content != null )
 					{
 						cm.setText( content );
