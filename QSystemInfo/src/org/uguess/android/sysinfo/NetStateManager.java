@@ -411,6 +411,8 @@ public final class NetStateManager extends ListActivity implements Constants
 				{
 					cm.setText( itm.remoteName == null ? itm.remote
 							: itm.remoteName );
+
+					Util.shortToast( this, R.string.copied_hint );
 				}
 			}
 

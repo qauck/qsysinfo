@@ -329,6 +329,8 @@ public final class LogViewer extends ListActivity implements Constants
 			if ( cm != null )
 			{
 				cm.setText( log.getMsg( ) );
+
+				Util.shortToast( this, R.string.copied_hint );
 			}
 		}
 

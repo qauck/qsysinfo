@@ -2655,6 +2655,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 				if ( cm != null && !TextUtils.isEmpty( s ) )
 				{
 					cm.setText( s );
+
+					Util.shortToast( this, R.string.copied_hint );
 				}
 			}
 
