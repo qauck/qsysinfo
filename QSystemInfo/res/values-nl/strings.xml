@@ -39,7 +39,6 @@
 	<string name="user_apps">Gebruiker</string>
 	<string name="version">Versie</string>
 	<string name="loading">Vernieuwen...</string>
-	<string name="end_proc_hint">- Klik hier om één taak te stoppen\u00A0\n- Klik hier om alles te stoppen\u00A0</string>
 	<string name="switch_to">Overgaan naar</string>
 	<string name="end_task">Taak beëindigen</string>
 	<string name="tab_info">Basisinformatie</string>

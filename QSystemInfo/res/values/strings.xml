@@ -39,7 +39,6 @@
 	<string name="user_apps">User</string>
 	<string name="version">Version</string>
 	<string name="loading">Refreshing...</string>
-	<string name="end_proc_hint">- Click a task to end\u00A0\n- Click me to end all\u00A0</string>
 	<string name="switch_to">Switch To</string>
 	<string name="end_task">End Task</string>
 	<string name="tab_info">Basic Info</string>
@@ -225,12 +224,12 @@
     <string name="scan_dir">Restore Folder</string>
 	<string name="task_widget_name">Quick Task Killer</string>
 	<string name="widget_bar_name">Quick Info Bar</string>
-    <string name="auto_start_sum">Show icons in notification area automatically after reboot</string>
-    <string name="show_task_icon_sum">Show quick task killer icon in notification area</string>
-    <string name="show_info_icon_sum">Show quick system info icon in notification area</string>
-    <string name="auto_start">Automatic Icons</string>
-    <string name="show_task_icon">Show Task Killer Icon</string>
-    <string name="show_info_icon">Show Info Icon</string>
+    <string name="auto_start_sum">Show notifications automatically after reboot</string>
+    <string name="show_task_icon_sum">Show quick task killer in notification area</string>
+    <string name="show_info_icon_sum">Show quick system info in notification area</string>
+    <string name="auto_start">Auto Start</string>
+    <string name="show_task_icon">Show Task Killer</string>
+    <string name="show_info_icon">Show System Info</string>
     <string name="task_icon_hint">Click to end all running tasks.</string>
     <string name="info_icon_hint">Click to show quick system info.</string>
     <string name="default_email">Default Email Address</string>

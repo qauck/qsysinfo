@@ -39,7 +39,6 @@
 	<string name="user_apps">用户</string>
 	<string name="version">版本</string>
 	<string name="loading">正在刷新...</string>
-	<string name="end_proc_hint">- 单击列表结束进程\u00A0\n- 单击此处结束所有进程\u00A0</string>
 	<string name="switch_to">切换任务</string>
 	<string name="end_task">结束任务</string>
 	<string name="tab_info">基本信息</string>
@@ -225,12 +224,12 @@
     <string name="scan_dir">还原目录</string>
 	<string name="task_widget_name">任务终止器</string>
 	<string name="widget_bar_name">系统信息栏</string>
-    <string name="auto_start_sum">重启后自动在通知区域显示图标</string>
-    <string name="show_task_icon_sum">在通知区域显示任务终止器图标</string>
-    <string name="show_info_icon_sum">在通知区域显示系统信息图标</string>
-    <string name="auto_start">自动显示图标</string>
-    <string name="show_task_icon">显示任务终止器图标</string>
-    <string name="show_info_icon">显示系统信息图标</string>
+    <string name="auto_start_sum">重启后自动在通知区域显示通知</string>
+    <string name="show_task_icon_sum">在通知区域显示任务终止器通知</string>
+    <string name="show_info_icon_sum">在通知区域显示系统信息通知</string>
+    <string name="auto_start">自动显示通知</string>
+    <string name="show_task_icon">显示任务终止器</string>
+    <string name="show_info_icon">显示系统信息</string>
     <string name="task_icon_hint">点击以结束所有正在运行的任务.</string>
     <string name="info_icon_hint">点击以显示系统信息.</string>
     <string name="default_email">默认电子邮件地址</string>

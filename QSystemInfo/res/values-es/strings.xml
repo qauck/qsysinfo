@@ -39,7 +39,6 @@
 	<string name="user_apps">De Usuario</string>
 	<string name="version">Versión</string>
 	<string name="loading">Actualizando...</string>
-	<string name="end_proc_hint">- Pulsa una tarea para finalizarla\u00A0\n- Púlsame para finalizar todo\u00A0</string>
 	<string name="switch_to">Cambiar a</string>
 	<string name="end_task">Finalizar Tarea</string>
 	<string name="tab_info">Información Básica</string>
@@ -225,12 +224,12 @@
     <string name="scan_dir">Directorio de Recuperación</string>
 	<!--string name="task_widget_name">Quick Task Killer</string>
 	<string name="widget_bar_name">Quick Info Bar</string-->
-    <string name="auto_start_sum">Mostrar iconos en el área de notificaciones automáticamente después de reiniciar</string>
-    <string name="show_task_icon_sum">Mostrar icono de "Quick Task Killer" en el área de notificaciones</string>
-    <string name="show_info_icon_sum">Mostrar icono de "Quick System Info" en el área de notificaciones</string>
-    <string name="auto_start">Iconos Automáticos</string>
-    <string name="show_task_icon">Mostrar Icono de "Task Killer"</string>
-    <string name="show_info_icon">Mostrar Icono de Información</string>
+    <string name="auto_start_sum">Mostrar notificaciones automáticamente tras reiniciar</string>
+    <string name="show_task_icon_sum">Muestra quick task killer en el área de notificaciones</string>
+    <string name="show_info_icon_sum">Muestra quick system info en el área de notificaciones</string>
+    <string name="auto_start">Inicio Automático</string>
+    <string name="show_task_icon">Mostrar Task Killer</string>
+    <string name="show_info_icon">Mostrar System Info</string>
     <string name="task_icon_hint">Pulsar para finalizar todas las tareas en ejecución.</string>
     <string name="info_icon_hint">Pulsar para mostrar "Quick System Info".</string>
     <string name="default_email">Dirección de Correo por Defecto</string>

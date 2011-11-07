@@ -39,7 +39,6 @@
 	<string name="user_apps">Utente</string>
 	<string name="version">Versione</string>
 	<string name="loading">Aggiornando...</string>
-	<string name="end_proc_hint">- Clicca un task per terminare\u00A0\n- Clicca quì per terminare tutti\u00A0</string>
 	<string name="switch_to">Passa a</string>
 	<string name="end_task">Termina processo</string>
 	<string name="tab_info">Informazioni base</string>

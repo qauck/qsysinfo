@@ -39,7 +39,6 @@
 	<string name="user_apps">사용자 설치</string>
 	<string name="version">버전</string>
 	<string name="loading">로딩중 ...</string>
-	<!--string name="end_proc_hint">- Click a task to end\u00A0\n- Click me to end all\u00A0</string-->
 	<string name="switch_to">전환</string>
 	<string name="end_task">프로세스 종료</string>
 	<string name="tab_info">기본정보</string>

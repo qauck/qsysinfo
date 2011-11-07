@@ -39,7 +39,6 @@
 	<string name="user_apps">Benutzer</string>
 	<!--string name="version">Version</string-->
 	<string name="loading">Aktualisiere...</string>
-	<string name="end_proc_hint">- Task zum Beenden antippen\u00A0\n- Hier antippen um alle zu beenden\u00A0</string>
 	<string name="switch_to">Zu Task wechseln</string>
 	<string name="end_task">Task beenden</string>
 	<string name="tab_info">Infos</string>
@@ -225,12 +224,12 @@
     <string name="scan_dir">Verzeichnis wiederherstellen</string>
 	<!--string name="task_widget_name">Quick Task Killer</string>
 	<string name="widget_bar_name">Quick Info Bar</string-->
-    <string name="auto_start_sum">Symbole in der Benachrichtigungsleiste nach Neustart automatisch anzeigen</string>
-    <string name="show_task_icon_sum">Quick Task Killer Symbol in der Benachrichtigungsleiste anzeigen</string>
-    <string name="show_info_icon_sum">Quick System Info Symbol in der Benachrichtigungsleiste anzeigen</string>
-    <string name="auto_start">Autostart f. Symbole</string>
-    <string name="show_task_icon">Task Killer Symbol anz.</string>
-    <string name="show_info_icon">Info Symbol anzeigen</string>
+    <string name="auto_start_sum">Benachrichtigungen automatisch nach Neustart anzeigen</string>
+    <string name="show_task_icon_sum">Quick Task Killer im Benachrichtigungsbereich anzeigen</string>
+    <string name="show_info_icon_sum">Quick System Info im Benachrichtigungsbereich anzeigen</string>
+    <string name="auto_start">Automatisch starten</string>
+    <string name="show_task_icon">Task Killer anzeigen</string>
+    <string name="show_info_icon">System Info anzeigen</string>
     <string name="task_icon_hint">Antippen, um alle Tasks zu beenden.</string>
     <string name="info_icon_hint">Antippen, um Quick System Info anzuzeigen.</string>
     <string name="default_email">Standard E-Mail-Adresse</string>

@@ -39,7 +39,6 @@
 	<string name="user_apps">用戶</string>
 	<string name="version">版本</string>
 	<string name="loading">正在重新整理...</string>
-	<string name="end_proc_hint">- 單擊列表結束進程\u00A0\n- 單擊此處結束所有進程\u00A0</string>
 	<string name="switch_to">切換任務</string>
 	<string name="end_task">結束任務</string>
 	<string name="tab_info">基礎資訊</string>
@@ -225,12 +224,12 @@
     <string name="scan_dir">還原資料夾</string>
 	<string name="task_widget_name">任務終結器</string>
 	<string name="widget_bar_name">系統資訊列</string>
-    <string name="auto_start_sum">重啟後自動在通知區域顯示圖示</string>
-    <string name="show_task_icon_sum">在通知區域顯示任務終結器圖示</string>
-    <string name="show_info_icon_sum">在通知區域顯示系統資訊圖示</string>
-    <string name="auto_start">自動顯示圖示</string>
-    <string name="show_task_icon">顯示任務終結器圖示</string>
-    <string name="show_info_icon">顯示系統資訊圖示</string>
+    <string name="auto_start_sum">重啟後自動在通知區域顯示通知</string>
+    <string name="show_task_icon_sum">在通知區域顯示任務終結器通知</string>
+    <string name="show_info_icon_sum">在通知區域顯示系統資訊通知</string>
+    <string name="auto_start">自動顯示通知</string>
+    <string name="show_task_icon">顯示任務終結器</string>
+    <string name="show_info_icon">顯示系統資訊</string>
     <string name="task_icon_hint">點擊以結束全體正在執行的任務.</string>
     <string name="info_icon_hint">點擊以顯示系統資訊.</string>
     <string name="default_email">默認電子郵件地址</string>

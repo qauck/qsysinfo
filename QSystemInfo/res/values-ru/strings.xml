@@ -39,7 +39,6 @@
     <string name="user_apps">Пользователь</string>
     <string name="version">Версия</string>
     <string name="loading">Обновление...</string>
-    <string name="end_proc_hint">- Щелкните для завершения задачи\n- Нажмите сюда, чтобы закончить</string>
     <string name="switch_to">Переключиться</string>
     <string name="end_task">Конец задачи</string>
     <string name="tab_info">Основная информация</string>
@@ -225,12 +224,12 @@
     <string name="scan_dir">Восстановление папки</string>
     <string name="task_widget_name">Быстый Сброс Приложений</string>
     <string name="widget_bar_name">Панель Quick Info</string>
-    <string name="auto_start_sum">Показать значки в области уведомлений автоматически после перезагрузки</string>
-    <string name="show_task_icon_sum">Показать панель быстрого сброса приложений в области уведомлений</string>
-    <string name="show_info_icon_sum">Показать Иконку приложения в области уведомлений</string>
-    <string name="auto_start">Автоматические Иконки</string>
-    <string name="show_task_icon">Показать иконку Сброс Приложений</string>
-    <string name="show_info_icon">Показать Иконку Информации</string>
+    <string name="auto_start_sum">Показывать уведомления автоматически после перезагрузки</string>
+    <string name="show_task_icon_sum">Показывать quick task killer на панели уведомления</string>
+    <string name="show_info_icon_sum">Показывать quick system info на панели уведомления</string>
+    <string name="auto_start">Авто Старт</string>
+    <string name="show_task_icon">Показать Task Killer</string>
+    <string name="show_info_icon">Показать System Info</string>
     <string name="task_icon_hint">Нажмите, чтобы завершить все работающие задачи.</string>
     <string name="info_icon_hint">Нажмите, чтобы показать быструю информацию о системе.</string>
     <string name="default_email">E-mail по умолчанию.</string>

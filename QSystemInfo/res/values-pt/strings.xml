@@ -39,7 +39,6 @@
 	<string name="user_apps">Usuário</string>
 	<string name="version">Versão</string>
 	<string name="loading">Atualizando...</string>
-	<string name="end_proc_hint">- Toque em uma tarefa para encerrá-la\u00A0\n- Toque-me para encerrar todas\u00A0</string>
 	<string name="switch_to">Abrir</string>
 	<string name="end_task">Encerrar tarefa</string>
 	<string name="tab_info">Info</string>
