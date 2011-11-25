@@ -44,7 +44,7 @@ import android.widget.TextView;
 /**
  * NetworkInfoActivity
  */
-public class NetworkInfoActivity extends PopActivity
+public final class NetworkInfoActivity extends PopActivity
 {
 
 	@Override

@@ -210,7 +210,7 @@ public final class MemInfoActivity extends PopActivity
 		}
 		catch ( Exception e )
 		{
-			Log.e( SysInfoManager.class.getName( ), e.getLocalizedMessage( ), e );
+			Log.e( MemInfoActivity.class.getName( ), e.getLocalizedMessage( ), e );
 		}
 		finally
 		{
@@ -222,7 +222,7 @@ public final class MemInfoActivity extends PopActivity
 				}
 				catch ( IOException ie )
 				{
-					Log.e( SysInfoManager.class.getName( ),
+					Log.e( MemInfoActivity.class.getName( ),
 							ie.getLocalizedMessage( ),
 							ie );
 				}

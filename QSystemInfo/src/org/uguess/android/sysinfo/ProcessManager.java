@@ -137,10 +137,10 @@ public final class ProcessManager extends ListActivity implements Constants
 
 					adapter.setNotifyOnChange( false );
 
-					adapter.clear( );
-
 					synchronized ( procCache )
 					{
+						adapter.clear( );
+
 						ArrayList<ProcessItem> localList = procCache.procList;
 
 						for ( int i = 0, size = localList.size( ); i < size; i++ )
@@ -178,10 +178,10 @@ public final class ProcessManager extends ListActivity implements Constants
 					{
 						adapter.setNotifyOnChange( false );
 
-						adapter.clear( );
-
 						synchronized ( procCache )
 						{
+							adapter.clear( );
+
 							ArrayList<ProcessItem> localList = procCache.procList;
 
 							for ( int i = 0, size = localList.size( ); i < size; i++ )
@@ -1589,22 +1589,7 @@ public final class ProcessManager extends ListActivity implements Constants
 					{
 						try
 						{
-							Drawable icon = pm.getApplicationIcon( ai );
-
-							if ( icon == null )
-							{
-								try
-								{
-									icon = pm.getDefaultActivityIcon( );
-								}
-								catch ( Exception e )
-								{
-									Log.e( ProcessManager.class.getName( ),
-											e.getLocalizedMessage( ) );
-								}
-							}
-
-							proc.icon = icon;
+							proc.icon = pm.getApplicationIcon( ai );
 
 							changed = true;
 						}
@@ -1916,7 +1901,9 @@ public final class ProcessManager extends ListActivity implements Constants
 		{
 			final Intent it = getIntent( );
 
-			if ( PREF_KEY_REFRESH_INTERVAL.equals( preference.getKey( ) ) )
+			final String prefKey = preference.getKey( );
+
+			if ( PREF_KEY_REFRESH_INTERVAL.equals( prefKey ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
@@ -1946,35 +1933,35 @@ public final class ProcessManager extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( PREF_KEY_SHOW_MEM.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_SHOW_MEM.equals( prefKey ) )
 			{
 				it.putExtra( PREF_KEY_SHOW_MEM,
 						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_MEM ) ).isChecked( ) );
 
 				return true;
 			}
-			else if ( PREF_KEY_SHOW_CPU.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_SHOW_CPU.equals( prefKey ) )
 			{
 				it.putExtra( PREF_KEY_SHOW_CPU,
 						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_CPU ) ).isChecked( ) );
 
 				return true;
 			}
-			else if ( PREF_KEY_SHOW_SYS_PROC.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_SHOW_SYS_PROC.equals( prefKey ) )
 			{
 				it.putExtra( PREF_KEY_SHOW_SYS_PROC,
 						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_SYS_PROC ) ).isChecked( ) );
 
 				return true;
 			}
-			else if ( PREF_KEY_SHOW_KILL_WARN.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_SHOW_KILL_WARN.equals( prefKey ) )
 			{
 				it.putExtra( PREF_KEY_SHOW_KILL_WARN,
 						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_KILL_WARN ) ).isChecked( ) );
 
 				return true;
 			}
-			else if ( PREF_KEY_DEFAULT_TAP_ACTION.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_DEFAULT_TAP_ACTION.equals( prefKey ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
@@ -2006,7 +1993,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( PREF_KEY_SORT_ORDER_TYPE.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_SORT_ORDER_TYPE.equals( prefKey ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
@@ -2036,7 +2023,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( PREF_KEY_SORT_DIRECTION.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_SORT_DIRECTION.equals( prefKey ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
@@ -2065,7 +2052,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( PREF_KEY_IGNORE_ACTION.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_IGNORE_ACTION.equals( prefKey ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
@@ -2093,7 +2080,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( PREF_KEY_IGNORE_LIST.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_IGNORE_LIST.equals( prefKey ) )
 			{
 				final ArrayList<String> list = it.getStringArrayListExtra( PREF_KEY_IGNORE_LIST );
 				final boolean[] state = new boolean[list.size( )];

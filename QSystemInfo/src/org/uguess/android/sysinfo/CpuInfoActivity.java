@@ -156,7 +156,7 @@ public final class CpuInfoActivity extends PopActivity
 		adapter.notifyDataSetChanged( );
 	}
 
-	private String readFile( String fname, boolean freq )
+	private static String readFile( String fname, boolean freq )
 	{
 		File f = new File( fname );
 
@@ -176,7 +176,7 @@ public final class CpuInfoActivity extends PopActivity
 				{
 					if ( freq )
 					{
-						return String.valueOf( Long.parseLong( line.trim( ) ) / 1000f )
+						return String.valueOf( Long.parseLong( line.trim( ) ) / 1000 )
 								+ "MHz"; //$NON-NLS-1$
 					}
 					else

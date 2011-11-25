@@ -38,6 +38,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
@@ -197,7 +198,7 @@ public final class NetStateManager extends ListActivity implements Constants
 					}
 					else if ( state == WIFI_ONLY )
 					{
-						ConnectivityManager cm = (ConnectivityManager) getSystemService( Activity.CONNECTIVITY_SERVICE );
+						ConnectivityManager cm = (ConnectivityManager) getSystemService( Context.CONNECTIVITY_SERVICE );
 
 						NetworkInfo info = cm.getNetworkInfo( ConnectivityManager.TYPE_WIFI );
 
@@ -818,7 +819,7 @@ public final class NetStateManager extends ListActivity implements Constants
 						ip = "?"; //$NON-NLS-1$
 
 						Log.e( NetStateManager.class.getName( ),
-								"Parsing raw ip46 fail : " + raw ); //$NON-NLS-1$
+								"Parsing raw ip6 fail : " + raw ); //$NON-NLS-1$
 					}
 				}
 				else
@@ -1168,7 +1169,9 @@ public final class NetStateManager extends ListActivity implements Constants
 		{
 			final Intent it = getIntent( );
 
-			if ( PREF_KEY_REFRESH_INTERVAL.equals( preference.getKey( ) ) )
+			final String prefKey = preference.getKey( );
+
+			if ( PREF_KEY_REFRESH_INTERVAL.equals( prefKey ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
@@ -1198,7 +1201,7 @@ public final class NetStateManager extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( PREF_KEY_REMOTE_QUERY.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_REMOTE_QUERY.equals( prefKey ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
@@ -1226,21 +1229,21 @@ public final class NetStateManager extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( PREF_KEY_SHOW_REMOTE_NAME.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_SHOW_REMOTE_NAME.equals( prefKey ) )
 			{
 				it.putExtra( PREF_KEY_SHOW_REMOTE_NAME,
 						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_REMOTE_NAME ) ).isChecked( ) );
 
 				return true;
 			}
-			else if ( PREF_KEY_SHOW_LOCAL_ADDRESS.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_SHOW_LOCAL_ADDRESS.equals( prefKey ) )
 			{
 				it.putExtra( PREF_KEY_SHOW_LOCAL_ADDRESS,
 						( (CheckBoxPreference) findPreference( PREF_KEY_SHOW_LOCAL_ADDRESS ) ).isChecked( ) );
 
 				return true;
 			}
-			else if ( PREF_KEY_SORT_ORDER_TYPE.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_SORT_ORDER_TYPE.equals( prefKey ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
@@ -1270,7 +1273,7 @@ public final class NetStateManager extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( PREF_KEY_SORT_DIRECTION.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_SORT_DIRECTION.equals( prefKey ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 

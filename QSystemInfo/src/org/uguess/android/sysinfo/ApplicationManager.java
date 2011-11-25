@@ -446,7 +446,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 	{
 		super.onCreate( savedInstanceState );
 
-		versionPrefix = getResources( ).getString( R.string.version );
+		versionPrefix = getString( R.string.version );
 
 		appCache = new AppCache( );
 

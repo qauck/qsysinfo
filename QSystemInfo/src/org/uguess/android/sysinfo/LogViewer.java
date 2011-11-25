@@ -903,8 +903,18 @@ public final class LogViewer extends ListActivity implements Constants
 		int pid = -1;
 		try
 		{
-			pid = Integer.parseInt( line.substring( tagOffset + 1, pidOffset )
-					.trim( ) );
+			String pidStr = line.substring( tagOffset + 1, pidOffset ).trim( );
+
+			// some models have a special format like (num*num), need
+			// investigation
+			int idx = pidStr.indexOf( '*' );
+
+			if ( idx != -1 )
+			{
+				pidStr = pidStr.substring( idx + 1 ).trim( );
+			}
+
+			pid = Integer.parseInt( pidStr );
 		}
 		catch ( Exception e )
 		{
@@ -1044,7 +1054,7 @@ public final class LogViewer extends ListActivity implements Constants
 			Process proc = Runtime.getRuntime( ).exec( cmd + cl );
 
 			reader = new BufferedReader( new InputStreamReader( proc.getInputStream( ) ),
-					8192 * 4 );
+					8192 );
 
 			String line;
 			LogItem clog, lastClog = null;
@@ -1271,7 +1281,9 @@ public final class LogViewer extends ListActivity implements Constants
 		{
 			final Intent it = getIntent( );
 
-			if ( "level_filter".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+			String prefKey = preference.getKey( );
+
+			if ( "level_filter".equals( prefKey ) ) //$NON-NLS-1$
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
@@ -1351,7 +1363,7 @@ public final class LogViewer extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( PREF_KEY_RING_BUFFER.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_RING_BUFFER.equals( prefKey ) )
 			{
 				OnClickListener listener = new OnClickListener( ) {
 
@@ -1380,7 +1392,7 @@ public final class LogViewer extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( PREF_KEY_TAG_FILTER.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_TAG_FILTER.equals( prefKey ) )
 			{
 				final EditText txt = new EditText( this );
 				txt.setText( it.getStringExtra( PREF_KEY_TAG_FILTER ) );
@@ -1418,7 +1430,7 @@ public final class LogViewer extends ListActivity implements Constants
 
 				return true;
 			}
-			else if ( PREF_KEY_PID_FILTER.equals( preference.getKey( ) ) )
+			else if ( PREF_KEY_PID_FILTER.equals( prefKey ) )
 			{
 				final EditText txt = new EditText( this );
 				txt.setFilters( new InputFilter[]{

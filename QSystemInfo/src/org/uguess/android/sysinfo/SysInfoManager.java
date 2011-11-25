@@ -538,7 +538,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 					{
 						long freq = Long.parseLong( line.trim( ) );
 
-						mips = String.valueOf( freq / 1000f );
+						mips = String.valueOf( freq / 1000 );
 					}
 				}
 				catch ( Exception e )
