@@ -422,10 +422,11 @@ public final class LogViewer extends ListActivity implements Constants
 
 	void sendLog( final boolean compressed, final int format )
 	{
-		if ( progress == null )
+		if ( progress != null )
 		{
-			progress = new ProgressDialog( this );
+			progress.dismiss( );
 		}
+		progress = new ProgressDialog( this );
 		progress.setMessage( getResources( ).getText( R.string.loading ) );
 		progress.setIndeterminate( true );
 		progress.show( );
@@ -783,10 +784,11 @@ public final class LogViewer extends ListActivity implements Constants
 
 	private void refreshLogs( )
 	{
-		if ( progress == null )
+		if ( progress != null )
 		{
-			progress = new ProgressDialog( this );
+			progress.dismiss( );
 		}
+		progress = new ProgressDialog( this );
 		progress.setMessage( getResources( ).getText( R.string.loading ) );
 		progress.setIndeterminate( true );
 		progress.show( );

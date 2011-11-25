@@ -1290,10 +1290,11 @@ public final class SysInfoManager extends PreferenceActivity implements
 	void sendReport( final boolean[] items, final int format,
 			final boolean compressed )
 	{
-		if ( progress == null )
+		if ( progress != null )
 		{
-			progress = new ProgressDialog( this );
+			progress.dismiss( );
 		}
+		progress = new ProgressDialog( this );
 		progress.setMessage( getResources( ).getText( R.string.loading ) );
 		progress.setIndeterminate( true );
 		progress.show( );

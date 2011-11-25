@@ -723,10 +723,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 	private void loadApps( )
 	{
-		if ( progress == null )
+		if ( progress != null )
 		{
-			progress = new ProgressDialog( this );
+			progress.dismiss( );
 		}
+		progress = new ProgressDialog( this );
 		progress.setMessage( getResources( ).getText( R.string.loading ) );
 		progress.setIndeterminate( true );
 		progress.show( );
@@ -883,12 +884,14 @@ public final class ApplicationManager extends ListActivity implements Constants
 			return;
 		}
 
-		if ( progress == null )
+		if ( progress != null )
 		{
-			progress = new ProgressDialog( this );
+			progress.dismiss( );
 		}
+		progress = new ProgressDialog( this );
 		progress.setMessage( getResources( ).getString( R.string.start_exporting ) );
 		progress.setIndeterminate( false );
+		progress.setCancelable( false );
 		progress.setProgressStyle( ProgressDialog.STYLE_HORIZONTAL );
 		progress.setMax( apps.size( ) );
 
@@ -1633,10 +1636,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 	void sendContent( final boolean[] items, final List<AppInfoHolder> apps,
 			final boolean isCopy )
 	{
-		if ( progress == null )
+		if ( progress != null )
 		{
-			progress = new ProgressDialog( this );
+			progress.dismiss( );
 		}
+		progress = new ProgressDialog( this );
 		progress.setMessage( getResources( ).getText( R.string.loading ) );
 		progress.setIndeterminate( true );
 		progress.show( );

@@ -476,10 +476,11 @@ public final class NetStateManager extends ListActivity implements Constants
 			return;
 		}
 
-		if ( progress == null )
+		if ( progress != null )
 		{
-			progress = new ProgressDialog( this );
+			progress.dismiss( );
 		}
+		progress = new ProgressDialog( this );
 		progress.setMessage( getString( R.string.query_ip_msg ) );
 		progress.setIndeterminate( true );
 		progress.show( );
