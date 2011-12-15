@@ -71,7 +71,7 @@
 	<string name="csv">CSV</string>
 	<string name="html">HTML</string>
 	<string name="copy_text">Copy Text</string>
-	<string name="tab_netstat">Net States</string>
+	<string name="tab_netstat">Net Stats</string>
 	<string name="update_speed">Update Speed</string>
 	<string name="high">High</string>
 	<string name="normal">Normal</string>
