@@ -761,7 +761,7 @@ public final class ProcessManager extends ListActivity implements Constants
 										ri.activityInfo.name );
 
 								it.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK )
-										.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
+										.addFlags( Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY );
 
 								try
 								{
