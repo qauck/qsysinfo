@@ -201,6 +201,11 @@ public final class LogViewer extends ListActivity implements Constants
 					view = convertView;
 				}
 
+				if ( position >= getCount( ) )
+				{
+					return view;
+				}
+
 				LogItem itm = getItem( position );
 
 				txt_msg = (TextView) view.findViewById( R.id.txt_msg );
