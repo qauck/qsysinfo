@@ -86,12 +86,12 @@
 	<string name="copy_ip">Copia Remote Address</string>
 	<string name="location_info">&lt;b>%1$s&lt;/b>&lt;br>%2$s&lt;br>Country: %3$s&lt;br>Regione: %4$s&lt;br>Città: %5$s</string>
 	<string name="view_map">Visualizza sulla mappa</string>
-	<string name="remote_query">Coda Iformazioni Remote</string>
+	<string name="remote_query">Coda Informazioni Remote</string>
 	<string name="enabled">Abilitato</string>
 	<string name="disabled">Disabilitato</string>
 	<string name="wifi_only">Solo Wi-Fi</string>
 	<string name="compressed">(Compresso)</string>
-	<string name="send_report">Sspedisci Report</string>
+	<string name="send_report">Spedisci Report</string>
 	<!--string name="log">Log</string-->
 	<string name="no_report">Nessun report è stato generato.</string>
 	<string name="no_report_item">Nessun report selezionato.</string>
@@ -133,7 +133,7 @@
 	<string name="full">Full</string>
 	<string name="discharging">Discharging</string>
 	<string name="charging">Charging</string-->
-	<string name="batt_health">Vita:</string>
+	<string name="batt_health">Salute:</string>
 	<!--string name="failure">Failure</string>
 	<string name="over_voltage">Over Voltage</string>
 	<string name="dead">Dead</string>
@@ -229,7 +229,7 @@
     <string name="show_info_icon_sum">Mostra quick system info nell\'area notifica</string>
     <string name="auto_start">Autoavvio</string>
     <string name="show_task_icon">Mostra Task Killer</string>
-    <string name="show_info_icon">Mostra System Info</string>
+    <string name="show_info_icon">Mostra Info System</string>
     <string name="task_icon_hint">Clicca per terminare tutti i processi attivi.</string>
     <string name="info_icon_hint">Clicca per mostrare quick system info.</string>
     <string name="default_email">Indirizzo Email Default</string>
