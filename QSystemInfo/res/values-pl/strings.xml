@@ -50,8 +50,8 @@
     <string name="error_switch_task">Nie można przełączyć do tego zadania.</string>
     <string name="net_address">Sieć</string>
     <string name="verbose">Rozmowa</string>
-    <!--string name="debug">Debug</string>
-    <string name="info">Info</string-->
+	<string name="debug">Debuguj</string>
+    <string name="info">Informacje</string>
     <string name="error">Błąd</string>
     <string name="asser_t">Fatalny</string>
     <string name="emmergency">Nagły</string>
@@ -92,7 +92,7 @@
     <string name="wifi_only">Tylko Wi-Fi</string>
     <string name="compressed">(Skompresowane)</string>
     <string name="send_report">Wyślij raport</string>
-    <!--string name="log">Log</string-->
+    <string name="log">Loguj</string>
     <string name="no_report">Nie wygenerowano raportu.</string>
     <string name="no_report_item">Nie wybrano obiektu do raportu.</string>
     <string name="device">Urządzenie</string>
@@ -120,8 +120,8 @@
     <string name="sc_freq">Częstotliwość CPU:</string>
     <string name="size_warning">"Wysyłasz bardzo dużo danych. Aby nie mieć problemów z pamięcią, zaleca się kompresje pliku.\n\nChcesz wysłać zawartość skompresowaną?"</string>
     <string name="idle_info">, Bezczynne: %s</string>
-    <!--string name="sensors">Sensor</string>
-    <string name="gps">GPS</string-->
+    <string name="sensors">Sensory</string>
+    <!--string name="gps">GPS</string-->
     <string name="batt_plugged">Podłączone:</string>
     <string name="unplugged">Niepodłączone</string>
     <string name="batt_temp">Temperatura:</string>
@@ -143,7 +143,7 @@
     <string name="sensor_info">%s sensor dostępny</string>
     <string name="sensor_info2">%s sensorów dostępnych</string>
     <string name="wait_data">Czekam na dane</string>
-    <string name="cache_storage">Cache systemu</string>
+    <string name="cache_storage">Bufor systemu</string>
     <string name="sensor_msg">"Sprzedawca: %1$s\nWersja: %2$s\nMoc: %3$smA\nRozdzielczość: %4$s\nMax zasięg: %5$s"</string>
     <string name="sort">Sortuj</string>
     <string name="sort_type">Sortuj wg</string>
@@ -151,7 +151,7 @@
     <string name="descending">Malejący</string>
     <string name="ascending">Rosnący</string>
     <string name="total_size">Rozmiar razem</string>
-    <string name="cache_size">Rozmiar cache</string>
+    <string name="cache_size">Rozmiar buforu</string>
     <string name="data_size">Rozmiar danych</string>
     <string name="code_size">Rozmiar kodu</string>
     <string name="name">Nazwa</string>
@@ -255,7 +255,7 @@
     <string name="task_affinity">Powinowactwo zadania</string>
     <string name="permission">Uprawnienia</string>
     <string name="manage_space_ac">Zarządzaj przestrzenia</string>
-    <string name="end_others">Zakończ inne</string>
+    <string name="end_others">Zakończ wszystkie</string>
     <string name="show_menu">Pokaż menu</string>
     <string name="default_tap_action">Domyślna akcja dotknięcia</string>
     <string name="end_task_warning_sum">Pokaż ostrzeżenie, gdy próbujesz zabić zadania</string>
@@ -304,8 +304,8 @@
     <string name="widgets">Widżety</string>
     <string name="swap_free">Swap wolny:</string>
     <string name="swap_total">Swap razem:</string>
-    <string name="cached">Cache:</string>
-    <string name="buffers">Bufer:</string>
+    <string name="cached">Bufor cache:</string>
+    <string name="buffers">Bufor:</string>
     <string name="idle">Bezczynne:</string>
     <string name="total">Razem:</string>
     <string name="version_code">Kod wersji</string>
