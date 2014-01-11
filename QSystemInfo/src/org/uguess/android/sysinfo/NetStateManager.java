@@ -36,7 +36,6 @@ import org.xmlpull.v1.XmlPullParserFactory;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -54,6 +53,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.support.v4.app.ListFragment;
 import android.text.ClipboardManager;
 import android.text.Html;
 import android.text.TextUtils;
@@ -61,21 +61,25 @@ import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 /**
  * NetStateManager
  */
-public final class NetStateManager extends ListActivity implements Constants
+public final class NetStateManager extends ListFragment implements Constants
 {
+
+	private static final String PSTORE_NETMANAGER = NetStateManager.class.getSimpleName( );
 
 	private static final String PREF_KEY_REMOTE_QUERY = "remote_query"; //$NON-NLS-1$
 	private static final String PREF_KEY_SHOW_REMOTE_NAME = "show_remote_name"; //$NON-NLS-1$
@@ -125,7 +129,7 @@ public final class NetStateManager extends ListActivity implements Constants
 						return;
 					}
 
-					showIpInfo( (IpInfo) msg.obj, NetStateManager.this );
+					showIpInfo( (IpInfo) msg.obj, getActivity( ) );
 
 					this.post( task );
 
@@ -148,7 +152,8 @@ public final class NetStateManager extends ListActivity implements Constants
 		{
 			refresh( );
 
-			int interval = Util.getIntOption( NetStateManager.this,
+			int interval = Util.getIntOption( getActivity( ),
+					PSTORE_NETMANAGER,
 					PREF_KEY_REFRESH_INTERVAL,
 					REFRESH_LOW );
 
@@ -168,9 +173,11 @@ public final class NetStateManager extends ListActivity implements Constants
 	};
 
 	@Override
-	protected void onCreate( Bundle savedInstanceState )
+	public void onCreate( Bundle savedInstanceState )
 	{
 		super.onCreate( savedInstanceState );
+
+		setHasOptionsMenu( true );
 
 		queryCache = new HashMap<String, IpInfo>( );
 
@@ -179,53 +186,19 @@ public final class NetStateManager extends ListActivity implements Constants
 		dummyInfo.local = getString( R.string.local_remote_addr );
 		dummyInfo.state = getString( R.string.state );
 
-		registerForContextMenu( getListView( ) );
+	}
 
-		getListView( ).setOnItemClickListener( new OnItemClickListener( ) {
+	@Override
+	public View onCreateView( LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState )
+	{
+		View view = super.onCreateView( inflater, container, savedInstanceState );
 
-			public void onItemClick( AdapterView<?> parent, View view,
-					int position, long id )
-			{
-				if ( position > 0 )
-				{
-					int state = Util.getIntOption( NetStateManager.this,
-							PREF_KEY_REMOTE_QUERY,
-							ENABLED );
+		ListView listView = (ListView) view.findViewById( android.R.id.list );
 
-					if ( state == DISABLED )
-					{
-						return;
-					}
-					else if ( state == WIFI_ONLY )
-					{
-						ConnectivityManager cm = (ConnectivityManager) getSystemService( Context.CONNECTIVITY_SERVICE );
+		registerForContextMenu( listView );
 
-						NetworkInfo info = cm.getNetworkInfo( ConnectivityManager.TYPE_WIFI );
-
-						if ( info == null || !info.isConnected( ) )
-						{
-							return;
-						}
-					}
-
-					ConnectionItem itm = (ConnectionItem) parent.getItemAtPosition( position );
-
-					String ip = getValidIP( itm.remote );
-
-					if ( !TextUtils.isEmpty( ip ) )
-					{
-						queryIPInfo( ip );
-					}
-					else
-					{
-						Util.shortToast( NetStateManager.this,
-								R.string.no_ip_info );
-					}
-				}
-			}
-		} );
-
-		ArrayAdapter<ConnectionItem> adapter = new ArrayAdapter<ConnectionItem>( this,
+		ArrayAdapter<ConnectionItem> adapter = new ArrayAdapter<ConnectionItem>( getActivity( ),
 				R.layout.net_item ) {
 
 			public android.view.View getView( int position,
@@ -234,10 +207,13 @@ public final class NetStateManager extends ListActivity implements Constants
 				View view;
 				TextView txt_proto, txt_ip, txt_state;
 
+				Activity ctx = getActivity( );
+
 				if ( convertView == null )
 				{
-					view = NetStateManager.this.getLayoutInflater( )
-							.inflate( R.layout.net_item, parent, false );
+					view = ctx.getLayoutInflater( ).inflate( R.layout.net_item,
+							parent,
+							false );
 				}
 				else
 				{
@@ -258,7 +234,8 @@ public final class NetStateManager extends ListActivity implements Constants
 				txt_proto.setText( itm.proto );
 				txt_state.setText( itm.state );
 
-				boolean showLocal = Util.getBooleanOption( NetStateManager.this,
+				boolean showLocal = Util.getBooleanOption( ctx,
+						PSTORE_NETMANAGER,
 						PREF_KEY_SHOW_LOCAL_ADDRESS );
 
 				if ( itm == dummyInfo )
@@ -291,11 +268,11 @@ public final class NetStateManager extends ListActivity implements Constants
 								: itm.remoteName );
 					}
 
-					txt_proto.setTextAppearance( NetStateManager.this,
+					txt_proto.setTextAppearance( ctx,
 							android.R.style.TextAppearance_Small );
-					txt_ip.setTextAppearance( NetStateManager.this,
+					txt_ip.setTextAppearance( ctx,
 							android.R.style.TextAppearance_Small );
-					txt_state.setTextAppearance( NetStateManager.this,
+					txt_state.setTextAppearance( ctx,
 							android.R.style.TextAppearance_Small );
 				}
 
@@ -303,11 +280,54 @@ public final class NetStateManager extends ListActivity implements Constants
 			}
 		};
 
-		getListView( ).setAdapter( adapter );
+		setListAdapter( adapter );
+
+		return view;
 	}
 
 	@Override
-	protected void onDestroy( )
+	public void onListItemClick( ListView l, View v, int position, long id )
+	{
+		if ( position > 0 )
+		{
+			int state = Util.getIntOption( getActivity( ),
+					PSTORE_NETMANAGER,
+					PREF_KEY_REMOTE_QUERY,
+					ENABLED );
+
+			if ( state == DISABLED )
+			{
+				return;
+			}
+			else if ( state == WIFI_ONLY )
+			{
+				ConnectivityManager cm = (ConnectivityManager) getActivity( ).getSystemService( Context.CONNECTIVITY_SERVICE );
+
+				NetworkInfo info = cm.getNetworkInfo( ConnectivityManager.TYPE_WIFI );
+
+				if ( info == null || !info.isConnected( ) )
+				{
+					return;
+				}
+			}
+
+			ConnectionItem itm = (ConnectionItem) l.getItemAtPosition( position );
+
+			String ip = getValidIP( itm.remote );
+
+			if ( !TextUtils.isEmpty( ip ) )
+			{
+				queryIPInfo( ip );
+			}
+			else
+			{
+				Util.shortToast( getActivity( ), R.string.no_ip_info );
+			}
+		}
+	}
+
+	@Override
+	public void onDestroyView( )
 	{
 		if ( progress != null )
 		{
@@ -317,11 +337,17 @@ public final class NetStateManager extends ListActivity implements Constants
 
 		( (ArrayAdapter<ConnectionItem>) getListView( ).getAdapter( ) ).clear( );
 
+		super.onDestroyView( );
+	}
+
+	@Override
+	public void onDestroy( )
+	{
 		super.onDestroy( );
 	}
 
 	@Override
-	protected void onResume( )
+	public void onResume( )
 	{
 		aborted = false;
 
@@ -331,7 +357,7 @@ public final class NetStateManager extends ListActivity implements Constants
 	}
 
 	@Override
-	protected void onPause( )
+	public void onPause( )
 	{
 		aborted = true;
 
@@ -342,38 +368,47 @@ public final class NetStateManager extends ListActivity implements Constants
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu( Menu menu )
+	public void onCreateOptionsMenu( Menu menu, MenuInflater inflater )
 	{
 		MenuItem mi = menu.add( Menu.NONE,
 				MI_PREFERENCE,
 				Menu.NONE,
 				R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );
-
-		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected( MenuItem item )
 	{
+		Activity ctx = getActivity( );
+
 		if ( item.getItemId( ) == MI_PREFERENCE )
 		{
-			Intent it = new Intent( this, NetStateSettings.class );
+			Intent it = new Intent( ctx, NetStateSettings.class );
 
-			it.putExtra( PREF_KEY_REFRESH_INTERVAL, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_REFRESH_INTERVAL, Util.getIntOption( ctx,
+					PSTORE_NETMANAGER,
 					PREF_KEY_REFRESH_INTERVAL,
 					REFRESH_LOW ) );
-			it.putExtra( PREF_KEY_REMOTE_QUERY,
-					Util.getIntOption( this, PREF_KEY_REMOTE_QUERY, ENABLED ) );
-			it.putExtra( PREF_KEY_SHOW_REMOTE_NAME,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_REMOTE_NAME ) );
+			it.putExtra( PREF_KEY_REMOTE_QUERY, Util.getIntOption( ctx,
+					PSTORE_NETMANAGER,
+					PREF_KEY_REMOTE_QUERY,
+					ENABLED ) );
+			it.putExtra( PREF_KEY_SHOW_REMOTE_NAME, Util.getBooleanOption( ctx,
+					PSTORE_NETMANAGER,
+					PREF_KEY_SHOW_REMOTE_NAME ) );
 			it.putExtra( PREF_KEY_SHOW_LOCAL_ADDRESS,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_LOCAL_ADDRESS ) );
-			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
+					Util.getBooleanOption( ctx,
+							PSTORE_NETMANAGER,
+							PREF_KEY_SHOW_LOCAL_ADDRESS ) );
+			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( ctx,
+					PSTORE_NETMANAGER,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_PROTO ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION,
-					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( ctx,
+					PSTORE_NETMANAGER,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
 
 			startActivityForResult( it, 1 );
 
@@ -406,14 +441,14 @@ public final class NetStateManager extends ListActivity implements Constants
 
 			if ( itm != null && !TextUtils.isEmpty( itm.remote ) )
 			{
-				ClipboardManager cm = (ClipboardManager) getSystemService( CLIPBOARD_SERVICE );
+				ClipboardManager cm = (ClipboardManager) getActivity( ).getSystemService( Context.CLIPBOARD_SERVICE );
 
 				if ( cm != null )
 				{
 					cm.setText( itm.remoteName == null ? itm.remote
 							: itm.remoteName );
 
-					Util.shortToast( this, R.string.copied_hint );
+					Util.shortToast( getActivity( ), R.string.copied_hint );
 				}
 			}
 
@@ -424,26 +459,40 @@ public final class NetStateManager extends ListActivity implements Constants
 	}
 
 	@Override
-	protected void onActivityResult( int requestCode, int resultCode,
-			Intent data )
+	public void onActivityResult( int requestCode, int resultCode, Intent data )
 	{
+		Activity ctx = getActivity( );
+
 		if ( requestCode == 1 && data != null )
 		{
 			Util.updateIntOption( data,
-					this,
+					ctx,
+					PSTORE_NETMANAGER,
 					PREF_KEY_REFRESH_INTERVAL,
 					REFRESH_LOW );
-			Util.updateIntOption( data, this, PREF_KEY_REMOTE_QUERY, ENABLED );
 			Util.updateIntOption( data,
-					this,
+					ctx,
+					PSTORE_NETMANAGER,
+					PREF_KEY_REMOTE_QUERY,
+					ENABLED );
+			Util.updateIntOption( data,
+					ctx,
+					PSTORE_NETMANAGER,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_PROTO );
 			Util.updateIntOption( data,
-					this,
+					ctx,
+					PSTORE_NETMANAGER,
 					PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC );
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_REMOTE_NAME );
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_LOCAL_ADDRESS );
+			Util.updateBooleanOption( data,
+					ctx,
+					PSTORE_NETMANAGER,
+					PREF_KEY_SHOW_REMOTE_NAME );
+			Util.updateBooleanOption( data,
+					ctx,
+					PSTORE_NETMANAGER,
+					PREF_KEY_SHOW_LOCAL_ADDRESS );
 		}
 	}
 
@@ -481,7 +530,7 @@ public final class NetStateManager extends ListActivity implements Constants
 		{
 			progress.dismiss( );
 		}
-		progress = new ProgressDialog( this );
+		progress = new ProgressDialog( getActivity( ) );
 		progress.setMessage( getString( R.string.query_ip_msg ) );
 		progress.setIndeterminate( true );
 		progress.show( );
@@ -515,10 +564,12 @@ public final class NetStateManager extends ListActivity implements Constants
 
 		if ( items != null )
 		{
-			final int type = Util.getIntOption( this,
+			final int type = Util.getIntOption( getActivity( ),
+					PSTORE_NETMANAGER,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_PROTO );
-			final int direction = Util.getIntOption( this,
+			final int direction = Util.getIntOption( getActivity( ),
+					PSTORE_NETMANAGER,
 					PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC );
 			final Collator clt = Collator.getInstance( );
@@ -611,10 +662,12 @@ public final class NetStateManager extends ListActivity implements Constants
 	{
 		ArrayList<ConnectionItem> items = new ArrayList<NetStateManager.ConnectionItem>( );
 
-		parseRawData( items, this, queryCache, "TCP", "/proc/net/tcp", false ); //$NON-NLS-1$ //$NON-NLS-2$
-		parseRawData( items, this, queryCache, "UDP", "/proc/net/udp", true ); //$NON-NLS-1$ //$NON-NLS-2$
-		parseRawData( items, this, queryCache, "TCP", "/proc/net/tcp6", false ); //$NON-NLS-1$ //$NON-NLS-2$
-		parseRawData( items, this, queryCache, "UDP", "/proc/net/udp6", true ); //$NON-NLS-1$ //$NON-NLS-2$
+		Activity ctx = getActivity( );
+
+		parseRawData( items, ctx, queryCache, "TCP", "/proc/net/tcp", false ); //$NON-NLS-1$ //$NON-NLS-2$
+		parseRawData( items, ctx, queryCache, "UDP", "/proc/net/udp", true ); //$NON-NLS-1$ //$NON-NLS-2$
+		parseRawData( items, ctx, queryCache, "TCP", "/proc/net/tcp6", false ); //$NON-NLS-1$ //$NON-NLS-2$
+		parseRawData( items, ctx, queryCache, "UDP", "/proc/net/udp6", true ); //$NON-NLS-1$ //$NON-NLS-2$
 
 		return items;
 	}
@@ -634,6 +687,7 @@ public final class NetStateManager extends ListActivity implements Constants
 			String line;
 
 			final boolean showRemoteName = Util.getBooleanOption( ac,
+					PSTORE_NETMANAGER,
 					PREF_KEY_SHOW_REMOTE_NAME );
 			String remoteIp;
 			int portIdx;

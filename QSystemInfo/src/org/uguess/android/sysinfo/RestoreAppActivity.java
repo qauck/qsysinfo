@@ -76,6 +76,8 @@ import android.widget.TextView;
 public final class RestoreAppActivity extends ListActivity implements Constants
 {
 
+	private static final String PSTORE_RESTOREMANAGER = RestoreAppActivity.class.getSimpleName( );
+
 	private static final int MSG_SCAN = MSG_PRIVATE + 1;
 	private static final int MSG_PRE_SCAN = MSG_PRIVATE + 2;
 	private static final int MSG_REMOVE = MSG_PRIVATE + 3;
@@ -339,6 +341,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 				txt_size = (TextView) view.findViewById( R.id.app_size );
 				if ( Util.getBooleanOption( RestoreAppActivity.this,
+						PSTORE_RESTOREMANAGER,
 						PREF_KEY_SHOW_SIZE ) )
 				{
 					txt_size.setVisibility( View.VISIBLE );
@@ -359,6 +362,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 				txt_path = (TextView) view.findViewById( R.id.app_path );
 				if ( Util.getBooleanOption( RestoreAppActivity.this,
+						PSTORE_RESTOREMANAGER,
 						PREF_KEY_SHOW_PATH ) )
 				{
 					txt_path.setVisibility( View.VISIBLE );
@@ -372,6 +376,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 				txt_time = (TextView) view.findViewById( R.id.app_time );
 				if ( Util.getBooleanOption( RestoreAppActivity.this,
+						PSTORE_RESTOREMANAGER,
 						PREF_KEY_SHOW_DATE ) )
 				{
 					txt_time.setVisibility( View.VISIBLE );
@@ -453,35 +458,54 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 		{
 			skipUpdate = true;
 
-			if ( Util.updateStringOption( data, this, PREF_KEY_APP_RESTORE_DIR ) )
+			if ( Util.updateStringOption( data,
+					this,
+					PSTORE_RESTOREMANAGER,
+					PREF_KEY_APP_RESTORE_DIR ) )
 			{
 				skipUpdate = false;
 			}
 
-			if ( Util.updateBooleanOption( data, this, PREF_KEY_SEARCH_SUB_DIR ) )
+			if ( Util.updateBooleanOption( data,
+					this,
+					PSTORE_RESTOREMANAGER,
+					PREF_KEY_SEARCH_SUB_DIR ) )
 			{
 				skipUpdate = false;
 			}
 
 			Util.updateIntOption( data,
 					this,
+					PSTORE_RESTOREMANAGER,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME );
 			Util.updateIntOption( data,
 					this,
+					PSTORE_RESTOREMANAGER,
 					PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC );
 
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_SIZE );
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_DATE );
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_PATH );
+			Util.updateBooleanOption( data,
+					this,
+					PSTORE_RESTOREMANAGER,
+					PREF_KEY_SHOW_SIZE );
+			Util.updateBooleanOption( data,
+					this,
+					PSTORE_RESTOREMANAGER,
+					PREF_KEY_SHOW_DATE );
+			Util.updateBooleanOption( data,
+					this,
+					PSTORE_RESTOREMANAGER,
+					PREF_KEY_SHOW_PATH );
 
 			if ( skipUpdate )
 			{
 				Comparator<ApkInfo> comp = getComparator( Util.getIntOption( this,
+						PSTORE_RESTOREMANAGER,
 						PREF_KEY_SORT_ORDER_TYPE,
 						ORDER_TYPE_NAME ),
 						Util.getIntOption( this,
+								PSTORE_RESTOREMANAGER,
 								PREF_KEY_SORT_DIRECTION,
 								ORDER_ASC ) );
 
@@ -520,21 +544,30 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 
 			it.putExtra( PREF_KEY_DEFAULT_RESTORE_DIR,
 					getIntent( ).getStringExtra( ApplicationManager.KEY_RESTORE_PATH ) );
-			it.putExtra( PREF_KEY_APP_RESTORE_DIR,
-					Util.getStringOption( this, PREF_KEY_APP_RESTORE_DIR, null ) );
-			it.putExtra( PREF_KEY_SEARCH_SUB_DIR,
-					Util.getBooleanOption( this, PREF_KEY_SEARCH_SUB_DIR ) );
+			it.putExtra( PREF_KEY_APP_RESTORE_DIR, Util.getStringOption( this,
+					PSTORE_RESTOREMANAGER,
+					PREF_KEY_APP_RESTORE_DIR,
+					null ) );
+			it.putExtra( PREF_KEY_SEARCH_SUB_DIR, Util.getBooleanOption( this,
+					PSTORE_RESTOREMANAGER,
+					PREF_KEY_SEARCH_SUB_DIR ) );
 			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
+					PSTORE_RESTOREMANAGER,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION,
-					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
-			it.putExtra( PREF_KEY_SHOW_SIZE,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_SIZE ) );
-			it.putExtra( PREF_KEY_SHOW_DATE,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_DATE ) );
-			it.putExtra( PREF_KEY_SHOW_PATH,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_PATH ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( this,
+					PSTORE_RESTOREMANAGER,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( this,
+					PSTORE_RESTOREMANAGER,
+					PREF_KEY_SHOW_SIZE ) );
+			it.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( this,
+					PSTORE_RESTOREMANAGER,
+					PREF_KEY_SHOW_DATE ) );
+			it.putExtra( PREF_KEY_SHOW_PATH, Util.getBooleanOption( this,
+					PSTORE_RESTOREMANAGER,
+					PREF_KEY_SHOW_PATH ) );
 
 			startActivityForResult( it, 1 );
 
@@ -939,6 +972,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 	private void loadApps( )
 	{
 		String appPath = Util.getStringOption( this,
+				PSTORE_RESTOREMANAGER,
 				PREF_KEY_APP_RESTORE_DIR,
 				null );
 
@@ -976,6 +1010,7 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 			{
 				ArrayList<File> files = getFiles( appFolder,
 						Util.getBooleanOption( RestoreAppActivity.this,
+								PSTORE_RESTOREMANAGER,
 								PREF_KEY_SEARCH_SUB_DIR ) );
 
 				ArrayList<ApkInfo> dataList = new ArrayList<ApkInfo>( );
@@ -1066,9 +1101,11 @@ public final class RestoreAppActivity extends ListActivity implements Constants
 					}
 
 					Comparator<ApkInfo> comp = getComparator( Util.getIntOption( RestoreAppActivity.this,
+							PSTORE_RESTOREMANAGER,
 							PREF_KEY_SORT_ORDER_TYPE,
 							ORDER_TYPE_NAME ),
 							Util.getIntOption( RestoreAppActivity.this,
+									PSTORE_RESTOREMANAGER,
 									PREF_KEY_SORT_DIRECTION,
 									ORDER_ASC ) );
 

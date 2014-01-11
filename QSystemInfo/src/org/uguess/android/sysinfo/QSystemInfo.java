@@ -18,6 +18,7 @@
 package org.uguess.android.sysinfo;
 
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.ArrayList;
 import java.util.Date;
 
 import android.app.Activity;
@@ -25,7 +26,6 @@ import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.TabActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -35,15 +35,22 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TabHost;
+import android.widget.TabWidget;
 
 /**
  * QSystemInfo
  */
-public final class QSystemInfo extends TabActivity
+public final class QSystemInfo extends FragmentActivity
 {
 
 	private static final String PREF_KEY_LAST_ACTIVE = "last_active_tab"; //$NON-NLS-1$
@@ -58,37 +65,40 @@ public final class QSystemInfo extends TabActivity
 
 		Util.hookExceptionHandler( getApplicationContext( ) );
 
-		TabHost th = getTabHost( );
+		setContentView( R.layout.main );
 
-		Intent it = new Intent( Intent.ACTION_VIEW );
-		it.setClass( this, SysInfoManager.class );
-		th.addTab( th.newTabSpec( SysInfoManager.class.getName( ) )
-				.setContent( it )
+		TabHost th = (TabHost) findViewById( android.R.id.tabhost );
+		th.setup( );
+
+		ViewPager vp = (ViewPager) findViewById( R.id.pager );
+
+		TabsAdapter tabAdapter = new TabsAdapter( this, th, vp );
+
+		tabAdapter.addTab( th.newTabSpec( SysInfoManager.class.getName( ) )
 				.setIndicator( getString( R.string.tab_info ),
-						getResources( ).getDrawable( R.drawable.info ) ) );
+						getResources( ).getDrawable( R.drawable.info ) ),
+				SysInfoManager.class,
+				null );
 
-		it = new Intent( Intent.ACTION_VIEW );
-		it.setClass( this, ApplicationManager.class );
-		th.addTab( th.newTabSpec( ApplicationManager.class.getName( ) )
-				.setContent( it )
+		tabAdapter.addTab( th.newTabSpec( ApplicationManager.class.getName( ) )
 				.setIndicator( getString( R.string.tab_apps ),
-						getResources( ).getDrawable( R.drawable.applications ) ) );
+						getResources( ).getDrawable( R.drawable.applications ) ),
+				ApplicationManager.class,
+				null );
 
-		it = new Intent( Intent.ACTION_VIEW );
-		it.setClass( this, ProcessManager.class );
-		th.addTab( th.newTabSpec( ProcessManager.class.getName( ) )
-				.setContent( it )
+		tabAdapter.addTab( th.newTabSpec( ProcessManager.class.getName( ) )
 				.setIndicator( getString( R.string.tab_procs ),
-						getResources( ).getDrawable( R.drawable.processes ) ) );
+						getResources( ).getDrawable( R.drawable.processes ) ),
+				ProcessManager.class,
+				null );
 
-		it = new Intent( Intent.ACTION_VIEW );
-		it.setClass( this, NetStateManager.class );
-		th.addTab( th.newTabSpec( NetStateManager.class.getName( ) )
-				.setContent( it )
+		tabAdapter.addTab( th.newTabSpec( NetStateManager.class.getName( ) )
 				.setIndicator( getString( R.string.tab_netstat ),
-						getResources( ).getDrawable( R.drawable.connection ) ) );
+						getResources( ).getDrawable( R.drawable.connection ) ),
+				NetStateManager.class,
+				null );
 
-		SharedPreferences sp = getSharedPreferences( SysInfoManager.class.getSimpleName( ),
+		SharedPreferences sp = getSharedPreferences( SysInfoManager.PSTORE_SYSINFOMANAGER,
 				Context.MODE_PRIVATE );
 
 		Util.updateIcons( this, sp );
@@ -112,7 +122,7 @@ public final class QSystemInfo extends TabActivity
 	@Override
 	protected void onDestroy( )
 	{
-		SharedPreferences sp = getSharedPreferences( SysInfoManager.class.getSimpleName( ),
+		SharedPreferences sp = getSharedPreferences( SysInfoManager.PSTORE_SYSINFOMANAGER,
 				Context.MODE_PRIVATE );
 
 		if ( sp != null )
@@ -123,12 +133,137 @@ public final class QSystemInfo extends TabActivity
 			{
 				Editor et = sp.edit( );
 				et.putInt( PREF_KEY_LAST_ACTIVE,
-						getTabHost( ).getCurrentTab( ) + 1 );
+						( (TabHost) findViewById( android.R.id.tabhost ) ).getCurrentTab( ) + 1 );
 				et.commit( );
 			}
 		}
 
 		super.onDestroy( );
+	}
+
+	/**
+	 * TabInfo
+	 */
+	static final class TabInfo
+	{
+
+		private String tag;
+		private Class<?> clss;
+		private Bundle args;
+
+		TabInfo( String _tag, Class<?> _class, Bundle _args )
+		{
+			tag = _tag;
+			clss = _class;
+			args = _args;
+		}
+	}
+
+	static final class TabFactory implements TabHost.TabContentFactory
+	{
+
+		private Context mContext;
+
+		public TabFactory( Context context )
+		{
+			mContext = context;
+		}
+
+		@Override
+		public View createTabContent( String tag )
+		{
+			View v = new View( mContext );
+			v.setMinimumWidth( 0 );
+			v.setMinimumHeight( 0 );
+			return v;
+		}
+	}
+
+	/**
+	 * TabsAdapter
+	 */
+	static final class TabsAdapter extends FragmentPagerAdapter implements
+			TabHost.OnTabChangeListener,
+			ViewPager.OnPageChangeListener
+	{
+
+		private Context mContext;
+		private TabHost mTabHost;
+		private ViewPager mViewPager;
+		private ArrayList<TabInfo> mTabs = new ArrayList<TabInfo>( );
+
+		public TabsAdapter( FragmentActivity activity, TabHost tabHost,
+				ViewPager pager )
+		{
+			super( activity.getSupportFragmentManager( ) );
+
+			mContext = activity;
+			mTabHost = tabHost;
+			mViewPager = pager;
+
+			mTabHost.setOnTabChangedListener( this );
+			mViewPager.setAdapter( this );
+			mViewPager.setOnPageChangeListener( this );
+		}
+
+		public void addTab( TabHost.TabSpec tabSpec, Class<?> clss, Bundle args )
+		{
+			tabSpec.setContent( new TabFactory( mContext ) );
+			String tag = tabSpec.getTag( );
+
+			TabInfo info = new TabInfo( tag, clss, args );
+			mTabs.add( info );
+			mTabHost.addTab( tabSpec );
+			notifyDataSetChanged( );
+		}
+
+		@Override
+		public int getCount( )
+		{
+			return mTabs.size( );
+		}
+
+		@Override
+		public Fragment getItem( int position )
+		{
+			TabInfo info = mTabs.get( position );
+			return Fragment.instantiate( mContext,
+					info.clss.getName( ),
+					info.args );
+		}
+
+		@Override
+		public void onTabChanged( String tabId )
+		{
+			int position = mTabHost.getCurrentTab( );
+			mViewPager.setCurrentItem( position );
+		}
+
+		@Override
+		public void onPageScrolled( int position, float positionOffset,
+				int positionOffsetPixels )
+		{
+		}
+
+		@Override
+		public void onPageSelected( int position )
+		{
+			// Unfortunately when TabHost changes the current tab, it kindly
+			// also takes care of putting focus on it when not in touch mode.
+			// The jerk.
+			// This hack tries to prevent this from pulling focus out of our
+			// ViewPager.
+			TabWidget widget = mTabHost.getTabWidget( );
+			int oldFocusability = widget.getDescendantFocusability( );
+			widget.setDescendantFocusability( ViewGroup.FOCUS_BLOCK_DESCENDANTS );
+			mTabHost.setCurrentTab( position );
+			widget.setDescendantFocusability( oldFocusability );
+		}
+
+		@Override
+		public void onPageScrollStateChanged( int state )
+		{
+		}
 	}
 
 	/**
@@ -312,7 +447,7 @@ public final class QSystemInfo extends TabActivity
 		@Override
 		public void onReceive( Context context, Intent intent )
 		{
-			SharedPreferences sp = context.getSharedPreferences( SysInfoManager.class.getSimpleName( ),
+			SharedPreferences sp = context.getSharedPreferences( SysInfoManager.PSTORE_SYSINFOMANAGER,
 					Context.MODE_PRIVATE );
 
 			if ( sp != null

@@ -37,11 +37,11 @@ import java.util.concurrent.CountDownLatch;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.ListActivity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
@@ -66,6 +66,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.support.v4.app.ListFragment;
 import android.text.ClipboardManager;
 import android.text.Html;
 import android.text.format.DateUtils;
@@ -73,14 +74,15 @@ import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.animation.AnimationUtils;
-import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -94,8 +96,10 @@ import android.widget.TextView;
 /**
  * ApplicationManager
  */
-public final class ApplicationManager extends ListActivity implements Constants
+public final class ApplicationManager extends ListFragment implements Constants
 {
+
+	private static final String PSTORE_APPMANAGER = ApplicationManager.class.getSimpleName( );
 
 	private static final int MSG_COPING = MSG_PRIVATE + 1;
 	private static final int MSG_COPING_ERROR = MSG_PRIVATE + 2;
@@ -160,6 +164,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 	ProgressDialog progress;
 
+	View rootView;
+
 	volatile boolean aborted;
 
 	String versionPrefix;
@@ -177,6 +183,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 		@Override
 		public void handleMessage( Message msg )
 		{
+			Activity ctx = getActivity( );
+
 			ArrayAdapter<AppInfoHolder> adapter;
 
 			switch ( msg.what )
@@ -208,8 +216,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 					if ( getListView( ).getCount( ) == 0 )
 					{
-						Util.shortToast( ApplicationManager.this,
-								R.string.no_app_show );
+						Util.shortToast( ctx, R.string.no_app_show );
 					}
 
 					break;
@@ -230,7 +237,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 						progress = null;
 					}
 
-					Util.shortToast( ApplicationManager.this,
+					Util.shortToast( ctx,
 							getString( R.string.copy_error, msg.obj ) );
 					break;
 				case MSG_COPING_FINISHED :
@@ -248,16 +255,18 @@ public final class ApplicationManager extends ListActivity implements Constants
 						progress = null;
 					}
 
-					Util.shortToast( ApplicationManager.this,
+					Util.shortToast( ctx,
 							msg.arg2 > 0 ? getString( R.string.exported_to_skip,
 									msg.arg1,
-									Util.getStringOption( ApplicationManager.this,
+									Util.getStringOption( ctx,
+											PSTORE_APPMANAGER,
 											PREF_KEY_APP_EXPORT_DIR,
 											DEFAULT_EXPORT_FOLDER ),
 									msg.arg2 )
 									: getString( R.string.exported_to,
 											msg.arg1,
-											Util.getStringOption( ApplicationManager.this,
+											Util.getStringOption( ctx,
+													PSTORE_APPMANAGER,
 													PREF_KEY_APP_EXPORT_DIR,
 													DEFAULT_EXPORT_FOLDER ) ) );
 
@@ -265,13 +274,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 							getResources( ).getString( R.string.export_complete ),
 							System.currentTimeMillis( ) );
 
-					PendingIntent pit = PendingIntent.getActivity( ApplicationManager.this,
+					PendingIntent pit = PendingIntent.getActivity( ctx,
 							0,
 							new Intent( ),
 							0 );
 
 					nc.flags |= Notification.FLAG_AUTO_CANCEL;
-					nc.setLatestEventInfo( ApplicationManager.this,
+					nc.setLatestEventInfo( ctx,
 							getResources( ).getString( R.string.export_complete ),
 							msg.arg2 > 0 ? getString( R.string.exported_skip,
 									msg.arg1,
@@ -279,12 +288,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 									msg.arg1 ),
 							pit );
 
-					( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).notify( NOTIFY_EXPORT_FINISHED,
+					( (NotificationManager) ctx.getSystemService( Context.NOTIFICATION_SERVICE ) ).notify( NOTIFY_EXPORT_FINISHED,
 							nc );
 
 					toggleAllSelection( false );
 
-					if ( Util.getBooleanOption( ApplicationManager.this,
+					if ( Util.getBooleanOption( ctx,
+							PSTORE_APPMANAGER,
 							PREF_KEY_SHOW_BACKUP_STATE ) )
 					{
 						// reload backup state
@@ -294,7 +304,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 							backupUpdater.aborted = true;
 						}
 
-						( backupUpdater = new BackupStateUpdaterThread( ApplicationManager.this,
+						( backupUpdater = new BackupStateUpdaterThread( ctx,
 								apps,
 								appCache,
 								handler ) ).start( );;
@@ -339,7 +349,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 					break;
 				case MSG_TOAST :
 
-					Util.shortToast( ApplicationManager.this, (String) msg.obj );
+					Util.shortToast( ctx, (String) msg.obj );
 					break;
 				case MSG_UPDATE :
 
@@ -360,31 +370,34 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 					appCache.update( (ArrayList<AppInfoHolder>) msg.obj );
 
-					appCache.reOrder( Util.getIntOption( ApplicationManager.this,
+					appCache.reOrder( Util.getIntOption( ctx,
+							PSTORE_APPMANAGER,
 							PREF_KEY_SORT_ORDER_TYPE,
-							ORDER_TYPE_NAME ),
-							Util.getIntOption( ApplicationManager.this,
-									PREF_KEY_SORT_DIRECTION,
-									ORDER_ASC ) );
+							ORDER_TYPE_NAME ), Util.getIntOption( ctx,
+							PSTORE_APPMANAGER,
+							PREF_KEY_SORT_DIRECTION,
+							ORDER_ASC ) );
 
 					handler.sendEmptyMessage( MSG_INIT_OK );
 
-					if ( Util.getBooleanOption( ApplicationManager.this,
+					if ( Util.getBooleanOption( ctx,
+							PSTORE_APPMANAGER,
 							PREF_KEY_SHOW_SIZE ) )
 					{
-						( sizeUpdater = new PkgSizeUpdaterThread( ApplicationManager.this,
+						( sizeUpdater = new PkgSizeUpdaterThread( ctx,
 								appCache,
 								handler ) ).start( );
 					}
 
-					( resUpdater = new ResourceUpdaterThread( ApplicationManager.this,
+					( resUpdater = new ResourceUpdaterThread( ctx,
 							appCache,
 							handler ) ).start( );
 
-					if ( Util.getBooleanOption( ApplicationManager.this,
+					if ( Util.getBooleanOption( ctx,
+							PSTORE_APPMANAGER,
 							PREF_KEY_SHOW_BACKUP_STATE ) )
 					{
-						( backupUpdater = new BackupStateUpdaterThread( ApplicationManager.this,
+						( backupUpdater = new BackupStateUpdaterThread( ctx,
 								null,
 								appCache,
 								handler ) ).start( );
@@ -396,7 +409,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 					Util.handleMsgSendContentReady( (String) msg.obj,
 							"Android Applications - ", //$NON-NLS-1$
-							ApplicationManager.this,
+							ctx,
 							msg.arg2 == 1 );
 
 					break;
@@ -405,7 +418,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
 					Util.checkForceCompression( this,
-							ApplicationManager.this,
+							ctx,
 							(String) msg.obj,
 							msg.arg1,
 							"android_applications" ); //$NON-NLS-1$
@@ -422,7 +435,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		{
 			( (AppInfoHolder) getListView( ).getItemAtPosition( (Integer) buttonView.getTag( ) ) ).checked = isChecked;
 
-			View v = findViewById( R.id.app_footer );
+			View v = rootView.findViewById( R.id.app_footer );
 
 			if ( isChecked )
 			{
@@ -430,7 +443,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 				{
 					v.setVisibility( View.VISIBLE );
 
-					v.startAnimation( AnimationUtils.loadAnimation( ApplicationManager.this,
+					v.startAnimation( AnimationUtils.loadAnimation( getActivity( ),
 							R.anim.footer_appear ) );
 				}
 			}
@@ -442,7 +455,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 	};
 
 	@Override
-	protected void onCreate( Bundle savedInstanceState )
+	public void onCreate( Bundle savedInstanceState )
 	{
 		super.onCreate( savedInstanceState );
 
@@ -450,9 +463,16 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 		appCache = new AppCache( );
 
-		setContentView( R.layout.app_lst_view );
+		setHasOptionsMenu( true );
+	}
 
-		( (Button) findViewById( R.id.btn_export ) ).setOnClickListener( new View.OnClickListener( ) {
+	@Override
+	public View onCreateView( LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState )
+	{
+		rootView = inflater.inflate( R.layout.app_lst_view, container, false );
+
+		( (Button) rootView.findViewById( R.id.btn_export ) ).setOnClickListener( new View.OnClickListener( ) {
 
 			public void onClick( View v )
 			{
@@ -460,7 +480,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			}
 		} );
 
-		( (Button) findViewById( R.id.btn_sel_all ) ).setOnClickListener( new View.OnClickListener( ) {
+		( (Button) rootView.findViewById( R.id.btn_sel_all ) ).setOnClickListener( new View.OnClickListener( ) {
 
 			public void onClick( View v )
 			{
@@ -468,7 +488,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			}
 		} );
 
-		( (Button) findViewById( R.id.btn_desel_all ) ).setOnClickListener( new View.OnClickListener( ) {
+		( (Button) rootView.findViewById( R.id.btn_desel_all ) ).setOnClickListener( new View.OnClickListener( ) {
 
 			public void onClick( View v )
 			{
@@ -476,28 +496,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 			}
 		} );
 
-		ListView lstApps = getListView( );
+		ListView lstApps = (ListView) rootView.findViewById( android.R.id.list );
 
 		lstApps.setFastScrollEnabled( true );
 
 		registerForContextMenu( lstApps );
 
-		lstApps.setOnItemClickListener( new OnItemClickListener( ) {
-
-			public void onItemClick( AdapterView<?> parent, View view,
-					int position, long id )
-			{
-				AppInfoHolder holder = (AppInfoHolder) parent.getItemAtPosition( position );
-
-				int action = Util.getIntOption( ApplicationManager.this,
-						PREF_KEY_DEFAULT_TAP_ACTION,
-						ACTION_MENU );
-
-				handleAction( holder, action );
-			}
-		} );
-
-		ArrayAdapter<AppInfoHolder> adapter = new ArrayAdapter<AppInfoHolder>( ApplicationManager.this,
+		ArrayAdapter<AppInfoHolder> adapter = new ArrayAdapter<AppInfoHolder>( getActivity( ),
 				R.layout.app_item ) {
 
 			public android.view.View getView( int position,
@@ -508,10 +513,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 				ImageView img_type;
 				CheckBox ckb_app;
 
+				Activity ctx = getActivity( );
+
 				if ( convertView == null )
 				{
-					view = ApplicationManager.this.getLayoutInflater( )
-							.inflate( R.layout.app_item, parent, false );
+					view = ctx.getLayoutInflater( ).inflate( R.layout.app_item,
+							parent,
+							false );
 				}
 				else
 				{
@@ -535,7 +543,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 					txt_name.setText( itm.appInfo.packageName );
 				}
 
-				if ( Util.getBooleanOption( ApplicationManager.this,
+				if ( Util.getBooleanOption( ctx,
+						PSTORE_APPMANAGER,
 						PREF_KEY_SHOW_BACKUP_STATE ) )
 				{
 					switch ( itm.backupState )
@@ -563,7 +572,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 				txt_ver.setText( itm.version );
 
 				txt_size = (TextView) view.findViewById( R.id.app_size );
-				if ( Util.getBooleanOption( ApplicationManager.this,
+				if ( Util.getBooleanOption( ctx,
+						PSTORE_APPMANAGER,
 						PREF_KEY_SHOW_SIZE ) )
 				{
 					txt_size.setVisibility( View.VISIBLE );
@@ -583,7 +593,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 				}
 
 				txt_time = (TextView) view.findViewById( R.id.app_time );
-				if ( Util.getBooleanOption( ApplicationManager.this,
+				if ( Util.getBooleanOption( ctx,
+						PSTORE_APPMANAGER,
 						PREF_KEY_SHOW_DATE ) )
 				{
 					txt_time.setVisibility( View.VISIBLE );
@@ -591,7 +602,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 					if ( itm.appInfo.sourceDir != null )
 					{
 						File f = new File( itm.appInfo.sourceDir );
-						txt_time.setText( DateUtils.formatDateTime( ApplicationManager.this,
+						txt_time.setText( DateUtils.formatDateTime( ctx,
 								f.lastModified( ),
 								DateUtils.FORMAT_SHOW_YEAR
 										| DateUtils.FORMAT_SHOW_DATE
@@ -608,7 +619,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 				}
 
 				img_type = (ImageView) view.findViewById( R.id.img_app_icon );
-				if ( Util.getBooleanOption( ApplicationManager.this,
+				if ( Util.getBooleanOption( ctx,
+						PSTORE_APPMANAGER,
 						PREF_KEY_SHOW_ICON ) )
 				{
 					img_type.setVisibility( View.VISIBLE );
@@ -621,7 +633,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 					{
 						try
 						{
-							img_type.setImageDrawable( getPackageManager( ).getDefaultActivityIcon( ) );
+							img_type.setImageDrawable( ctx.getPackageManager( )
+									.getDefaultActivityIcon( ) );
 						}
 						catch ( Exception fe )
 						{
@@ -649,11 +662,26 @@ public final class ApplicationManager extends ListActivity implements Constants
 			}
 		};
 
-		getListView( ).setAdapter( adapter );
+		setListAdapter( adapter );
+
+		return rootView;
 	}
 
 	@Override
-	protected void onDestroy( )
+	public void onListItemClick( ListView l, View v, int position, long id )
+	{
+		AppInfoHolder holder = (AppInfoHolder) l.getItemAtPosition( position );
+
+		int action = Util.getIntOption( getActivity( ),
+				PSTORE_APPMANAGER,
+				PREF_KEY_DEFAULT_TAP_ACTION,
+				ACTION_MENU );
+
+		handleAction( holder, action );
+	}
+
+	@Override
+	public void onDestroyView( )
 	{
 		if ( progress != null )
 		{
@@ -661,15 +689,23 @@ public final class ApplicationManager extends ListActivity implements Constants
 			progress = null;
 		}
 
+		rootView = null;
+
 		( (ArrayAdapter<AppInfoHolder>) getListView( ).getAdapter( ) ).clear( );
 
+		super.onDestroyView( );
+	}
+
+	@Override
+	public void onDestroy( )
+	{
 		appCache.clear( );
 
 		super.onDestroy( );
 	}
 
 	@Override
-	protected void onStart( )
+	public void onStart( )
 	{
 		super.onStart( );
 
@@ -677,7 +713,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 	}
 
 	@Override
-	protected void onStop( )
+	public void onStop( )
 	{
 		if ( sizeUpdater != null )
 		{
@@ -697,13 +733,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 			backupUpdater = null;
 		}
 
-		( (NotificationManager) getSystemService( NOTIFICATION_SERVICE ) ).cancel( NOTIFY_EXPORT_FINISHED );
+		( (NotificationManager) getActivity( ).getSystemService( Context.NOTIFICATION_SERVICE ) ).cancel( NOTIFY_EXPORT_FINISHED );
 
 		super.onStop( );
 	}
 
 	@Override
-	protected void onResume( )
+	public void onResume( )
 	{
 		aborted = false;
 
@@ -711,7 +747,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 	}
 
 	@Override
-	protected void onPause( )
+	public void onPause( )
 	{
 		aborted = true;
 
@@ -727,7 +763,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		{
 			progress.dismiss( );
 		}
-		progress = new ProgressDialog( this );
+		progress = new ProgressDialog( getActivity( ) );
 		progress.setMessage( getResources( ).getText( R.string.loading ) );
 		progress.setIndeterminate( true );
 		progress.show( );
@@ -736,7 +772,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 			public void run( )
 			{
-				final PackageManager pm = getPackageManager( );
+				final PackageManager pm = getActivity( ).getPackageManager( );
 				List<ApplicationInfo> allApps = pm.getInstalledApplications( 0 );
 
 				final List<ApplicationInfo> filteredApps = filterApps( allApps );
@@ -791,7 +827,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 			return apps;
 		}
 
-		int type = Util.getIntOption( this,
+		int type = Util.getIntOption( getActivity( ),
+				PSTORE_APPMANAGER,
 				PREF_KEY_FILTER_APP_TYPE,
 				APP_TYPE_ALL );
 
@@ -880,7 +917,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 	{
 		if ( apps == null || apps.isEmpty( ) )
 		{
-			Util.shortToast( this, R.string.no_app_selected );
+			Util.shortToast( getActivity( ), R.string.no_app_selected );
 			return;
 		}
 
@@ -888,7 +925,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		{
 			progress.dismiss( );
 		}
-		progress = new ProgressDialog( this );
+		progress = new ProgressDialog( getActivity( ) );
 		progress.setMessage( getResources( ).getString( R.string.start_exporting ) );
 		progress.setIndeterminate( false );
 		progress.setCancelable( false );
@@ -901,7 +938,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 			public void run( )
 			{
-				String exportFolder = Util.getStringOption( ApplicationManager.this,
+				String exportFolder = Util.getStringOption( getActivity( ),
+						PSTORE_APPMANAGER,
 						PREF_KEY_APP_EXPORT_DIR,
 						DEFAULT_EXPORT_FOLDER );
 
@@ -1092,39 +1130,59 @@ public final class ApplicationManager extends ListActivity implements Constants
 	}
 
 	@Override
-	protected void onActivityResult( int requestCode, int resultCode,
-			Intent data )
+	public void onActivityResult( int requestCode, int resultCode, Intent data )
 	{
+		Activity ctx = getActivity( );
+
 		if ( requestCode == REQUEST_SETTINGS && data != null )
 		{
-			Util.updateStringOption( data, this, PREF_KEY_APP_EXPORT_DIR );
+			Util.updateStringOption( data,
+					ctx,
+					PSTORE_APPMANAGER,
+					PREF_KEY_APP_EXPORT_DIR );
 
 			Util.updateIntOption( data,
-					this,
+					ctx,
+					PSTORE_APPMANAGER,
 					PREF_KEY_FILTER_APP_TYPE,
 					APP_TYPE_ALL );
 			Util.updateIntOption( data,
-					this,
+					ctx,
+					PSTORE_APPMANAGER,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME );
 			Util.updateIntOption( data,
-					this,
+					ctx,
+					PSTORE_APPMANAGER,
 					PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC );
 			Util.updateIntOption( data,
-					this,
+					ctx,
+					PSTORE_APPMANAGER,
 					PREF_KEY_DEFAULT_TAP_ACTION,
 					ACTION_MENU );
 
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_SIZE );
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_DATE );
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_ICON );
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_BACKUP_STATE );
+			Util.updateBooleanOption( data,
+					ctx,
+					PSTORE_APPMANAGER,
+					PREF_KEY_SHOW_SIZE );
+			Util.updateBooleanOption( data,
+					ctx,
+					PSTORE_APPMANAGER,
+					PREF_KEY_SHOW_DATE );
+			Util.updateBooleanOption( data,
+					ctx,
+					PSTORE_APPMANAGER,
+					PREF_KEY_SHOW_ICON );
+			Util.updateBooleanOption( data,
+					ctx,
+					PSTORE_APPMANAGER,
+					PREF_KEY_SHOW_BACKUP_STATE );
 		}
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu( Menu menu )
+	public void onCreateOptionsMenu( Menu menu, MenuInflater inflater )
 	{
 		MenuItem mi = menu.add( Menu.NONE,
 				MI_DELETE,
@@ -1135,7 +1193,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		mi = menu.add( Menu.NONE, MI_SHARE, Menu.NONE, R.string.share );
 		mi.setIcon( android.R.drawable.ic_menu_share );
 
-		if ( Util.getSettingsIntent( getPackageManager( ),
+		if ( Util.getSettingsIntent( getActivity( ).getPackageManager( ),
 				"com.android.settings.UsageStats" ) != null ) //$NON-NLS-1$
 		{
 			mi = menu.add( Menu.NONE,
@@ -1150,37 +1208,48 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 		mi = menu.add( Menu.NONE, MI_PREFERENCE, Menu.NONE, R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );
-
-		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected( MenuItem item )
 	{
+		Activity ctx = getActivity( );
+
 		if ( item.getItemId( ) == MI_PREFERENCE )
 		{
-			Intent it = new Intent( this, AppSettings.class );
+			Intent it = new Intent( ctx, AppSettings.class );
 
-			it.putExtra( PREF_KEY_FILTER_APP_TYPE, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_FILTER_APP_TYPE, Util.getIntOption( ctx,
+					PSTORE_APPMANAGER,
 					PREF_KEY_FILTER_APP_TYPE,
 					APP_TYPE_ALL ) );
-			it.putExtra( PREF_KEY_APP_EXPORT_DIR, Util.getStringOption( this,
+			it.putExtra( PREF_KEY_APP_EXPORT_DIR, Util.getStringOption( ctx,
+					PSTORE_APPMANAGER,
 					PREF_KEY_APP_EXPORT_DIR,
 					DEFAULT_EXPORT_FOLDER ) );
-			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( ctx,
+					PSTORE_APPMANAGER,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION,
-					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
-			it.putExtra( PREF_KEY_SHOW_SIZE,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_SIZE ) );
-			it.putExtra( PREF_KEY_SHOW_DATE,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_DATE ) );
-			it.putExtra( PREF_KEY_SHOW_ICON,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_ICON ) );
+			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( ctx,
+					PSTORE_APPMANAGER,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
+			it.putExtra( PREF_KEY_SHOW_SIZE, Util.getBooleanOption( ctx,
+					PSTORE_APPMANAGER,
+					PREF_KEY_SHOW_SIZE ) );
+			it.putExtra( PREF_KEY_SHOW_DATE, Util.getBooleanOption( ctx,
+					PSTORE_APPMANAGER,
+					PREF_KEY_SHOW_DATE ) );
+			it.putExtra( PREF_KEY_SHOW_ICON, Util.getBooleanOption( ctx,
+					PSTORE_APPMANAGER,
+					PREF_KEY_SHOW_ICON ) );
 			it.putExtra( PREF_KEY_SHOW_BACKUP_STATE,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_BACKUP_STATE ) );
-			it.putExtra( PREF_KEY_DEFAULT_TAP_ACTION, Util.getIntOption( this,
+					Util.getBooleanOption( ctx,
+							PSTORE_APPMANAGER,
+							PREF_KEY_SHOW_BACKUP_STATE ) );
+			it.putExtra( PREF_KEY_DEFAULT_TAP_ACTION, Util.getIntOption( ctx,
+					PSTORE_APPMANAGER,
 					PREF_KEY_DEFAULT_TAP_ACTION,
 					ACTION_MENU ) );
 
@@ -1190,14 +1259,16 @@ public final class ApplicationManager extends ListActivity implements Constants
 		}
 		else if ( item.getItemId( ) == MI_REVERT )
 		{
-			Intent it = new Intent( this, RestoreAppActivity.class );
+			Intent it = new Intent( ctx, RestoreAppActivity.class );
 
 			it.putExtra( KEY_RESTORE_PATH,
-					new File( Util.getStringOption( this,
+					new File( Util.getStringOption( ctx,
+							PSTORE_APPMANAGER,
 							PREF_KEY_APP_EXPORT_DIR,
 							DEFAULT_EXPORT_FOLDER ), USER_APP ).getAbsolutePath( ) );
 			it.putExtra( KEY_ARCHIVE_PATH,
-					new File( Util.getStringOption( this,
+					new File( Util.getStringOption( ctx,
+							PSTORE_APPMANAGER,
 							PREF_KEY_APP_EXPORT_DIR,
 							DEFAULT_EXPORT_FOLDER ), ARCHIVED ).getAbsolutePath( ) );
 
@@ -1207,7 +1278,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 		}
 		else if ( item.getItemId( ) == MI_USAGE_STATS )
 		{
-			Intent it = Util.getSettingsIntent( getPackageManager( ),
+			Intent it = Util.getSettingsIntent( ctx.getPackageManager( ),
 					"com.android.settings.UsageStats" ); //$NON-NLS-1$
 
 			if ( it != null )
@@ -1280,6 +1351,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 	void handleAction( final AppInfoHolder ai, int action )
 	{
+		Activity ctx = getActivity( );
 		String pkgName = ai.appInfo.packageName;
 
 		switch ( action )
@@ -1299,7 +1371,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 					}
 				};
 
-				new AlertDialog.Builder( this ).setTitle( R.string.actions )
+				new AlertDialog.Builder( ctx ).setTitle( R.string.actions )
 						.setItems( new CharSequence[]{
 								getString( R.string.manage ),
 								getString( R.string.run ),
@@ -1321,8 +1393,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 				// this is for Froyo
 				it.putExtra( "pkg", pkgName ); //$NON-NLS-1$
 
-				List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
-						0 );
+				List<ResolveInfo> acts = ctx.getPackageManager( )
+						.queryIntentActivities( it, 0 );
 
 				if ( acts.size( ) > 0 )
 				{
@@ -1334,7 +1406,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 					it = new Intent( "android.settings.APPLICATION_DETAILS_SETTINGS", //$NON-NLS-1$
 							Uri.fromParts( "package", pkgName, null ) ); //$NON-NLS-1$
 
-					acts = getPackageManager( ).queryIntentActivities( it, 0 );
+					acts = ctx.getPackageManager( ).queryIntentActivities( it,
+							0 );
 
 					if ( acts.size( ) > 0 )
 					{
@@ -1350,12 +1423,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 				break;
 			case ACTION_LAUNCH :
 
-				if ( !pkgName.equals( this.getPackageName( ) ) )
+				if ( !pkgName.equals( ctx.getPackageName( ) ) )
 				{
 					it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
 					it.addCategory( Intent.CATEGORY_LAUNCHER );
 
-					acts = getPackageManager( ).queryIntentActivities( it, 0 );
+					acts = ctx.getPackageManager( ).queryIntentActivities( it,
+							0 );
 
 					if ( acts != null )
 					{
@@ -1393,7 +1467,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 						if ( !started )
 						{
-							Util.shortToast( this, R.string.run_failed );
+							Util.shortToast( ctx, R.string.run_failed );
 						}
 					}
 				}
@@ -1420,12 +1494,12 @@ public final class ApplicationManager extends ListActivity implements Constants
 				if ( appInfo.sourceDir != null )
 				{
 					File f = new File( appInfo.sourceDir );
-					installDate = DateUtils.formatDateTime( this,
+					installDate = DateUtils.formatDateTime( ctx,
 							f.lastModified( ),
 							DateUtils.FORMAT_SHOW_YEAR
 									| DateUtils.FORMAT_SHOW_DATE
 									| DateUtils.FORMAT_SHOW_TIME );
-					fileSize = Formatter.formatFileSize( this, f.length( ) );
+					fileSize = Formatter.formatFileSize( ctx, f.length( ) );
 				}
 				else
 				{
@@ -1443,7 +1517,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 						.append( "<br>" ) //$NON-NLS-1$
 						.append( getString( R.string.target_sdk ) )
 						.append( ": " ) //$NON-NLS-1$
-						.append( Util.getTargetSdkVersion( this, appInfo ) )
+						.append( Util.getTargetSdkVersion( ctx, appInfo ) )
 						.append( "<br>" ) //$NON-NLS-1$
 						.append( getString( R.string.uid ) )
 						.append( ": " ) //$NON-NLS-1$
@@ -1501,7 +1575,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 								: appInfo.manageSpaceActivityName )
 						.append( "</small>" ); //$NON-NLS-1$
 
-				new AlertDialog.Builder( this ).setTitle( ai.label == null ? appInfo.packageName
+				new AlertDialog.Builder( ctx ).setTitle( ai.label == null ? appInfo.packageName
 						: ai.label )
 						.setNeutralButton( R.string.close, null )
 						.setMessage( Html.fromHtml( sb.toString( ) ) )
@@ -1518,7 +1592,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 		if ( sels == null || sels.size( ) == 0 )
 		{
-			Util.shortToast( this, R.string.no_app_selected );
+			Util.shortToast( getActivity( ), R.string.no_app_selected );
 		}
 		else
 		{
@@ -1538,8 +1612,8 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 						if ( !canUninstall )
 						{
-							List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
-									0 );
+							List<ResolveInfo> acts = getActivity( ).getPackageManager( )
+									.queryIntentActivities( it, 0 );
 
 							canUninstall = acts.size( ) > 0;
 						}
@@ -1552,7 +1626,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 					if ( !canUninstall )
 					{
-						Util.shortToast( ApplicationManager.this,
+						Util.shortToast( getActivity( ),
 								R.string.uninstall_fail );
 
 						Log.d( ApplicationManager.class.getName( ),
@@ -1561,7 +1635,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 				}
 			};
 
-			new AlertDialog.Builder( this ).setTitle( R.string.warning )
+			new AlertDialog.Builder( getActivity( ) ).setTitle( R.string.warning )
 					.setMessage( R.string.uninstall_msg )
 					.setPositiveButton( android.R.string.ok, listener )
 					.setNegativeButton( android.R.string.cancel, null )
@@ -1576,7 +1650,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 		if ( sels == null || sels.size( ) == 0 )
 		{
-			Util.shortToast( this, R.string.no_app_selected );
+			Util.shortToast( getActivity( ), R.string.no_app_selected );
 		}
 		else
 		{
@@ -1606,7 +1680,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 						}
 					};
 
-					new AlertDialog.Builder( ApplicationManager.this ).setTitle( R.string.actions )
+					new AlertDialog.Builder( getActivity( ) ).setTitle( R.string.actions )
 							.setItems( new String[]{
 									getString( R.string.copy ),
 									getString( R.string.send ),
@@ -1617,7 +1691,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 				}
 			};
 
-			new AlertDialog.Builder( this ).setTitle( R.string.include )
+			new AlertDialog.Builder( getActivity( ) ).setTitle( R.string.include )
 					.setMultiChoiceItems( new CharSequence[]{
 							getString( R.string.version ),
 							getString( R.string.target_sdk ),
@@ -1640,13 +1714,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 		{
 			progress.dismiss( );
 		}
-		progress = new ProgressDialog( this );
+		progress = new ProgressDialog( getActivity( ) );
 		progress.setMessage( getResources( ).getText( R.string.loading ) );
 		progress.setIndeterminate( true );
 		progress.show( );
 
 		// move this out of the thread code to avoid exception under honeycomb
-		final ClipboardManager cm = (ClipboardManager) getSystemService( CLIPBOARD_SERVICE );
+		final ClipboardManager cm = (ClipboardManager) getActivity( ).getSystemService( Context.CLIPBOARD_SERVICE );
 
 		new Thread( new Runnable( ) {
 
@@ -1714,7 +1788,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 			if ( items[1] )
 			{
-				sb.append( ", SDK " + Util.getTargetSdkVersion( this, ai.appInfo ) ); //$NON-NLS-1$
+				sb.append( ", SDK " + Util.getTargetSdkVersion( getActivity( ), ai.appInfo ) ); //$NON-NLS-1$
 			}
 
 			if ( items[2] )
@@ -1743,11 +1817,11 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 		if ( sels == null || sels.size( ) == 0 )
 		{
-			Util.shortToast( this, R.string.no_app_selected );
+			Util.shortToast( getActivity( ), R.string.no_app_selected );
 		}
 		else if ( !ensureSDCard( ) )
 		{
-			Util.shortToast( this, R.string.error_sdcard );
+			Util.shortToast( getActivity( ), R.string.error_sdcard );
 		}
 		else
 		{
@@ -1762,9 +1836,10 @@ public final class ApplicationManager extends ListActivity implements Constants
 				}
 			};
 
-			new AlertDialog.Builder( this ).setTitle( R.string.warning )
+			new AlertDialog.Builder( getActivity( ) ).setTitle( R.string.warning )
 					.setMessage( getString( R.string.warning_msg,
-							Util.getStringOption( this,
+							Util.getStringOption( getActivity( ),
+									PSTORE_APPMANAGER,
 									PREF_KEY_APP_EXPORT_DIR,
 									DEFAULT_EXPORT_FOLDER ) ) )
 					.setPositiveButton( R.string.cont, listener )
@@ -1797,13 +1872,18 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 	void hideButtons( )
 	{
-		View v = findViewById( R.id.app_footer );
+		if ( rootView == null )
+		{
+			return;
+		}
+
+		View v = rootView.findViewById( R.id.app_footer );
 
 		if ( v.getVisibility( ) != View.GONE )
 		{
 			v.setVisibility( View.GONE );
 
-			v.startAnimation( AnimationUtils.loadAnimation( ApplicationManager.this,
+			v.startAnimation( AnimationUtils.loadAnimation( getActivity( ),
 					R.anim.footer_disappear ) );
 		}
 	}
@@ -1937,6 +2017,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 					if ( k == num - 1 )
 					{
 						int type = Util.getIntOption( ac,
+								PSTORE_APPMANAGER,
 								PREF_KEY_SORT_ORDER_TYPE,
 								ORDER_TYPE_NAME );
 
@@ -1946,6 +2027,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 								|| type == ORDER_TYPE_TOTAL_SIZE )
 						{
 							appCache.reOrder( type, Util.getIntOption( ac,
+									PSTORE_APPMANAGER,
 									PREF_KEY_SORT_DIRECTION,
 									ORDER_ASC ) );
 
@@ -2025,10 +2107,12 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 			// reorder by new names
 			if ( Util.getIntOption( ac,
+					PSTORE_APPMANAGER,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) == ORDER_TYPE_NAME )
 			{
 				appCache.reOrder( ORDER_TYPE_NAME, Util.getIntOption( ac,
+						PSTORE_APPMANAGER,
 						PREF_KEY_SORT_DIRECTION,
 						ORDER_ASC ) );
 
@@ -2043,7 +2127,9 @@ public final class ApplicationManager extends ListActivity implements Constants
 						0 ) );
 			}
 
-			if ( Util.getBooleanOption( ac, PREF_KEY_SHOW_ICON ) )
+			if ( Util.getBooleanOption( ac,
+					PSTORE_APPMANAGER,
+					PREF_KEY_SHOW_ICON ) )
 			{
 				for ( int i = 0, size = localList.size( ); i < size; i++ )
 				{
@@ -2116,6 +2202,7 @@ public final class ApplicationManager extends ListActivity implements Constants
 			}
 
 			String exportFolder = Util.getStringOption( ac,
+					PSTORE_APPMANAGER,
 					PREF_KEY_APP_EXPORT_DIR,
 					DEFAULT_EXPORT_FOLDER );
 
@@ -2222,11 +2309,13 @@ public final class ApplicationManager extends ListActivity implements Constants
 
 			// reorder by backup state
 			if ( Util.getIntOption( ac,
+					PSTORE_APPMANAGER,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) == ORDER_TYPE_BACKUP_STATE )
 			{
 				appCache.reOrder( ORDER_TYPE_BACKUP_STATE,
 						Util.getIntOption( ac,
+								PSTORE_APPMANAGER,
 								PREF_KEY_SORT_DIRECTION,
 								ORDER_ASC ) );
 
