@@ -18,9 +18,13 @@
 package org.uguess.android.sysinfo;
 
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Date;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Notification;
@@ -44,8 +48,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
+import android.widget.SpinnerAdapter;
 import android.widget.TabHost;
 import android.widget.TabWidget;
+import android.widget.TextView;
 
 /**
  * QSystemInfo
@@ -55,15 +62,49 @@ public final class QSystemInfo extends FragmentActivity
 
 	private static final String PREF_KEY_LAST_ACTIVE = "last_active_tab"; //$NON-NLS-1$
 
-	/** Called when the activity is first created. */
+	private static Method mtdGetActionBar = null;
+	private static Method mtdSetDisplayShowTitleEnabled = null;
+	private static Method mtdSetNavigationMode = null;
+	private static Method mtdSetListNavigationCallbacks = null;
+	private static Method mtdSetSelectedNavigationItem = null;
+
+	static
+	{
+		if ( Util.SDK_VER >= 11 )
+		{
+			try
+			{
+				mtdGetActionBar = Activity.class.getDeclaredMethod( "getActionBar" ); //$NON-NLS-1$
+				Class<?> clz = Class.forName( "android.app.ActionBar" ); //$NON-NLS-1$
+				mtdSetDisplayShowTitleEnabled = clz.getDeclaredMethod( "setDisplayShowTitleEnabled", //$NON-NLS-1$
+						boolean.class );
+				mtdSetNavigationMode = clz.getDeclaredMethod( "setNavigationMode", //$NON-NLS-1$
+						int.class );
+				mtdSetListNavigationCallbacks = clz.getDeclaredMethod( "setListNavigationCallbacks", //$NON-NLS-1$
+						SpinnerAdapter.class,
+						Class.forName( "android.app.ActionBar$OnNavigationListener" ) ); //$NON-NLS-1$
+				mtdSetSelectedNavigationItem = clz.getDeclaredMethod( "setSelectedNavigationItem", //$NON-NLS-1$
+						int.class );
+			}
+			catch ( Exception e )
+			{
+				Log.e( QSystemInfo.class.getName( ),
+						"Current SDK version do not support Action Bar framework." ); //$NON-NLS-1$
+			}
+		}
+	}
+
 	@Override
 	public void onCreate( Bundle savedInstanceState )
 	{
 		super.onCreate( savedInstanceState );
 
-		requestWindowFeature( Window.FEATURE_NO_TITLE );
-
 		Util.hookExceptionHandler( getApplicationContext( ) );
+
+		if ( Util.SDK_VER < 11 )
+		{
+			requestWindowFeature( Window.FEATURE_NO_TITLE );
+		}
 
 		setContentView( R.layout.main );
 
@@ -72,27 +113,67 @@ public final class QSystemInfo extends FragmentActivity
 
 		ViewPager vp = (ViewPager) findViewById( R.id.pager );
 
-		TabsAdapter tabAdapter = new TabsAdapter( this, th, vp );
+		ITabContainer tabContainer = null;
 
-		tabAdapter.addTab( th.newTabSpec( SysInfoManager.class.getName( ) )
+		if ( Util.SDK_VER >= 11 )
+		{
+			if ( mtdGetActionBar != null
+					&& mtdSetDisplayShowTitleEnabled != null
+					&& mtdSetNavigationMode != null
+					&& mtdSetListNavigationCallbacks != null
+					&& mtdSetSelectedNavigationItem != null )
+			{
+				try
+				{
+					Object actionBar = mtdGetActionBar.invoke( this );
+
+					mtdSetDisplayShowTitleEnabled.invoke( actionBar, false );
+					mtdSetNavigationMode.invoke( actionBar,
+							ActionBar.NAVIGATION_MODE_LIST );
+
+					tabContainer = new NavListAdapter( this,
+							actionBar,
+							vp,
+							new String[]{
+									getString( R.string.tab_info ),
+									getString( R.string.tab_apps ),
+									getString( R.string.tab_procs ),
+									getString( R.string.tab_netstat )
+							} );
+				}
+				catch ( Exception e )
+				{
+					Log.e( QSystemInfo.class.getName( ),
+							e.getLocalizedMessage( ),
+							e );
+				}
+			}
+		}
+
+		if ( tabContainer == null )
+		{
+			tabContainer = new TabsAdapter( this, th, vp );
+		}
+
+		tabContainer.addTab( th.newTabSpec( SysInfoManager.class.getName( ) )
 				.setIndicator( getString( R.string.tab_info ),
 						getResources( ).getDrawable( R.drawable.info ) ),
 				SysInfoManager.class,
 				null );
 
-		tabAdapter.addTab( th.newTabSpec( ApplicationManager.class.getName( ) )
+		tabContainer.addTab( th.newTabSpec( ApplicationManager.class.getName( ) )
 				.setIndicator( getString( R.string.tab_apps ),
 						getResources( ).getDrawable( R.drawable.applications ) ),
 				ApplicationManager.class,
 				null );
 
-		tabAdapter.addTab( th.newTabSpec( ProcessManager.class.getName( ) )
+		tabContainer.addTab( th.newTabSpec( ProcessManager.class.getName( ) )
 				.setIndicator( getString( R.string.tab_procs ),
 						getResources( ).getDrawable( R.drawable.processes ) ),
 				ProcessManager.class,
 				null );
 
-		tabAdapter.addTab( th.newTabSpec( NetStateManager.class.getName( ) )
+		tabContainer.addTab( th.newTabSpec( NetStateManager.class.getName( ) )
 				.setIndicator( getString( R.string.tab_netstat ),
 						getResources( ).getDrawable( R.drawable.connection ) ),
 				NetStateManager.class,
@@ -100,6 +181,8 @@ public final class QSystemInfo extends FragmentActivity
 
 		SharedPreferences sp = getSharedPreferences( SysInfoManager.PSTORE_SYSINFOMANAGER,
 				Context.MODE_PRIVATE );
+
+		fixTextView( th );
 
 		Util.updateIcons( this, sp );
 
@@ -141,41 +224,178 @@ public final class QSystemInfo extends FragmentActivity
 		super.onDestroy( );
 	}
 
+	private void fixTextView( View view )
+	{
+		if ( view instanceof TextView )
+		{
+			TextView tv = (TextView) view;
+			tv.setSingleLine( );
+			Util.setAllCaps( tv, false );
+		}
+		else if ( view instanceof ViewGroup )
+		{
+			ViewGroup vg = (ViewGroup) view;
+
+			for ( int i = 0, size = vg.getChildCount( ); i < size; i++ )
+			{
+				fixTextView( vg.getChildAt( i ) );
+			}
+		}
+	}
+
+	/**
+	 * ITabContainer
+	 */
+	interface ITabContainer
+	{
+
+		void addTab( TabHost.TabSpec tabSpec, Class<?> clss, Bundle args );
+	}
+
 	/**
 	 * TabInfo
 	 */
 	static final class TabInfo
 	{
 
-		private String tag;
 		private Class<?> clss;
 		private Bundle args;
 
-		TabInfo( String _tag, Class<?> _class, Bundle _args )
+		TabInfo( Class<?> _class, Bundle _args )
 		{
-			tag = _tag;
 			clss = _class;
 			args = _args;
 		}
 	}
 
+	/**
+	 * TabFactory
+	 */
 	static final class TabFactory implements TabHost.TabContentFactory
 	{
 
-		private Context mContext;
+		private Context ctx;
 
 		public TabFactory( Context context )
 		{
-			mContext = context;
+			ctx = context;
 		}
 
 		@Override
 		public View createTabContent( String tag )
 		{
-			View v = new View( mContext );
+			View v = new View( ctx );
 			v.setMinimumWidth( 0 );
 			v.setMinimumHeight( 0 );
 			return v;
+		}
+	}
+
+	/**
+	 * NavListAdapter
+	 */
+	static final class NavListAdapter extends FragmentPagerAdapter implements
+			ViewPager.OnPageChangeListener,
+			ITabContainer
+	{
+
+		private Context ctx;
+		private Object bar;
+		private ViewPager pager;
+		private ArrayList<TabInfo> tabs = new ArrayList<TabInfo>( );
+
+		NavListAdapter( FragmentActivity activity, Object bar, ViewPager pager,
+				String[] items )
+		{
+			super( activity.getSupportFragmentManager( ) );
+
+			this.ctx = activity;
+			this.bar = bar;
+			this.pager = pager;
+
+			pager.setAdapter( this );
+			pager.setOnPageChangeListener( this );
+
+			ArrayAdapter<String> adapter = new ArrayAdapter<String>( ctx,
+					android.R.layout.simple_spinner_dropdown_item,
+					items );
+
+			try
+			{
+				Class<?> clz = Class.forName( "android.app.ActionBar$OnNavigationListener" ); //$NON-NLS-1$
+				Object listener = Proxy.newProxyInstance( getClass( ).getClassLoader( ),
+						new Class<?>[]{
+							clz
+						},
+						new InvocationHandler( ) {
+
+							@Override
+							public Object invoke( Object proxy, Method method,
+									Object[] args ) throws Throwable
+							{
+								if ( "onNavigationItemSelected".equals( method.getName( ) ) ) //$NON-NLS-1$
+								{
+									NavListAdapter.this.pager.setCurrentItem( (Integer) args[0] );
+									return true;
+								}
+								return null;
+							}
+						} );
+
+				mtdSetListNavigationCallbacks.invoke( bar, adapter, listener );
+			}
+			catch ( Exception e )
+			{
+				Log.e( QSystemInfo.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+		}
+
+		@Override
+		public void addTab( TabHost.TabSpec tabSpec, Class<?> clss, Bundle args )
+		{
+			TabInfo info = new TabInfo( clss, args );
+			tabs.add( info );
+			notifyDataSetChanged( );
+		}
+
+		@Override
+		public void onPageScrollStateChanged( int arg0 )
+		{
+		}
+
+		@Override
+		public void onPageScrolled( int arg0, float arg1, int arg2 )
+		{
+		}
+
+		@Override
+		public void onPageSelected( int position )
+		{
+			try
+			{
+				mtdSetSelectedNavigationItem.invoke( bar, position );
+			}
+			catch ( Exception e )
+			{
+				Log.e( QSystemInfo.class.getName( ),
+						e.getLocalizedMessage( ),
+						e );
+			}
+		}
+
+		@Override
+		public Fragment getItem( int position )
+		{
+			TabInfo info = tabs.get( position );
+			return Fragment.instantiate( ctx, info.clss.getName( ), info.args );
+		}
+
+		@Override
+		public int getCount( )
+		{
+			return tabs.size( );
 		}
 	}
 
@@ -184,59 +404,58 @@ public final class QSystemInfo extends FragmentActivity
 	 */
 	static final class TabsAdapter extends FragmentPagerAdapter implements
 			TabHost.OnTabChangeListener,
-			ViewPager.OnPageChangeListener
+			ViewPager.OnPageChangeListener,
+			ITabContainer
 	{
 
-		private Context mContext;
-		private TabHost mTabHost;
-		private ViewPager mViewPager;
-		private ArrayList<TabInfo> mTabs = new ArrayList<TabInfo>( );
+		private Context ctx;
+		private TabHost th;
+		private ViewPager vp;
+		private ArrayList<TabInfo> tabs = new ArrayList<TabInfo>( );
 
 		public TabsAdapter( FragmentActivity activity, TabHost tabHost,
 				ViewPager pager )
 		{
 			super( activity.getSupportFragmentManager( ) );
 
-			mContext = activity;
-			mTabHost = tabHost;
-			mViewPager = pager;
+			ctx = activity;
+			th = tabHost;
+			vp = pager;
 
-			mTabHost.setOnTabChangedListener( this );
-			mViewPager.setAdapter( this );
-			mViewPager.setOnPageChangeListener( this );
+			th.setOnTabChangedListener( this );
+			vp.setAdapter( this );
+			vp.setOnPageChangeListener( this );
 		}
 
+		@Override
 		public void addTab( TabHost.TabSpec tabSpec, Class<?> clss, Bundle args )
 		{
-			tabSpec.setContent( new TabFactory( mContext ) );
-			String tag = tabSpec.getTag( );
+			tabSpec.setContent( new TabFactory( ctx ) );
 
-			TabInfo info = new TabInfo( tag, clss, args );
-			mTabs.add( info );
-			mTabHost.addTab( tabSpec );
+			TabInfo info = new TabInfo( clss, args );
+			tabs.add( info );
+			th.addTab( tabSpec );
 			notifyDataSetChanged( );
 		}
 
 		@Override
 		public int getCount( )
 		{
-			return mTabs.size( );
+			return tabs.size( );
 		}
 
 		@Override
 		public Fragment getItem( int position )
 		{
-			TabInfo info = mTabs.get( position );
-			return Fragment.instantiate( mContext,
-					info.clss.getName( ),
-					info.args );
+			TabInfo info = tabs.get( position );
+			return Fragment.instantiate( ctx, info.clss.getName( ), info.args );
 		}
 
 		@Override
 		public void onTabChanged( String tabId )
 		{
-			int position = mTabHost.getCurrentTab( );
-			mViewPager.setCurrentItem( position );
+			int position = th.getCurrentTab( );
+			vp.setCurrentItem( position );
 		}
 
 		@Override
@@ -253,10 +472,10 @@ public final class QSystemInfo extends FragmentActivity
 			// The jerk.
 			// This hack tries to prevent this from pulling focus out of our
 			// ViewPager.
-			TabWidget widget = mTabHost.getTabWidget( );
+			TabWidget widget = th.getTabWidget( );
 			int oldFocusability = widget.getDescendantFocusability( );
 			widget.setDescendantFocusability( ViewGroup.FOCUS_BLOCK_DESCENDANTS );
-			mTabHost.setCurrentTab( position );
+			th.setCurrentTab( position );
 			widget.setDescendantFocusability( oldFocusability );
 		}
 

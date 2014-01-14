@@ -352,12 +352,15 @@ public final class LogViewer extends ListActivity implements Constants
 				Menu.NONE,
 				R.string.send_log );
 		mi.setIcon( android.R.drawable.ic_menu_share );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_IF_ROOM );
 
 		mi = menu.add( Menu.NONE, MI_REFRESH, Menu.NONE, R.string.refresh );
 		mi.setIcon( android.R.drawable.ic_menu_rotate );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_IF_ROOM );
 
 		mi = menu.add( Menu.NONE, MI_PREFERENCE, Menu.NONE, R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 
 		return true;
 	}

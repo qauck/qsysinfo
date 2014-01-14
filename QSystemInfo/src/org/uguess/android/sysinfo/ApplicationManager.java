@@ -1189,9 +1189,11 @@ public final class ApplicationManager extends ListFragment implements Constants
 				Menu.NONE,
 				R.string.uninstall );
 		mi.setIcon( android.R.drawable.ic_menu_delete );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_IF_ROOM );
 
 		mi = menu.add( Menu.NONE, MI_SHARE, Menu.NONE, R.string.share );
 		mi.setIcon( android.R.drawable.ic_menu_share );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_IF_ROOM );
 
 		if ( Util.getSettingsIntent( getActivity( ).getPackageManager( ),
 				"com.android.settings.UsageStats" ) != null ) //$NON-NLS-1$
@@ -1201,13 +1203,16 @@ public final class ApplicationManager extends ListFragment implements Constants
 					Menu.NONE,
 					R.string.usage_stats );
 			mi.setIcon( android.R.drawable.ic_menu_recent_history );
+			Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 		}
 
 		mi = menu.add( Menu.NONE, MI_REVERT, Menu.NONE, R.string.restore );
 		mi.setIcon( android.R.drawable.ic_menu_revert );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_ALWAYS );
 
 		mi = menu.add( Menu.NONE, MI_PREFERENCE, Menu.NONE, R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 	}
 
 	@Override

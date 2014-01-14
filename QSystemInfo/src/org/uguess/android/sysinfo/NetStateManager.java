@@ -375,6 +375,7 @@ public final class NetStateManager extends ListFragment implements Constants
 				Menu.NONE,
 				R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 	}
 
 	@Override

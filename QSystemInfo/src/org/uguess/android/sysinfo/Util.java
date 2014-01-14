@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -54,6 +55,8 @@ import android.os.Handler;
 import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -62,7 +65,11 @@ import android.widget.Toast;
 final class Util implements Constants
 {
 
+	static final int SDK_VER = Build.VERSION.SDK_INT;
+
 	private static Field fdTargetSdkVersion = null;
+	private static Method mtdSetShowAsAction = null;
+	private static Method mtdSetAllCaps = null;
 
 	static
 	{
@@ -74,6 +81,26 @@ final class Util implements Constants
 		{
 			Log.d( Util.class.getName( ),
 					"Current SDK version do not support 'targetSdkVersion' property." ); //$NON-NLS-1$
+		}
+
+		try
+		{
+			mtdSetShowAsAction = MenuItem.class.getDeclaredMethod( "setShowAsAction", int.class ); //$NON-NLS-1$
+		}
+		catch ( Exception e )
+		{
+			Log.d( Util.class.getName( ),
+					"Current SDK version do not support 'setShowAsAction' method." ); //$NON-NLS-1$
+		}
+
+		try
+		{
+			mtdSetAllCaps = TextView.class.getDeclaredMethod( "setAllCaps", boolean.class ); //$NON-NLS-1$
+		}
+		catch ( Exception e )
+		{
+			Log.d( Util.class.getName( ),
+					"Current SDK version do not support 'setAllCaps' method." ); //$NON-NLS-1$
 		}
 	}
 
@@ -92,6 +119,36 @@ final class Util implements Constants
 		}
 
 		return ctx.getString( R.string.unknown );
+	}
+
+	static void setAllCaps( TextView tv, boolean value )
+	{
+		if ( mtdSetAllCaps != null )
+		{
+			try
+			{
+				mtdSetAllCaps.invoke( tv, value );
+			}
+			catch ( Exception e )
+			{
+				Log.e( Util.class.getName( ), e.getLocalizedMessage( ), e );
+			}
+		}
+	}
+
+	static void setShowAsAction( MenuItem mi, int flags )
+	{
+		if ( SDK_VER >= 11 && mtdSetShowAsAction != null )
+		{
+			try
+			{
+				mtdSetShowAsAction.invoke( mi, flags );
+			}
+			catch ( Exception e )
+			{
+				Log.e( Util.class.getName( ), e.getLocalizedMessage( ), e );
+			}
+		}
 	}
 
 	static void killSelf( Handler handler, Activity ac, ActivityManager am,

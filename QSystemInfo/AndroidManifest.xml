@@ -77,7 +77,7 @@
 		</receiver>
 	</application>
 
-    <uses-sdk android:minSdkVersion="4" />
+    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="12"/>
     
     <uses-feature android:required="false" android:name="android.hardware.wifi"/>
     <uses-feature android:required="false" android:name="android.hardware.touchscreen"/>

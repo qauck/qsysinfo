@@ -1416,17 +1416,28 @@ public final class SysInfoManager extends ListFragment implements Constants
 	@Override
 	public void onCreateOptionsMenu( Menu menu, MenuInflater inflater )
 	{
-		MenuItem mi = menu.add( Menu.NONE, MI_ABOUT, Menu.NONE, R.string.about );
+		MenuItem mi = menu.add( Menu.NONE,
+				MI_REFRESH,
+				Menu.NONE,
+				R.string.refresh );
+		mi.setIcon( android.R.drawable.ic_menu_rotate );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_IF_ROOM );
+
+		mi = menu.add( Menu.NONE, MI_ABOUT, Menu.NONE, R.string.about );
 		mi.setIcon( android.R.drawable.ic_menu_info_details );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 
 		mi = menu.add( Menu.NONE, MI_HELP, Menu.NONE, R.string.help );
 		mi.setIcon( android.R.drawable.ic_menu_help );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 
 		mi = menu.add( Menu.NONE, MI_PREFERENCE, Menu.NONE, R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 
 		mi = menu.add( Menu.NONE, MI_EXIT, Menu.NONE, R.string.exit );
-		mi.setIcon( android.R.drawable.ic_lock_power_off );
+		mi.setIcon( android.R.drawable.ic_menu_close_clear_cancel );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 	}
 
 	@Override
@@ -1535,6 +1546,11 @@ public final class SysInfoManager extends ListFragment implements Constants
 					.create( )
 					.show( );
 
+			return true;
+		}
+		else if ( item.getItemId( ) == MI_REFRESH )
+		{
+			updateInfo( );
 			return true;
 		}
 
