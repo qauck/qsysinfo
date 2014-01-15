@@ -24,7 +24,6 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Date;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Notification;
@@ -49,7 +48,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
-import android.widget.SpinnerAdapter;
 import android.widget.TabHost;
 import android.widget.TabWidget;
 import android.widget.TextView;
@@ -62,9 +60,9 @@ public final class QSystemInfo extends FragmentActivity
 
 	private static final String PREF_KEY_LAST_ACTIVE = "last_active_tab"; //$NON-NLS-1$
 
-	private static Method mtdGetActionBar = null;
-	private static Method mtdSetDisplayShowTitleEnabled = null;
-	private static Method mtdSetNavigationMode = null;
+	// private static Method mtdGetActionBar = null;
+	// private static Method mtdSetDisplayShowTitleEnabled = null;
+	// private static Method mtdSetNavigationMode = null;
 	private static Method mtdSetListNavigationCallbacks = null;
 	private static Method mtdSetSelectedNavigationItem = null;
 
@@ -72,25 +70,25 @@ public final class QSystemInfo extends FragmentActivity
 	{
 		if ( Util.SDK_VER >= 11 )
 		{
-			try
-			{
-				mtdGetActionBar = Activity.class.getDeclaredMethod( "getActionBar" ); //$NON-NLS-1$
-				Class<?> clz = Class.forName( "android.app.ActionBar" ); //$NON-NLS-1$
-				mtdSetDisplayShowTitleEnabled = clz.getDeclaredMethod( "setDisplayShowTitleEnabled", //$NON-NLS-1$
-						boolean.class );
-				mtdSetNavigationMode = clz.getDeclaredMethod( "setNavigationMode", //$NON-NLS-1$
-						int.class );
-				mtdSetListNavigationCallbacks = clz.getDeclaredMethod( "setListNavigationCallbacks", //$NON-NLS-1$
-						SpinnerAdapter.class,
-						Class.forName( "android.app.ActionBar$OnNavigationListener" ) ); //$NON-NLS-1$
-				mtdSetSelectedNavigationItem = clz.getDeclaredMethod( "setSelectedNavigationItem", //$NON-NLS-1$
-						int.class );
-			}
-			catch ( Exception e )
-			{
-				Log.e( QSystemInfo.class.getName( ),
-						"Current SDK version do not support Action Bar framework." ); //$NON-NLS-1$
-			}
+			// try
+			// {
+			//				mtdGetActionBar = Activity.class.getDeclaredMethod( "getActionBar" ); //$NON-NLS-1$
+			//				Class<?> clz = Class.forName( "android.app.ActionBar" ); //$NON-NLS-1$
+			//				mtdSetDisplayShowTitleEnabled = clz.getDeclaredMethod( "setDisplayShowTitleEnabled", //$NON-NLS-1$
+			// boolean.class );
+			//				mtdSetNavigationMode = clz.getDeclaredMethod( "setNavigationMode", //$NON-NLS-1$
+			// int.class );
+			//				mtdSetListNavigationCallbacks = clz.getDeclaredMethod( "setListNavigationCallbacks", //$NON-NLS-1$
+			// SpinnerAdapter.class,
+			//						Class.forName( "android.app.ActionBar$OnNavigationListener" ) ); //$NON-NLS-1$
+			//				mtdSetSelectedNavigationItem = clz.getDeclaredMethod( "setSelectedNavigationItem", //$NON-NLS-1$
+			// int.class );
+			// }
+			// catch ( Exception e )
+			// {
+			// Log.e( QSystemInfo.class.getName( ),
+			//						"Current SDK version do not support Action Bar framework." ); //$NON-NLS-1$
+			// }
 		}
 	}
 
@@ -117,37 +115,37 @@ public final class QSystemInfo extends FragmentActivity
 
 		if ( Util.SDK_VER >= 11 )
 		{
-			if ( mtdGetActionBar != null
-					&& mtdSetDisplayShowTitleEnabled != null
-					&& mtdSetNavigationMode != null
-					&& mtdSetListNavigationCallbacks != null
-					&& mtdSetSelectedNavigationItem != null )
-			{
-				try
-				{
-					Object actionBar = mtdGetActionBar.invoke( this );
-
-					mtdSetDisplayShowTitleEnabled.invoke( actionBar, false );
-					mtdSetNavigationMode.invoke( actionBar,
-							ActionBar.NAVIGATION_MODE_LIST );
-
-					tabContainer = new NavListAdapter( this,
-							actionBar,
-							vp,
-							new String[]{
-									getString( R.string.tab_info ),
-									getString( R.string.tab_apps ),
-									getString( R.string.tab_procs ),
-									getString( R.string.tab_netstat )
-							} );
-				}
-				catch ( Exception e )
-				{
-					Log.e( QSystemInfo.class.getName( ),
-							e.getLocalizedMessage( ),
-							e );
-				}
-			}
+			// if ( mtdGetActionBar != null
+			// && mtdSetDisplayShowTitleEnabled != null
+			// && mtdSetNavigationMode != null
+			// && mtdSetListNavigationCallbacks != null
+			// && mtdSetSelectedNavigationItem != null )
+			// {
+			// try
+			// {
+			// Object actionBar = mtdGetActionBar.invoke( this );
+			//
+			// mtdSetDisplayShowTitleEnabled.invoke( actionBar, false );
+			// mtdSetNavigationMode.invoke( actionBar,
+			// ActionBar.NAVIGATION_MODE_LIST );
+			//
+			// tabContainer = new NavListAdapter( this,
+			// actionBar,
+			// vp,
+			// new String[]{
+			// getString( R.string.tab_info ),
+			// getString( R.string.tab_apps ),
+			// getString( R.string.tab_procs ),
+			// getString( R.string.tab_netstat )
+			// } );
+			// }
+			// catch ( Exception e )
+			// {
+			// Log.e( QSystemInfo.class.getName( ),
+			// e.getLocalizedMessage( ),
+			// e );
+			// }
+			// }
 		}
 
 		if ( tabContainer == null )
