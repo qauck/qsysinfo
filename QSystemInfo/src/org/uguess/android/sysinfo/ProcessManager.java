@@ -37,7 +37,6 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.AlertDialog;
-import android.app.ListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
@@ -58,18 +57,20 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.support.v4.app.ListFragment;
 import android.text.Html;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -78,8 +79,10 @@ import android.widget.TextView;
 /**
  * ProcessManager
  */
-public final class ProcessManager extends ListActivity implements Constants
+public final class ProcessManager extends ListFragment implements Constants
 {
+
+	private static final String PSTORE_PROCESSMANAGER = ProcessManager.class.getSimpleName( );
 
 	private static final int MSG_REFRESH_PKG_LABEL = MSG_PRIVATE + 1;
 	private static final int MSG_REFRESH_PKG_ICON = MSG_PRIVATE + 2;
@@ -106,6 +109,8 @@ public final class ProcessManager extends ListActivity implements Constants
 	private static final int IGNORE_ACTION_HIDDEN = 0;
 	private static final int IGNORE_ACTION_PROTECTED = 1;
 
+	View rootView;
+
 	ProcessCache procCache;
 
 	long totalLoad, totalDelta, totalWork, workDelta;
@@ -120,6 +125,8 @@ public final class ProcessManager extends ListActivity implements Constants
 
 		public void handleMessage( android.os.Message msg )
 		{
+			Activity ctx = getActivity( );
+
 			switch ( msg.what )
 			{
 				case MSG_INIT_OK :
@@ -129,7 +136,7 @@ public final class ProcessManager extends ListActivity implements Constants
 						resUpdater.aborted = true;
 					}
 
-					( resUpdater = new ResourceUpdaterThread( ProcessManager.this,
+					( resUpdater = new ResourceUpdaterThread( ctx,
 							procCache,
 							handler ) ).start( );
 
@@ -153,7 +160,8 @@ public final class ProcessManager extends ListActivity implements Constants
 
 					refreshHeader( );
 
-					int interval = Util.getIntOption( ProcessManager.this,
+					int interval = Util.getIntOption( ctx,
+							PSTORE_PROCESSMANAGER,
 							PREF_KEY_REFRESH_INTERVAL,
 							REFRESH_LOW );
 
@@ -205,7 +213,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 		public void run( )
 		{
-			ActivityManager am = (ActivityManager) getSystemService( ACTIVITY_SERVICE );
+			ActivityManager am = (ActivityManager) getActivity( ).getSystemService( Context.ACTIVITY_SERVICE );
 
 			List<RunningAppProcessInfo> raps = am.getRunningAppProcesses( );
 
@@ -216,31 +224,42 @@ public final class ProcessManager extends ListActivity implements Constants
 	};
 
 	@Override
-	protected void onCreate( Bundle savedInstanceState )
+	public void onCreate( Bundle savedInstanceState )
 	{
 		super.onCreate( savedInstanceState );
 
-		setContentView( R.layout.proc_lst_view );
-
-		registerForContextMenu( getListView( ) );
+		setHasOptionsMenu( true );
 
 		procCache = new ProcessCache( );
 
 		ignoreList = new LinkedHashSet<String>( );
 
-		ArrayList<String> list = getIgnoreList( getPreferences( Context.MODE_PRIVATE ) );
+		ArrayList<String> list = getIgnoreList( getActivity( ).getSharedPreferences( PSTORE_PROCESSMANAGER,
+				Context.MODE_PRIVATE ) );
 
 		if ( list != null )
 		{
 			ignoreList.addAll( list );
 		}
+	}
 
-		View listHeader = findViewById( R.id.list_head );
+	@Override
+	public View onCreateView( LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState )
+	{
+		rootView = inflater.inflate( R.layout.proc_lst_view, container, false );
+
+		ListView listView = (ListView) rootView.findViewById( android.R.id.list );
+
+		registerForContextMenu( listView );
+
+		View listHeader = rootView.findViewById( R.id.list_head );
 		listHeader.setOnClickListener( new View.OnClickListener( ) {
 
 			public void onClick( View v )
 			{
-				boolean showWarning = Util.getBooleanOption( ProcessManager.this,
+				boolean showWarning = Util.getBooleanOption( getActivity( ),
+						PSTORE_PROCESSMANAGER,
 						PREF_KEY_SHOW_KILL_WARN );
 
 				if ( showWarning )
@@ -253,7 +272,7 @@ public final class ProcessManager extends ListActivity implements Constants
 						}
 					};
 
-					new AlertDialog.Builder( ProcessManager.this ).setTitle( R.string.warning )
+					new AlertDialog.Builder( getActivity( ) ).setTitle( R.string.warning )
 							.setMessage( R.string.end_all_prompt )
 							.setPositiveButton( android.R.string.ok, listener )
 							.setNegativeButton( android.R.string.cancel, null )
@@ -268,71 +287,21 @@ public final class ProcessManager extends ListActivity implements Constants
 			}
 		} );
 
-		getListView( ).setOnItemClickListener( new OnItemClickListener( ) {
-
-			public void onItemClick( AdapterView<?> parent, View view,
-					int position, long id )
-			{
-				final ProcessItem rap = (ProcessItem) parent.getItemAtPosition( position );
-
-				boolean showWarning = Util.getBooleanOption( ProcessManager.this,
-						PREF_KEY_SHOW_KILL_WARN );
-
-				final int action = Util.getIntOption( ProcessManager.this,
-						PREF_KEY_DEFAULT_TAP_ACTION,
-						ACTION_MENU );
-
-				if ( action == ACTION_END || action == ACTION_IGNORE )
-				{
-					boolean protect = ignoreList.contains( rap.procInfo.processName )
-							|| rap.sys;
-
-					if ( protect )
-					{
-						return;
-					}
-				}
-
-				if ( showWarning
-						&& ( action == ACTION_END || action == ACTION_END_OTHERS ) )
-				{
-
-					OnClickListener listener = new OnClickListener( ) {
-
-						public void onClick( DialogInterface dialog, int which )
-						{
-							handleAction( rap, action );
-						}
-					};
-
-					new AlertDialog.Builder( ProcessManager.this ).setTitle( R.string.warning )
-							.setMessage( action == ACTION_END ? R.string.end_prompt
-									: R.string.end_other_prompt )
-							.setPositiveButton( android.R.string.ok, listener )
-							.setNegativeButton( android.R.string.cancel, null )
-							.create( )
-							.show( );
-				}
-				else
-				{
-					handleAction( rap, action );
-				}
-			}
-		} );
-
-		ArrayAdapter<ProcessItem> adapter = new ArrayAdapter<ProcessItem>( this,
+		ArrayAdapter<ProcessItem> adapter = new ArrayAdapter<ProcessItem>( getActivity( ),
 				R.layout.proc_item ) {
 
 			public android.view.View getView( int position,
 					android.view.View convertView, android.view.ViewGroup parent )
 			{
+				Activity ctx = getActivity( );
+
 				View view;
 				TextView txt_name, txt_mem, txt_cpu;
 				ImageView img_type;
 
 				if ( convertView == null )
 				{
-					view = ProcessManager.this.getLayoutInflater( )
+					view = ctx.getLayoutInflater( )
 							.inflate( R.layout.proc_item, parent, false );
 				}
 				else
@@ -352,9 +321,11 @@ public final class ProcessManager extends ListActivity implements Constants
 				txt_mem = (TextView) view.findViewById( R.id.txt_mem );
 				txt_cpu = (TextView) view.findViewById( R.id.txt_cpu );
 
-				boolean showMem = Util.getBooleanOption( ProcessManager.this,
+				boolean showMem = Util.getBooleanOption( ctx,
+						PSTORE_PROCESSMANAGER,
 						PREF_KEY_SHOW_MEM );
-				boolean showCpu = Util.getBooleanOption( ProcessManager.this,
+				boolean showCpu = Util.getBooleanOption( ctx,
+						PSTORE_PROCESSMANAGER,
 						PREF_KEY_SHOW_CPU );
 
 				String lb = itm.label == null ? itm.procInfo.processName
@@ -431,21 +402,84 @@ public final class ProcessManager extends ListActivity implements Constants
 			}
 		};
 
-		getListView( ).setAdapter( adapter );
+		setListAdapter( adapter );
+
+		return rootView;
 	}
 
 	@Override
-	protected void onDestroy( )
+	public void onListItemClick( ListView l, View v, int position, long id )
+	{
+		final ProcessItem rap = (ProcessItem) l.getItemAtPosition( position );
+
+		Activity ctx = getActivity( );
+
+		boolean showWarning = Util.getBooleanOption( ctx,
+				PSTORE_PROCESSMANAGER,
+				PREF_KEY_SHOW_KILL_WARN );
+
+		final int action = Util.getIntOption( ctx,
+				PSTORE_PROCESSMANAGER,
+				PREF_KEY_DEFAULT_TAP_ACTION,
+				ACTION_MENU );
+
+		if ( action == ACTION_END || action == ACTION_IGNORE )
+		{
+			boolean protect = ignoreList.contains( rap.procInfo.processName )
+					|| rap.sys;
+
+			if ( protect )
+			{
+				return;
+			}
+		}
+
+		if ( showWarning
+				&& ( action == ACTION_END || action == ACTION_END_OTHERS ) )
+		{
+
+			OnClickListener listener = new OnClickListener( ) {
+
+				public void onClick( DialogInterface dialog, int which )
+				{
+					handleAction( rap, action );
+				}
+			};
+
+			new AlertDialog.Builder( ctx ).setTitle( R.string.warning )
+					.setMessage( action == ACTION_END ? R.string.end_prompt
+							: R.string.end_other_prompt )
+					.setPositiveButton( android.R.string.ok, listener )
+					.setNegativeButton( android.R.string.cancel, null )
+					.create( )
+					.show( );
+		}
+		else
+		{
+			handleAction( rap, action );
+		}
+	}
+
+	@Override
+	public void onDestroyView( )
 	{
 		( (ArrayAdapter<ProcessItem>) getListView( ).getAdapter( ) ).clear( );
 
+		rootView = null;
+
+		super.onDestroyView( );
+	}
+
+	@Override
+	public void onDestroy( )
+	{
 		procCache.clear( );
 
 		super.onDestroy( );
 	}
 
 	@Override
-	protected void onResume( )
+	public void onResume( )
 	{
 		super.onResume( );
 
@@ -453,7 +487,7 @@ public final class ProcessManager extends ListActivity implements Constants
 	}
 
 	@Override
-	protected void onPause( )
+	public void onPause( )
 	{
 		handler.removeCallbacks( task );
 		handler.removeMessages( MSG_INIT_OK );
@@ -468,36 +502,54 @@ public final class ProcessManager extends ListActivity implements Constants
 	}
 
 	@Override
-	protected void onActivityResult( int requestCode, int resultCode,
-			Intent data )
+	public void onActivityResult( int requestCode, int resultCode, Intent data )
 	{
+		Activity ctx = getActivity( );
+
 		if ( requestCode == 1 && data != null )
 		{
 			Util.updateIntOption( data,
-					this,
+					ctx,
+					PSTORE_PROCESSMANAGER,
 					PREF_KEY_REFRESH_INTERVAL,
 					REFRESH_LOW );
 			Util.updateIntOption( data,
-					this,
+					ctx,
+					PSTORE_PROCESSMANAGER,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME );
 			Util.updateIntOption( data,
-					this,
+					ctx,
+					PSTORE_PROCESSMANAGER,
 					PREF_KEY_SORT_DIRECTION,
 					ORDER_ASC );
 			Util.updateIntOption( data,
-					this,
+					ctx,
+					PSTORE_PROCESSMANAGER,
 					PREF_KEY_IGNORE_ACTION,
 					IGNORE_ACTION_HIDDEN );
 			Util.updateIntOption( data,
-					this,
+					ctx,
+					PSTORE_PROCESSMANAGER,
 					PREF_KEY_DEFAULT_TAP_ACTION,
 					ACTION_MENU );
 
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_MEM );
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_CPU );
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_SYS_PROC );
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_KILL_WARN );
+			Util.updateBooleanOption( data,
+					ctx,
+					PSTORE_PROCESSMANAGER,
+					PREF_KEY_SHOW_MEM );
+			Util.updateBooleanOption( data,
+					ctx,
+					PSTORE_PROCESSMANAGER,
+					PREF_KEY_SHOW_CPU );
+			Util.updateBooleanOption( data,
+					ctx,
+					PSTORE_PROCESSMANAGER,
+					PREF_KEY_SHOW_SYS_PROC );
+			Util.updateBooleanOption( data,
+					ctx,
+					PSTORE_PROCESSMANAGER,
+					PREF_KEY_SHOW_KILL_WARN );
 
 			ArrayList<String> list = data.getStringArrayListExtra( PREF_KEY_IGNORE_LIST );
 
@@ -513,48 +565,60 @@ public final class ProcessManager extends ListActivity implements Constants
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu( Menu menu )
+	public void onCreateOptionsMenu( Menu menu, MenuInflater inflater )
 	{
 		MenuItem mi = menu.add( Menu.NONE,
 				MI_PREFERENCE,
 				Menu.NONE,
 				R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );
-
-		return true;
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 	}
 
 	@Override
 	public boolean onOptionsItemSelected( MenuItem item )
 	{
+		Activity ctx = getActivity( );
+
 		if ( item.getItemId( ) == MI_PREFERENCE )
 		{
-			Intent it = new Intent( this, ProcessSettings.class );
+			Intent it = new Intent( ctx, ProcessSettings.class );
 
-			it.putExtra( PREF_KEY_REFRESH_INTERVAL, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_REFRESH_INTERVAL, Util.getIntOption( ctx,
+					PSTORE_PROCESSMANAGER,
 					PREF_KEY_REFRESH_INTERVAL,
 					REFRESH_LOW ) );
-			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_SORT_ORDER_TYPE, Util.getIntOption( ctx,
+					PSTORE_PROCESSMANAGER,
 					PREF_KEY_SORT_ORDER_TYPE,
 					ORDER_TYPE_NAME ) );
-			it.putExtra( PREF_KEY_SORT_DIRECTION,
-					Util.getIntOption( this, PREF_KEY_SORT_DIRECTION, ORDER_ASC ) );
-			it.putExtra( PREF_KEY_IGNORE_ACTION, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_SORT_DIRECTION, Util.getIntOption( ctx,
+					PSTORE_PROCESSMANAGER,
+					PREF_KEY_SORT_DIRECTION,
+					ORDER_ASC ) );
+			it.putExtra( PREF_KEY_IGNORE_ACTION, Util.getIntOption( ctx,
+					PSTORE_PROCESSMANAGER,
 					PREF_KEY_IGNORE_ACTION,
 					IGNORE_ACTION_HIDDEN ) );
-			it.putExtra( PREF_KEY_DEFAULT_TAP_ACTION, Util.getIntOption( this,
+			it.putExtra( PREF_KEY_DEFAULT_TAP_ACTION, Util.getIntOption( ctx,
+					PSTORE_PROCESSMANAGER,
 					PREF_KEY_DEFAULT_TAP_ACTION,
 					ACTION_MENU ) );
 			it.putStringArrayListExtra( PREF_KEY_IGNORE_LIST,
-					getIgnoreList( getPreferences( Context.MODE_PRIVATE ) ) );
-			it.putExtra( PREF_KEY_SHOW_MEM,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_MEM ) );
-			it.putExtra( PREF_KEY_SHOW_CPU,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_CPU ) );
-			it.putExtra( PREF_KEY_SHOW_SYS_PROC,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_SYS_PROC ) );
-			it.putExtra( PREF_KEY_SHOW_KILL_WARN,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_KILL_WARN ) );
+					getIgnoreList( ctx.getSharedPreferences( PSTORE_PROCESSMANAGER,
+							Context.MODE_PRIVATE ) ) );
+			it.putExtra( PREF_KEY_SHOW_MEM, Util.getBooleanOption( ctx,
+					PSTORE_PROCESSMANAGER,
+					PREF_KEY_SHOW_MEM ) );
+			it.putExtra( PREF_KEY_SHOW_CPU, Util.getBooleanOption( ctx,
+					PSTORE_PROCESSMANAGER,
+					PREF_KEY_SHOW_CPU ) );
+			it.putExtra( PREF_KEY_SHOW_SYS_PROC, Util.getBooleanOption( ctx,
+					PSTORE_PROCESSMANAGER,
+					PREF_KEY_SHOW_SYS_PROC ) );
+			it.putExtra( PREF_KEY_SHOW_KILL_WARN, Util.getBooleanOption( ctx,
+					PSTORE_PROCESSMANAGER,
+					PREF_KEY_SHOW_KILL_WARN ) );
 
 			startActivityForResult( it, 1 );
 
@@ -675,7 +739,8 @@ public final class ProcessManager extends ListActivity implements Constants
 
 	private void setIgnoreList( Collection<String> list )
 	{
-		SharedPreferences sp = getPreferences( Context.MODE_PRIVATE );
+		SharedPreferences sp = getActivity( ).getSharedPreferences( PSTORE_PROCESSMANAGER,
+				Context.MODE_PRIVATE );
 
 		Editor et = sp.edit( );
 		if ( list == null || list.isEmpty( ) )
@@ -705,6 +770,8 @@ public final class ProcessManager extends ListActivity implements Constants
 
 	void handleAction( final ProcessItem rap, int action )
 	{
+		Activity ctx = getActivity( );
+
 		switch ( action )
 		{
 			case ACTION_END :
@@ -712,13 +779,13 @@ public final class ProcessManager extends ListActivity implements Constants
 				if ( !ignoreList.contains( rap.procInfo.processName )
 						&& !rap.sys )
 				{
-					ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
+					ActivityManager am = (ActivityManager) ctx.getSystemService( Context.ACTIVITY_SERVICE );
 
-					String self = getPackageName( );
+					String self = ctx.getPackageName( );
 
 					if ( self.equals( rap.procInfo.processName ) )
 					{
-						Util.killSelf( handler, ProcessManager.this, am, self );
+						Util.killSelf( handler, ctx, am, self );
 					}
 					else
 					{
@@ -739,13 +806,13 @@ public final class ProcessManager extends ListActivity implements Constants
 
 				String pkgName = rap.procInfo.processName;
 
-				if ( !pkgName.equals( this.getPackageName( ) ) )
+				if ( !pkgName.equals( ctx.getPackageName( ) ) )
 				{
 					Intent it = new Intent( "android.intent.action.MAIN" ); //$NON-NLS-1$
 					it.addCategory( Intent.CATEGORY_LAUNCHER );
 
-					List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
-							0 );
+					List<ResolveInfo> acts = ctx.getPackageManager( )
+							.queryIntentActivities( it, 0 );
 
 					if ( acts != null )
 					{
@@ -782,7 +849,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 						if ( !started )
 						{
-							Util.shortToast( this, R.string.error_switch_task );
+							Util.shortToast( ctx, R.string.error_switch_task );
 						}
 					}
 				}
@@ -797,7 +864,8 @@ public final class ProcessManager extends ListActivity implements Constants
 
 					setIgnoreList( ignoreList );
 
-					if ( IGNORE_ACTION_HIDDEN == Util.getIntOption( this,
+					if ( IGNORE_ACTION_HIDDEN == Util.getIntOption( ctx,
+							PSTORE_PROCESSMANAGER,
 							PREF_KEY_IGNORE_ACTION,
 							IGNORE_ACTION_HIDDEN ) )
 					{
@@ -865,7 +933,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 				sb.append( "</small>" ); //$NON-NLS-1$
 
-				new AlertDialog.Builder( this ).setTitle( rap.label == null ? rap.procInfo.processName
+				new AlertDialog.Builder( ctx ).setTitle( rap.label == null ? rap.procInfo.processName
 						: rap.label )
 						.setNeutralButton( R.string.close, null )
 						.setMessage( Html.fromHtml( sb.toString( ) ) )
@@ -895,7 +963,7 @@ public final class ProcessManager extends ListActivity implements Constants
 					}
 				};
 
-				new AlertDialog.Builder( this ).setTitle( R.string.actions )
+				new AlertDialog.Builder( ctx ).setTitle( R.string.actions )
 						.setItems( new CharSequence[]{
 						getString( R.string.switch_to ),
 								protect ? Html.fromHtml( "<font color=\"#848484\">" //$NON-NLS-1$
@@ -938,9 +1006,10 @@ public final class ProcessManager extends ListActivity implements Constants
 
 	void endAllExcept( String exception )
 	{
-		ActivityManager am = (ActivityManager) ProcessManager.this.getSystemService( ACTIVITY_SERVICE );
+		Activity ctx = getActivity( );
+		ActivityManager am = (ActivityManager) ctx.getSystemService( Context.ACTIVITY_SERVICE );
 
-		String self = this.getPackageName( );
+		String self = ctx.getPackageName( );
 
 		ListView lstProcs = getListView( );
 
@@ -962,7 +1031,7 @@ public final class ProcessManager extends ListActivity implements Constants
 
 		if ( !ignoreList.contains( self ) && !self.equals( exception ) )
 		{
-			Util.killSelf( handler, ProcessManager.this, am, self );
+			Util.killSelf( handler, ctx, am, self );
 		}
 		else
 		{
@@ -973,12 +1042,21 @@ public final class ProcessManager extends ListActivity implements Constants
 
 	void refreshHeader( )
 	{
-		TextView txt_head_mem = (TextView) findViewById( R.id.txt_head_mem );
-		TextView txt_head_cpu = (TextView) findViewById( R.id.txt_head_cpu );
+		if ( rootView == null )
+		{
+			return;
+		}
 
-		boolean showMem = Util.getBooleanOption( ProcessManager.this,
+		Activity ctx = getActivity( );
+
+		TextView txt_head_mem = (TextView) rootView.findViewById( R.id.txt_head_mem );
+		TextView txt_head_cpu = (TextView) rootView.findViewById( R.id.txt_head_cpu );
+
+		boolean showMem = Util.getBooleanOption( ctx,
+				PSTORE_PROCESSMANAGER,
 				PREF_KEY_SHOW_MEM );
-		boolean showCpu = Util.getBooleanOption( ProcessManager.this,
+		boolean showCpu = Util.getBooleanOption( ctx,
+				PSTORE_PROCESSMANAGER,
 				PREF_KEY_SHOW_CPU );
 
 		StringBuilder totalString = null;
@@ -987,15 +1065,13 @@ public final class ProcessManager extends ListActivity implements Constants
 		{
 			txt_head_mem.setVisibility( View.VISIBLE );
 
-			long[] mem = SysInfoManager.getMemState( ProcessManager.this );
+			long[] mem = SysInfoManager.getMemState( ctx );
 
 			if ( mem != null )
 			{
 				totalString = new StringBuilder( );
-				totalString.append( getString( R.string.free ) )
-						.append( ": " ) //$NON-NLS-1$
-						.append( Formatter.formatFileSize( ProcessManager.this,
-								mem[2] ) );
+				totalString.append( getString( R.string.free ) ).append( ": " ) //$NON-NLS-1$
+						.append( Formatter.formatFileSize( ctx, mem[2] ) );
 			}
 		}
 		else
@@ -1039,7 +1115,7 @@ public final class ProcessManager extends ListActivity implements Constants
 			txt_head_cpu.setVisibility( View.GONE );
 		}
 
-		View header = findViewById( R.id.list_head );
+		View header = rootView.findViewById( R.id.list_head );
 
 		if ( totalString == null )
 		{
@@ -1047,7 +1123,7 @@ public final class ProcessManager extends ListActivity implements Constants
 		}
 		else
 		{
-			TextView txt_head_total = (TextView) findViewById( R.id.txt_head_total );
+			TextView txt_head_total = (TextView) rootView.findViewById( R.id.txt_head_total );
 			txt_head_total.setText( totalString );
 
 			header.setVisibility( View.VISIBLE );
@@ -1056,7 +1132,11 @@ public final class ProcessManager extends ListActivity implements Constants
 
 	void updateProcess( List<RunningAppProcessInfo> list )
 	{
-		boolean showCpu = Util.getBooleanOption( this, PREF_KEY_SHOW_CPU );
+		Activity ctx = getActivity( );
+
+		boolean showCpu = Util.getBooleanOption( ctx,
+				PSTORE_PROCESSMANAGER,
+				PREF_KEY_SHOW_CPU );
 
 		if ( showCpu )
 		{
@@ -1087,12 +1167,15 @@ public final class ProcessManager extends ListActivity implements Constants
 
 			if ( list != null )
 			{
-				int ignoreAction = Util.getIntOption( this,
+				int ignoreAction = Util.getIntOption( ctx,
+						PSTORE_PROCESSMANAGER,
 						PREF_KEY_IGNORE_ACTION,
 						IGNORE_ACTION_HIDDEN );
-				boolean showMem = Util.getBooleanOption( this,
+				boolean showMem = Util.getBooleanOption( ctx,
+						PSTORE_PROCESSMANAGER,
 						PREF_KEY_SHOW_MEM );
-				boolean showSys = Util.getBooleanOption( this,
+				boolean showSys = Util.getBooleanOption( ctx,
+						PSTORE_PROCESSMANAGER,
 						PREF_KEY_SHOW_SYS_PROC );
 
 				String name;
@@ -1134,15 +1217,17 @@ public final class ProcessManager extends ListActivity implements Constants
 
 					if ( rap.pid != 0 && ( showMem || showCpu ) )
 					{
-						readProcessStat( this, buf, pi, showMem, showCpu );
+						readProcessStat( ctx, buf, pi, showMem, showCpu );
 					}
 
 					procCache.procList.add( pi );
 				}
 
-				procCache.reOrder( Util.getIntOption( this,
+				procCache.reOrder( Util.getIntOption( ctx,
+						PSTORE_PROCESSMANAGER,
 						PREF_KEY_SORT_ORDER_TYPE,
-						ORDER_TYPE_NAME ), Util.getIntOption( this,
+						ORDER_TYPE_NAME ), Util.getIntOption( ctx,
+						PSTORE_PROCESSMANAGER,
 						PREF_KEY_SORT_DIRECTION,
 						ORDER_ASC ) );
 			}
@@ -1544,10 +1629,12 @@ public final class ProcessManager extends ListActivity implements Constants
 			{
 				// reorder by new names
 				if ( Util.getIntOption( ac,
+						PSTORE_PROCESSMANAGER,
 						PREF_KEY_SORT_ORDER_TYPE,
 						ORDER_TYPE_NAME ) == ORDER_TYPE_NAME )
 				{
 					procCache.reOrder( ORDER_TYPE_NAME, Util.getIntOption( ac,
+							PSTORE_PROCESSMANAGER,
 							PREF_KEY_SORT_DIRECTION,
 							ORDER_ASC ) );
 

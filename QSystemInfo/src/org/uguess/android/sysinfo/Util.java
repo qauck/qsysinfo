@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -54,6 +55,8 @@ import android.os.Handler;
 import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -62,7 +65,11 @@ import android.widget.Toast;
 final class Util implements Constants
 {
 
+	static final int SDK_VER = Build.VERSION.SDK_INT;
+
 	private static Field fdTargetSdkVersion = null;
+	private static Method mtdSetShowAsAction = null;
+	private static Method mtdSetAllCaps = null;
 
 	static
 	{
@@ -74,6 +81,26 @@ final class Util implements Constants
 		{
 			Log.d( Util.class.getName( ),
 					"Current SDK version do not support 'targetSdkVersion' property." ); //$NON-NLS-1$
+		}
+
+		try
+		{
+			mtdSetShowAsAction = MenuItem.class.getDeclaredMethod( "setShowAsAction", int.class ); //$NON-NLS-1$
+		}
+		catch ( Exception e )
+		{
+			Log.d( Util.class.getName( ),
+					"Current SDK version do not support 'setShowAsAction' method." ); //$NON-NLS-1$
+		}
+
+		try
+		{
+			mtdSetAllCaps = TextView.class.getDeclaredMethod( "setAllCaps", boolean.class ); //$NON-NLS-1$
+		}
+		catch ( Exception e )
+		{
+			Log.d( Util.class.getName( ),
+					"Current SDK version do not support 'setAllCaps' method." ); //$NON-NLS-1$
 		}
 	}
 
@@ -92,6 +119,36 @@ final class Util implements Constants
 		}
 
 		return ctx.getString( R.string.unknown );
+	}
+
+	static void setAllCaps( TextView tv, boolean value )
+	{
+		if ( mtdSetAllCaps != null )
+		{
+			try
+			{
+				mtdSetAllCaps.invoke( tv, value );
+			}
+			catch ( Exception e )
+			{
+				Log.e( Util.class.getName( ), e.getLocalizedMessage( ), e );
+			}
+		}
+	}
+
+	static void setShowAsAction( MenuItem mi, int flags )
+	{
+		if ( SDK_VER >= 11 && mtdSetShowAsAction != null )
+		{
+			try
+			{
+				mtdSetShowAsAction.invoke( mi, flags );
+			}
+			catch ( Exception e )
+			{
+				Log.e( Util.class.getName( ), e.getLocalizedMessage( ), e );
+			}
+		}
 	}
 
 	static void killSelf( Handler handler, Activity ac, ActivityManager am,
@@ -159,46 +216,57 @@ final class Util implements Constants
 				|| pkgName.startsWith( "com.android.alarmclock" ); //$NON-NLS-1$
 	}
 
-	static int getIntOption( Activity ac, String key, int defValue )
+	static int getIntOption( Activity ac, String prefName, String key,
+			int defValue )
 	{
-		return ac.getPreferences( Context.MODE_PRIVATE ).getInt( key, defValue );
+		return ac.getSharedPreferences( prefName, Context.MODE_PRIVATE )
+				.getInt( key, defValue );
 	}
 
-	private static void setIntOption( Activity ac, String key, int val )
+	private static void setIntOption( Activity ac, String prefName, String key,
+			int val )
 	{
-		Editor et = ac.getPreferences( Context.MODE_PRIVATE ).edit( );
+		Editor et = ac.getSharedPreferences( prefName, Context.MODE_PRIVATE )
+				.edit( );
 		et.putInt( key, val );
 		et.commit( );
 	}
 
-	static boolean getBooleanOption( Activity ac, String key )
+	static boolean getBooleanOption( Activity ac, String prefName, String key )
 	{
-		return getBooleanOption( ac, key, true );
+		return getBooleanOption( ac, prefName, key, true );
 	}
 
-	static boolean getBooleanOption( Activity ac, String key, boolean defValue )
+	static boolean getBooleanOption( Activity ac, String prefName, String key,
+			boolean defValue )
 	{
-		return ac.getPreferences( Context.MODE_PRIVATE ).getBoolean( key,
-				defValue );
+		return ac.getSharedPreferences( prefName, Context.MODE_PRIVATE )
+				.getBoolean( key, defValue );
 	}
 
-	private static void setBooleanOption( Activity ac, String key, boolean val )
+	private static void setBooleanOption( Activity ac, String prefName,
+			String key, boolean val )
 	{
-		Editor et = ac.getPreferences( Context.MODE_PRIVATE ).edit( );
+		Editor et = ac.getSharedPreferences( prefName, Context.MODE_PRIVATE )
+				.edit( );
 		et.putBoolean( key, val );
 		et.commit( );
 	}
 
-	static String getStringOption( Activity ac, String key, String defValue )
+	static String getStringOption( Activity ac, String prefName, String key,
+			String defValue )
 	{
-		SharedPreferences sp = ac.getPreferences( Context.MODE_PRIVATE );
+		SharedPreferences sp = ac.getSharedPreferences( prefName,
+				Context.MODE_PRIVATE );
 
 		return sp.getString( key, defValue );
 	}
 
-	private static void setStringOption( Activity ac, String key, String val )
+	private static void setStringOption( Activity ac, String prefName,
+			String key, String val )
 	{
-		SharedPreferences sp = ac.getPreferences( Context.MODE_PRIVATE );
+		SharedPreferences sp = ac.getSharedPreferences( prefName,
+				Context.MODE_PRIVATE );
 
 		Editor et = sp.edit( );
 		if ( val == null )
@@ -232,42 +300,44 @@ final class Util implements Constants
 		Toast.makeText( context, msg, Toast.LENGTH_LONG ).show( );
 	}
 
-	static boolean updateIntOption( Intent data, Activity ac, String key,
-			int defValue )
+	static boolean updateIntOption( Intent data, Activity ac, String prefName,
+			String key, int defValue )
 	{
 		if ( data != null )
 		{
 			int t = data.getIntExtra( key, defValue );
-			if ( t != getIntOption( ac, key, defValue ) )
+			if ( t != getIntOption( ac, prefName, key, defValue ) )
 			{
-				setIntOption( ac, key, t );
+				setIntOption( ac, prefName, key, t );
 				return true;
 			}
 		}
 		return false;
 	}
 
-	static boolean updateBooleanOption( Intent data, Activity ac, String key )
+	static boolean updateBooleanOption( Intent data, Activity ac,
+			String prefName, String key )
 	{
-		return updateBooleanOption( data, ac, key, true );
+		return updateBooleanOption( data, ac, prefName, key, true );
 	}
 
-	static boolean updateBooleanOption( Intent data, Activity ac, String key,
-			boolean defValue )
+	static boolean updateBooleanOption( Intent data, Activity ac,
+			String prefName, String key, boolean defValue )
 	{
 		if ( data != null )
 		{
 			boolean b = data.getBooleanExtra( key, defValue );
-			if ( b != getBooleanOption( ac, key, defValue ) )
+			if ( b != getBooleanOption( ac, prefName, key, defValue ) )
 			{
-				setBooleanOption( ac, key, b );
+				setBooleanOption( ac, prefName, key, b );
 				return true;
 			}
 		}
 		return false;
 	}
 
-	static boolean updateStringOption( Intent data, Activity ac, String key )
+	static boolean updateStringOption( Intent data, Activity ac,
+			String prefName, String key )
 	{
 		if ( data != null )
 		{
@@ -283,9 +353,10 @@ final class Util implements Constants
 				}
 			}
 
-			if ( !TextUtils.equals( s, getStringOption( ac, key, null ) ) )
+			if ( !TextUtils.equals( s,
+					getStringOption( ac, prefName, key, null ) ) )
 			{
-				setStringOption( ac, key, s );
+				setStringOption( ac, prefName, key, s );
 				return true;
 			}
 		}

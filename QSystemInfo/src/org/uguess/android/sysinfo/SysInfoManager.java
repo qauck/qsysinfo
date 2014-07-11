@@ -29,8 +29,10 @@ import java.net.SocketException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map.Entry;
 
 import org.uguess.android.sysinfo.WidgetProvider.InfoWidget;
 import org.uguess.android.sysinfo.WidgetProvider.TaskWidget;
@@ -69,8 +71,8 @@ import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
-import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
+import android.support.v4.app.ListFragment;
 import android.text.ClipboardManager;
 import android.text.Html;
 import android.text.TextUtils;
@@ -81,7 +83,9 @@ import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.GestureDetector;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -90,15 +94,17 @@ import android.view.Window;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 /**
  * SysInfoManager
  */
-public final class SysInfoManager extends PreferenceActivity implements
-		Constants
+public final class SysInfoManager extends ListFragment implements Constants
 {
+
+	static final String PSTORE_SYSINFOMANAGER = SysInfoManager.class.getSimpleName( );
 
 	private static final char[] CSV_SEARCH_CHARS = new char[]{
 			',', '"', '\r', '\n'
@@ -132,6 +138,22 @@ public final class SysInfoManager extends PreferenceActivity implements
 	static final String PREF_KEY_DEFAULT_TAB = "default_tab"; //$NON-NLS-1$
 	static final String PREF_KEY_WIDGET_DISABLED = "widget_disabled"; //$NON-NLS-1$
 
+	private static final String KEY_SD_STORAGE = "sd_storage"; //$NON-NLS-1$
+	private static final String KEY_APP2SD_STORAGE = "app2sd_storage"; //$NON-NLS-1$
+	private static final String KEY_INTERNAL_STORAGE = "internal_storage"; //$NON-NLS-1$
+	private static final String KEY_SYSTEM_STORAGE = "system_storage"; //$NON-NLS-1$
+	private static final String KEY_CACHE_STORAGE = "cache_storage"; //$NON-NLS-1$
+	private static final String KEY_MEMORY = "memory"; //$NON-NLS-1$
+	private static final String KEY_PROCESSOR = "processor"; //$NON-NLS-1$
+	private static final String KEY_NET_ADDRESS = "net_address"; //$NON-NLS-1$
+	private static final String KEY_BATTERY_LEVEL = "battery_level"; //$NON-NLS-1$
+	private static final String KEY_SENSORS = "sensors"; //$NON-NLS-1$
+	private static final String KEY_ACTIONS = "actions"; //$NON-NLS-1$
+	private static final String KEY_REFRESH_STATUS = "refresh_status"; //$NON-NLS-1$
+	private static final String KEY_VIEW_LOGS = "view_logs"; //$NON-NLS-1$
+	private static final String KEY_SEND_REPORT = "send_report"; //$NON-NLS-1$
+	private static final String KEY_MORE_INFO = "more_info"; //$NON-NLS-1$
+
 	private static final int BASIC_INFO = 0;
 	private static final int APPLICATIONS = 1;
 	private static final int PROCESSES = 2;
@@ -145,6 +167,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 	ProgressDialog progress;
 
+	LinkedHashMap<String, PrefItem> prefs;
+
 	volatile boolean aborted;
 
 	private BroadcastReceiver mBatteryInfoReceiver = new BroadcastReceiver( ) {
@@ -152,8 +176,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 		@Override
 		public void onReceive( Context context, Intent intent )
 		{
-			String action = intent.getAction( );
-			if ( Intent.ACTION_BATTERY_CHANGED.equals( action ) )
+			if ( Intent.ACTION_BATTERY_CHANGED.equals( intent.getAction( ) ) )
 			{
 				int level = intent.getIntExtra( "level", 0 ); //$NON-NLS-1$
 				int scale = intent.getIntExtra( "scale", 100 ); //$NON-NLS-1$
@@ -184,10 +207,11 @@ public final class SysInfoManager extends PreferenceActivity implements
 						break;
 				}
 
-				findPreference( "battery_level" ).setSummary( hStr //$NON-NLS-1$
-						+ " (" //$NON-NLS-1$
+				findPreference( KEY_BATTERY_LEVEL ).setSummary( hStr + " (" //$NON-NLS-1$
 						+ lStr
 						+ ")" ); //$NON-NLS-1$
+
+				refresh( );
 			}
 		}
 	};
@@ -196,6 +220,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 		public void handleMessage( android.os.Message msg )
 		{
+			Activity ctx = getActivity( );
+
 			switch ( msg.what )
 			{
 				case MSG_CONTENT_READY :
@@ -204,7 +230,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 					Util.handleMsgSendContentReady( (String) msg.obj,
 							"Android System Report - ", //$NON-NLS-1$
-							SysInfoManager.this,
+							ctx,
 							msg.arg2 == 1 );
 
 					break;
@@ -213,7 +239,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 					sendEmptyMessage( MSG_DISMISS_PROGRESS );
 
 					Util.checkForceCompression( this,
-							SysInfoManager.this,
+							ctx,
 							(String) msg.obj,
 							msg.arg1,
 							"android_report" ); //$NON-NLS-1$
@@ -229,7 +255,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 					break;
 				case MSG_TOAST :
 
-					Util.shortToast( SysInfoManager.this, (String) msg.obj );
+					Util.shortToast( ctx, (String) msg.obj );
 					break;
 			}
 		}
@@ -241,99 +267,301 @@ public final class SysInfoManager extends PreferenceActivity implements
 	{
 		super.onCreate( savedInstanceState );
 
-		addPreferencesFromResource( R.xml.main );
+		setHasOptionsMenu( true );
+
+		prefs = new LinkedHashMap<String, PrefItem>( );
+
+		prefs.put( KEY_SD_STORAGE, new PrefItem( KEY_SD_STORAGE,
+				getString( R.string.sd_storage ),
+				false ) );
+
+		prefs.put( KEY_APP2SD_STORAGE, new PrefItem( KEY_APP2SD_STORAGE,
+				getString( R.string.a2sd_storage ),
+				false ) );
+
+		prefs.put( KEY_INTERNAL_STORAGE, new PrefItem( KEY_INTERNAL_STORAGE,
+				getString( R.string.internal_storage ),
+				false ) );
+
+		prefs.put( KEY_SYSTEM_STORAGE, new PrefItem( KEY_SYSTEM_STORAGE,
+				getString( R.string.system_storage ),
+				false ) );
+
+		prefs.put( KEY_CACHE_STORAGE, new PrefItem( KEY_CACHE_STORAGE,
+				getString( R.string.cache_storage ),
+				false ) );
+
+		prefs.put( KEY_MEMORY, new PrefItem( KEY_MEMORY,
+				getString( R.string.memory ) ) );
+
+		prefs.put( KEY_PROCESSOR, new PrefItem( KEY_PROCESSOR,
+				getString( R.string.processor ) ) );
+
+		prefs.put( KEY_NET_ADDRESS, new PrefItem( KEY_NET_ADDRESS,
+				getString( R.string.net_address ) ) );
+
+		prefs.put( KEY_BATTERY_LEVEL, new PrefItem( KEY_BATTERY_LEVEL,
+				getString( R.string.battery_level ) ) );
+
+		prefs.put( KEY_SENSORS, new PrefItem( KEY_SENSORS,
+				getString( R.string.sensors ) ) );
+
+		PrefItem actions = new PrefItem( KEY_ACTIONS,
+				getString( R.string.actions ),
+				false );
+		actions.isHeader = true;
+		prefs.put( KEY_ACTIONS, actions );
+
+		prefs.put( KEY_REFRESH_STATUS, new PrefItem( KEY_REFRESH_STATUS,
+				getString( R.string.refresh ) ) );
+		prefs.put( KEY_VIEW_LOGS, new PrefItem( KEY_VIEW_LOGS,
+				getString( R.string.view_logs ) ) );
+		prefs.put( KEY_SEND_REPORT, new PrefItem( KEY_SEND_REPORT,
+				getString( R.string.send_report ) ) );
 
 		Intent it = getAboutSettingsIntent( );
 
-		if ( it == null )
+		if ( it != null )
 		{
-			( (PreferenceGroup) getPreferenceScreen( ).getPreference( getPreferenceScreen( ).getPreferenceCount( ) - 1 ) ).removePreference( findPreference( "more_info" ) ); //$NON-NLS-1$
+			prefs.put( KEY_MORE_INFO, new PrefItem( KEY_MORE_INFO,
+					getString( R.string.more_info ) ) );
 		}
 	}
 
 	@Override
-	protected void onDestroy( )
+	public View onCreateView( LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState )
+	{
+		View view = super.onCreateView( inflater, container, savedInstanceState );
+
+		ListView listView = (ListView) view.findViewById( android.R.id.list );
+
+		registerForContextMenu( listView );
+
+		ArrayAdapter<PrefItem> adapter = new ArrayAdapter<PrefItem>( getActivity( ),
+				R.layout.pref_item ) {
+
+			@Override
+			public boolean isEnabled( int position )
+			{
+				PrefItem item = getItem( position );
+
+				return item.enabled;
+			}
+
+			@Override
+			public int getViewTypeCount( )
+			{
+				return 2;
+			}
+
+			@Override
+			public int getItemViewType( int position )
+			{
+				PrefItem item = getItem( position );
+
+				return item.isHeader ? 0 : 1;
+			}
+
+			public android.view.View getView( int position,
+					android.view.View convertView, android.view.ViewGroup parent )
+			{
+				View view;
+				TextView txt_title, txt_summary;
+
+				if ( position >= getCount( ) )
+				{
+					return null;
+				}
+
+				PrefItem item = getItem( position );
+
+				if ( convertView == null )
+				{
+					if ( item.isHeader )
+					{
+						view = getActivity( ).getLayoutInflater( )
+								.inflate( R.layout.pref_header_item,
+										parent,
+										false );
+					}
+					else
+					{
+						view = getActivity( ).getLayoutInflater( )
+								.inflate( R.layout.pref_item, parent, false );
+					}
+				}
+				else
+				{
+					view = convertView;
+				}
+
+				setEnabledStateOnViews( view, item.enabled );
+
+				if ( item.isHeader )
+				{
+					( (TextView) view ).setText( item.title );
+				}
+				else
+				{
+					txt_title = (TextView) view.findViewById( android.R.id.text1 );
+					txt_title.setText( item.title );
+
+					txt_summary = (TextView) view.findViewById( android.R.id.text2 );
+					txt_summary.setText( item.summary );
+				}
+
+				return view;
+			}
+		};
+
+		setListAdapter( adapter );
+
+		return view;
+	}
+
+	@Override
+	public void onListItemClick( ListView l, View v, int position, long id )
+	{
+		PrefItem item = (PrefItem) l.getItemAtPosition( position );
+
+		onPreferenceTreeClick( item );
+	}
+
+	@Override
+	public void onDestroyView( )
 	{
 		if ( progress != null )
 		{
 			progress.dismiss( );
 			progress = null;
 		}
+
+		super.onDestroyView( );
+	}
+
+	@Override
+	public void onDestroy( )
+	{
+		if ( prefs != null )
+		{
+			prefs.clear( );
+			prefs = null;
+		}
+
 		super.onDestroy( );
 	}
 
 	@Override
-	protected void onResume( )
+	public void onResume( )
 	{
 		aborted = false;
 
 		super.onResume( );
 
-		registerReceiver( mBatteryInfoReceiver,
+		getActivity( ).registerReceiver( mBatteryInfoReceiver,
 				new IntentFilter( Intent.ACTION_BATTERY_CHANGED ) );
 
 		updateInfo( );
 	}
 
 	@Override
-	protected void onPause( )
+	public void onPause( )
 	{
 		aborted = true;
 
 		handler.removeMessages( MSG_CHECK_FORCE_COMPRESSION );
 		handler.removeMessages( MSG_CONTENT_READY );
 
-		unregisterReceiver( mBatteryInfoReceiver );
+		getActivity( ).unregisterReceiver( mBatteryInfoReceiver );
 
 		super.onPause( );
 	}
 
+	void setEnabledStateOnViews( View v, boolean enabled )
+	{
+		v.setEnabled( enabled );
+
+		if ( v instanceof ViewGroup )
+		{
+			final ViewGroup vg = (ViewGroup) v;
+			for ( int i = vg.getChildCount( ) - 1; i >= 0; i-- )
+			{
+				setEnabledStateOnViews( vg.getChildAt( i ), enabled );
+			}
+		}
+	}
+
 	private void updateInfo( )
 	{
-		findPreference( "processor" ).setSummary( getCpuInfo( ) ); //$NON-NLS-1$
+		findPreference( KEY_PROCESSOR ).setSummary( getCpuInfo( ) );
 
 		String[] mi = getMemInfo( );
-		findPreference( "memory" ).setSummary( mi == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+		findPreference( KEY_MEMORY ).setSummary( mi == null ? getString( R.string.info_not_available )
 				: ( getString( R.string.storage_summary, mi[0], mi[2] ) + getString( R.string.idle_info,
 						mi[1] ) ) );
 
 		String[] si = getExternalStorageInfo( );
-		findPreference( "sd_storage" ).setSummary( si == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+		findPreference( KEY_SD_STORAGE ).setSummary( si == null ? getString( R.string.info_not_available )
 				: getString( R.string.storage_summary, si[0], si[1] ) );
 
 		si = getA2SDStorageInfo( );
-		findPreference( "app2sd_storage" ).setSummary( si == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+		findPreference( KEY_APP2SD_STORAGE ).setSummary( si == null ? getString( R.string.info_not_available )
 				: getString( R.string.storage_summary, si[0], si[1] ) );
 
 		si = getInternalStorageInfo( );
-		findPreference( "internal_storage" ).setSummary( si == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+		findPreference( KEY_INTERNAL_STORAGE ).setSummary( si == null ? getString( R.string.info_not_available )
 				: getString( R.string.storage_summary, si[0], si[1] ) );
 
 		si = getSystemStorageInfo( );
-		findPreference( "system_storage" ).setSummary( si == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+		findPreference( KEY_SYSTEM_STORAGE ).setSummary( si == null ? getString( R.string.info_not_available )
 				: getString( R.string.storage_summary, si[0], si[1] ) );
 
 		si = getCacheStorageInfo( );
-		findPreference( "cache_storage" ).setSummary( si == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+		findPreference( KEY_CACHE_STORAGE ).setSummary( si == null ? getString( R.string.info_not_available )
 				: getString( R.string.storage_summary, si[0], si[1] ) );
 
 		String nInfo = getNetAddressInfo( );
-		findPreference( "net_address" ).setSummary( nInfo == null ? getString( R.string.info_not_available ) //$NON-NLS-1$
+		findPreference( KEY_NET_ADDRESS ).setSummary( nInfo == null ? getString( R.string.info_not_available )
 				: nInfo );
-		findPreference( "net_address" ).setEnabled( nInfo != null ); //$NON-NLS-1$
+		findPreference( KEY_NET_ADDRESS ).setEnabled( nInfo != null );
 
 		int s = getSensorState( );
-		findPreference( "sensors" ).setSummary( getSensorInfo( s ) ); //$NON-NLS-1$
-		findPreference( "sensors" ).setEnabled( s > 0 ); //$NON-NLS-1$
+		findPreference( KEY_SENSORS ).setSummary( getSensorInfo( s ) );
+		findPreference( KEY_SENSORS ).setEnabled( s > 0 );
 
-		// int[] gs = getGpsState( );
-		//		findPreference( "gps" ).setSummary( getGpsInfo( gs ) ); //$NON-NLS-1$
-		//		findPreference( "gps" ).setEnabled( gs != null ); //$NON-NLS-1$
+		refresh( );
+	}
+
+	void refresh( )
+	{
+		ArrayAdapter<PrefItem> adapter = (ArrayAdapter<PrefItem>) getListAdapter( );
+
+		adapter.setNotifyOnChange( false );
+		adapter.clear( );
+
+		for ( Entry<String, PrefItem> ent : prefs.entrySet( ) )
+		{
+			adapter.add( ent.getValue( ) );
+		}
+
+		adapter.notifyDataSetChanged( );
+	}
+
+	PrefItem findPreference( String key )
+	{
+		if ( prefs != null )
+		{
+			return prefs.get( key );
+		}
+		return null;
 	}
 
 	private String[] getMemInfo( )
 	{
-		long[] state = getMemState( this );
+		Activity ctx = getActivity( );
+
+		long[] state = getMemState( ctx );
 
 		if ( state == null )
 		{
@@ -350,7 +578,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 			}
 			else
 			{
-				mem[i] = Formatter.formatFileSize( this, state[i] );
+				mem[i] = Formatter.formatFileSize( ctx, state[i] );
 			}
 		}
 
@@ -683,7 +911,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 	private int getSensorState( )
 	{
-		SensorManager sm = (SensorManager) getSystemService( Context.SENSOR_SERVICE );
+		SensorManager sm = (SensorManager) getActivity( ).getSystemService( Context.SENSOR_SERVICE );
 
 		if ( sm != null )
 		{
@@ -799,7 +1027,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 	 */
 	private String[] getSystemA2SDStorageInfo( )
 	{
-		final PackageManager pm = getPackageManager( );
+		Activity ctx = getActivity( );
+		final PackageManager pm = ctx.getPackageManager( );
 		List<ApplicationInfo> allApps = pm.getInstalledApplications( 0 );
 
 		long total = 0;
@@ -842,8 +1071,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 		if ( total > 0 )
 		{
 			String[] info = new String[2];
-			info[0] = Formatter.formatFileSize( this, total );
-			info[1] = Formatter.formatFileSize( this, free );
+			info[0] = Formatter.formatFileSize( ctx, total );
+			info[1] = Formatter.formatFileSize( ctx, free );
 
 			return info;
 		}
@@ -872,13 +1101,15 @@ public final class SysInfoManager extends PreferenceActivity implements
 		{
 			try
 			{
+				Activity ctx = getActivity( );
+
 				StatFs stat = new StatFs( path.getAbsolutePath( ) );
 				long blockSize = stat.getBlockSize( );
 
 				String[] info = new String[2];
-				info[0] = Formatter.formatFileSize( this, stat.getBlockCount( )
+				info[0] = Formatter.formatFileSize( ctx, stat.getBlockCount( )
 						* blockSize );
-				info[1] = Formatter.formatFileSize( this,
+				info[1] = Formatter.formatFileSize( ctx,
 						stat.getAvailableBlocks( ) * blockSize );
 
 				return info;
@@ -939,51 +1170,52 @@ public final class SysInfoManager extends PreferenceActivity implements
 		return null;
 	}
 
-	@Override
-	public boolean onPreferenceTreeClick( PreferenceScreen preferenceScreen,
-			Preference preference )
+	boolean onPreferenceTreeClick( PrefItem preference )
 	{
-		if ( "net_address".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		String prefKey = preference.getKey( );
+		Activity ctx = getActivity( );
+
+		if ( KEY_NET_ADDRESS.equals( prefKey ) )
 		{
-			Intent it = new Intent( this, NetworkInfoActivity.class );
+			Intent it = new Intent( ctx, NetworkInfoActivity.class );
 			startActivityForResult( it, 1 );
 
 			return true;
 		}
-		else if ( "processor".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		else if ( KEY_PROCESSOR.equals( prefKey ) )
 		{
-			Intent it = new Intent( this, CpuInfoActivity.class );
+			Intent it = new Intent( ctx, CpuInfoActivity.class );
 			startActivityForResult( it, 1 );
 
 			return true;
 		}
-		else if ( "memory".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		else if ( KEY_MEMORY.equals( prefKey ) )
 		{
-			Intent it = new Intent( this, MemInfoActivity.class );
+			Intent it = new Intent( ctx, MemInfoActivity.class );
 			startActivityForResult( it, 1 );
 
 			return true;
 		}
-		else if ( "battery_level".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		else if ( KEY_BATTERY_LEVEL.equals( prefKey ) )
 		{
-			Intent it = new Intent( this, BatteryInfoActivity.class );
+			Intent it = new Intent( ctx, BatteryInfoActivity.class );
 			startActivityForResult( it, 1 );
 
 			return true;
 		}
-		else if ( "sensors".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		else if ( KEY_SENSORS.equals( prefKey ) )
 		{
-			Intent it = new Intent( this, SensorInfoActivity.class );
+			Intent it = new Intent( ctx, SensorInfoActivity.class );
 			startActivityForResult( it, 1 );
 
 			return true;
 		}
-		else if ( "refresh_status".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		else if ( KEY_REFRESH_STATUS.equals( prefKey ) )
 		{
 			updateInfo( );
 			return true;
 		}
-		else if ( "view_logs".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		else if ( KEY_VIEW_LOGS.equals( prefKey ) )
 		{
 			OnClickListener listener = new OnClickListener( ) {
 
@@ -1002,7 +1234,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 				}
 			};
 
-			new AlertDialog.Builder( this ).setTitle( R.string.view_logs )
+			new AlertDialog.Builder( ctx ).setTitle( R.string.view_logs )
 					.setItems( new CharSequence[]{
 							"Dmesg", "Logcat" //$NON-NLS-1$ //$NON-NLS-2$
 					}, listener )
@@ -1010,7 +1242,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 					.show( );
 			return true;
 		}
-		else if ( "send_report".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		else if ( KEY_SEND_REPORT.equals( prefKey ) )
 		{
 			final boolean[] items = new boolean[]{
 					true, true, true, true, true, true
@@ -1029,6 +1261,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 				public void onClick( DialogInterface dialog, int which )
 				{
+					Activity ctx = getActivity( );
+
 					boolean hasContent = false;
 
 					for ( boolean b : items )
@@ -1042,13 +1276,12 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 					if ( !hasContent )
 					{
-						Util.shortToast( SysInfoManager.this,
-								R.string.no_report_item );
+						Util.shortToast( ctx, R.string.no_report_item );
 
 						return;
 					}
 
-					final FormatArrayAdapter adapter = new FormatArrayAdapter( SysInfoManager.this,
+					final FormatArrayAdapter adapter = new FormatArrayAdapter( ctx,
 							R.layout.send_item,
 							new FormatItem[]{
 									new FormatItem( getString( R.string.plain_text ) ),
@@ -1065,7 +1298,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 						}
 					};
 
-					new AlertDialog.Builder( SysInfoManager.this ).setTitle( R.string.send_report )
+					new AlertDialog.Builder( ctx ).setTitle( R.string.send_report )
 							.setAdapter( adapter, listener )
 							.setInverseBackgroundForced( true )
 							.create( )
@@ -1073,7 +1306,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 				}
 			};
 
-			new AlertDialog.Builder( this ).setTitle( R.string.send_report )
+			new AlertDialog.Builder( ctx ).setTitle( R.string.send_report )
 					.setMultiChoiceItems( new CharSequence[]{
 							getString( R.string.tab_info ),
 							getString( R.string.tab_apps ),
@@ -1091,7 +1324,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 			return true;
 		}
-		else if ( "more_info".equals( preference.getKey( ) ) ) //$NON-NLS-1$
+		else if ( KEY_MORE_INFO.equals( prefKey ) )
 		{
 			Intent it = getAboutSettingsIntent( );
 
@@ -1112,6 +1345,8 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 	private Intent getAboutSettingsIntent( )
 	{
+		PackageManager pm = getActivity( ).getPackageManager( );
+
 		Intent it = new Intent( Intent.ACTION_VIEW );
 
 		// try the htc specifc settings first to avoid some broken manifest
@@ -1119,8 +1354,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 		it.setClassName( "com.android.settings", //$NON-NLS-1$
 				"com.android.settings.framework.aboutphone.HtcAboutPhoneSettings" ); //$NON-NLS-1$
 
-		List<ResolveInfo> acts = getPackageManager( ).queryIntentActivities( it,
-				0 );
+		List<ResolveInfo> acts = pm.queryIntentActivities( it, 0 );
 
 		if ( acts.size( ) > 0 )
 		{
@@ -1132,7 +1366,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 			it.setClassName( "com.android.settings", //$NON-NLS-1$
 					"com.android.settings.DeviceInfoSettings" ); //$NON-NLS-1$
 
-			acts = getPackageManager( ).queryIntentActivities( it, 0 );
+			acts = pm.queryIntentActivities( it, 0 );
 
 			if ( acts.size( ) > 0 )
 			{
@@ -1144,61 +1378,99 @@ public final class SysInfoManager extends PreferenceActivity implements
 	}
 
 	@Override
-	protected void onActivityResult( int requestCode, int resultCode,
-			Intent data )
+	public void onActivityResult( int requestCode, int resultCode, Intent data )
 	{
+		Activity ctx = getActivity( );
+
 		if ( requestCode == 2 && data != null )
 		{
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_INFO_ICON );
-			Util.updateBooleanOption( data, this, PREF_KEY_SHOW_TASK_ICON );
 			Util.updateBooleanOption( data,
-					this,
+					ctx,
+					PSTORE_SYSINFOMANAGER,
+					PREF_KEY_SHOW_INFO_ICON );
+			Util.updateBooleanOption( data,
+					ctx,
+					PSTORE_SYSINFOMANAGER,
+					PREF_KEY_SHOW_TASK_ICON );
+			Util.updateBooleanOption( data,
+					ctx,
+					PSTORE_SYSINFOMANAGER,
 					PREF_KEY_AUTO_START_ICON,
 					false );
-			Util.updateStringOption( data, this, PREF_KEY_DEFAULT_EMAIL );
-			Util.updateIntOption( data, this, PREF_KEY_DEFAULT_TAB, 0 );
-			Util.updateStringOption( data, this, PREF_KEY_WIDGET_DISABLED );
+			Util.updateStringOption( data,
+					ctx,
+					PSTORE_SYSINFOMANAGER,
+					PREF_KEY_DEFAULT_EMAIL );
+			Util.updateIntOption( data,
+					ctx,
+					PSTORE_SYSINFOMANAGER,
+					PREF_KEY_DEFAULT_TAB,
+					0 );
+			Util.updateStringOption( data,
+					ctx,
+					PSTORE_SYSINFOMANAGER,
+					PREF_KEY_WIDGET_DISABLED );
 		}
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu( Menu menu )
+	public void onCreateOptionsMenu( Menu menu, MenuInflater inflater )
 	{
-		MenuItem mi = menu.add( Menu.NONE, MI_ABOUT, Menu.NONE, R.string.about );
+		MenuItem mi = menu.add( Menu.NONE,
+				MI_REFRESH,
+				Menu.NONE,
+				R.string.refresh );
+		mi.setIcon( android.R.drawable.ic_menu_rotate );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_IF_ROOM );
+
+		mi = menu.add( Menu.NONE, MI_ABOUT, Menu.NONE, R.string.about );
 		mi.setIcon( android.R.drawable.ic_menu_info_details );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 
 		mi = menu.add( Menu.NONE, MI_HELP, Menu.NONE, R.string.help );
 		mi.setIcon( android.R.drawable.ic_menu_help );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 
 		mi = menu.add( Menu.NONE, MI_PREFERENCE, Menu.NONE, R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 
 		mi = menu.add( Menu.NONE, MI_EXIT, Menu.NONE, R.string.exit );
-		mi.setIcon( android.R.drawable.ic_lock_power_off );
-
-		return true;
+		mi.setIcon( android.R.drawable.ic_menu_close_clear_cancel );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 	}
 
 	@Override
 	public boolean onOptionsItemSelected( MenuItem item )
 	{
+		final Activity ctx = getActivity( );
+
 		if ( item.getItemId( ) == MI_PREFERENCE )
 		{
-			Intent it = new Intent( this, InfoSettings.class );
+			Intent it = new Intent( ctx, InfoSettings.class );
 
-			it.putExtra( PREF_KEY_SHOW_INFO_ICON,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_INFO_ICON ) );
-			it.putExtra( PREF_KEY_SHOW_TASK_ICON,
-					Util.getBooleanOption( this, PREF_KEY_SHOW_TASK_ICON ) );
-			it.putExtra( PREF_KEY_AUTO_START_ICON, Util.getBooleanOption( this,
+			it.putExtra( PREF_KEY_SHOW_INFO_ICON, Util.getBooleanOption( ctx,
+					PSTORE_SYSINFOMANAGER,
+					PREF_KEY_SHOW_INFO_ICON ) );
+			it.putExtra( PREF_KEY_SHOW_TASK_ICON, Util.getBooleanOption( ctx,
+					PSTORE_SYSINFOMANAGER,
+					PREF_KEY_SHOW_TASK_ICON ) );
+			it.putExtra( PREF_KEY_AUTO_START_ICON, Util.getBooleanOption( ctx,
+					PSTORE_SYSINFOMANAGER,
 					PREF_KEY_AUTO_START_ICON,
 					false ) );
-			it.putExtra( PREF_KEY_DEFAULT_EMAIL,
-					Util.getStringOption( this, PREF_KEY_DEFAULT_EMAIL, null ) );
-			it.putExtra( PREF_KEY_DEFAULT_TAB,
-					Util.getIntOption( this, PREF_KEY_DEFAULT_TAB, 0 ) );
-			it.putExtra( PREF_KEY_WIDGET_DISABLED,
-					Util.getStringOption( this, PREF_KEY_WIDGET_DISABLED, null ) );
+			it.putExtra( PREF_KEY_DEFAULT_EMAIL, Util.getStringOption( ctx,
+					PSTORE_SYSINFOMANAGER,
+					PREF_KEY_DEFAULT_EMAIL,
+					null ) );
+			it.putExtra( PREF_KEY_DEFAULT_TAB, Util.getIntOption( ctx,
+					PSTORE_SYSINFOMANAGER,
+					PREF_KEY_DEFAULT_TAB,
+					0 ) );
+			it.putExtra( PREF_KEY_WIDGET_DISABLED, Util.getStringOption( ctx,
+					PSTORE_SYSINFOMANAGER,
+					PREF_KEY_WIDGET_DISABLED,
+					null ) );
 
 			startActivityForResult( it, 2 );
 
@@ -1210,7 +1482,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 			String target = "http://code.google.com/p/qsysinfo/wiki/FeaturesTextOnly#Introduction"; //$NON-NLS-1$
 
-			ConnectivityManager cm = (ConnectivityManager) getSystemService( Activity.CONNECTIVITY_SERVICE );
+			ConnectivityManager cm = (ConnectivityManager) ctx.getSystemService( Context.CONNECTIVITY_SERVICE );
 
 			NetworkInfo info = cm.getNetworkInfo( ConnectivityManager.TYPE_WIFI );
 
@@ -1229,22 +1501,23 @@ public final class SysInfoManager extends PreferenceActivity implements
 		}
 		else if ( item.getItemId( ) == MI_ABOUT )
 		{
-			ScrollView sv = new ScrollView( this );
+			ScrollView sv = new ScrollView( ctx );
 
-			TextView txt = new TextView( this );
+			TextView txt = new TextView( ctx );
 			txt.setGravity( Gravity.CENTER_HORIZONTAL );
-			txt.setTextAppearance( this, android.R.style.TextAppearance_Medium );
+			txt.setTextAppearance( ctx, android.R.style.TextAppearance_Medium );
 
 			sv.addView( txt );
 
 			String href = "http://qsysinfo.appspot.com/donate.jsp"; //$NON-NLS-1$
 
 			txt.setText( Html.fromHtml( getString( R.string.about_msg,
-					getVersionName( getPackageManager( ), getPackageName( ) ),
+					getVersionName( ctx.getPackageManager( ),
+							ctx.getPackageName( ) ),
 					href ) ) );
 			txt.setMovementMethod( LinkMovementMethod.getInstance( ) );
 
-			new AlertDialog.Builder( this ).setTitle( R.string.app_name )
+			new AlertDialog.Builder( ctx ).setTitle( R.string.app_name )
 					.setIcon( R.drawable.icon_m )
 					.setView( sv )
 					.setNegativeButton( R.string.close, null )
@@ -1260,13 +1533,13 @@ public final class SysInfoManager extends PreferenceActivity implements
 				public void onClick( DialogInterface dialog, int which )
 				{
 					Util.killSelf( handler,
-							SysInfoManager.this,
-							(ActivityManager) getSystemService( ACTIVITY_SERVICE ),
-							getPackageName( ) );
+							ctx,
+							(ActivityManager) ctx.getSystemService( Context.ACTIVITY_SERVICE ),
+							ctx.getPackageName( ) );
 				}
 			};
 
-			new AlertDialog.Builder( this ).setTitle( R.string.prompt )
+			new AlertDialog.Builder( ctx ).setTitle( R.string.prompt )
 					.setMessage( R.string.exit_prompt )
 					.setPositiveButton( android.R.string.yes, listener )
 					.setNegativeButton( android.R.string.no, null )
@@ -1275,13 +1548,18 @@ public final class SysInfoManager extends PreferenceActivity implements
 
 			return true;
 		}
+		else if ( item.getItemId( ) == MI_REFRESH )
+		{
+			updateInfo( );
+			return true;
+		}
 
 		return false;
 	}
 
 	void showLog( boolean dmesg )
 	{
-		Intent it = new Intent( this, LogViewer.class );
+		Intent it = new Intent( getActivity( ), LogViewer.class );
 		it.putExtra( LogViewer.DMESG_MODE, dmesg );
 
 		startActivityForResult( it, 1 );
@@ -1294,7 +1572,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 		{
 			progress.dismiss( );
 		}
-		progress = new ProgressDialog( this );
+		progress = new ProgressDialog( getActivity( ) );
 		progress.setMessage( getResources( ).getText( R.string.loading ) );
 		progress.setIndeterminate( true );
 		progress.show( );
@@ -1318,7 +1596,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 				if ( content != null && compressed )
 				{
 					content = Util.createCompressedContent( handler,
-							SysInfoManager.this,
+							getActivity( ),
 							content,
 							format,
 							"android_report" ); //$NON-NLS-1$
@@ -1351,7 +1629,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 	{
 		StringBuffer sb = new StringBuffer( );
 
-		createTextHeader( this, sb, "Android System Report - " //$NON-NLS-1$
+		createTextHeader( getActivity( ), sb, "Android System Report - " //$NON-NLS-1$
 				+ new Date( ).toLocaleString( ) );
 
 		if ( items[BASIC_INFO] )
@@ -1546,7 +1824,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 			sb.append( getString( R.string.tab_apps ) ).append( '\n' );
 			sb.append( HEADER_SPLIT );
 
-			PackageManager pm = getPackageManager( );
+			PackageManager pm = getActivity( ).getPackageManager( );
 			List<PackageInfo> pkgs = pm.getInstalledPackages( 0 );
 
 			if ( pkgs != null )
@@ -1583,12 +1861,12 @@ public final class SysInfoManager extends PreferenceActivity implements
 			sb.append( getString( R.string.tab_procs ) ).append( '\n' );
 			sb.append( HEADER_SPLIT );
 
-			ActivityManager am = (ActivityManager) this.getSystemService( ACTIVITY_SERVICE );
+			ActivityManager am = (ActivityManager) getActivity( ).getSystemService( Context.ACTIVITY_SERVICE );
 			List<RunningAppProcessInfo> procs = am.getRunningAppProcesses( );
 
 			if ( procs != null )
 			{
-				PackageManager pm = getPackageManager( );
+				PackageManager pm = getActivity( ).getPackageManager( );
 
 				for ( int i = 0, size = procs.size( ); i < size; i++ )
 				{
@@ -1705,7 +1983,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 	{
 		StringBuffer sb = new StringBuffer( );
 
-		createHtmlHeader( this,
+		createHtmlHeader( getActivity( ),
 				sb,
 				escapeHtml( "Android System Report - " + new Date( ).toLocaleString( ) ) ); //$NON-NLS-1$
 
@@ -1931,7 +2209,7 @@ public final class SysInfoManager extends PreferenceActivity implements
 					.append( "</b>" ) //$NON-NLS-1$
 					.append( closeRow );
 
-			PackageManager pm = getPackageManager( );
+			PackageManager pm = getActivity( ).getPackageManager( );
 			List<PackageInfo> pkgs = pm.getInstalledPackages( 0 );
 
 			if ( pkgs != null )
@@ -1989,12 +2267,12 @@ public final class SysInfoManager extends PreferenceActivity implements
 					.append( "</b>" ) //$NON-NLS-1$
 					.append( closeRow );
 
-			ActivityManager am = (ActivityManager) this.getSystemService( ACTIVITY_SERVICE );
+			ActivityManager am = (ActivityManager) getActivity( ).getSystemService( Context.ACTIVITY_SERVICE );
 			List<RunningAppProcessInfo> procs = am.getRunningAppProcesses( );
 
 			if ( procs != null )
 			{
-				PackageManager pm = getPackageManager( );
+				PackageManager pm = getActivity( ).getPackageManager( );
 
 				for ( int i = 0, size = procs.size( ); i < size; i++ )
 				{
@@ -2499,6 +2777,47 @@ public final class SysInfoManager extends PreferenceActivity implements
 		}
 
 		return null;
+	}
+
+	/**
+	 * PrefItem
+	 */
+	static final class PrefItem
+	{
+
+		String key;
+		String title;
+		String summary;
+		boolean isHeader;
+		boolean enabled = true;
+
+		PrefItem( String key, String title )
+		{
+			this.key = key;
+			this.title = title;
+		}
+
+		PrefItem( String key, String title, boolean enabled )
+		{
+			this.key = key;
+			this.title = title;
+			this.enabled = enabled;
+		}
+
+		String getKey( )
+		{
+			return key;
+		}
+
+		void setSummary( String summary )
+		{
+			this.summary = summary;
+		}
+
+		void setEnabled( boolean enabled )
+		{
+			this.enabled = enabled;
+		}
 	}
 
 	/**

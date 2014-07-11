@@ -65,6 +65,8 @@ import android.widget.TextView;
 public final class LogViewer extends ListActivity implements Constants
 {
 
+	private static final String PSTORE_LOGVIEWER = LogViewer.class.getSimpleName( );
+
 	private static final Pattern DMESG_TIME_PATTERN = Pattern.compile( "\\d+\\.\\d+" ); //$NON-NLS-1$
 
 	private static final String PREF_KEY_CLOG_LEVL = "clog_level"; //$NON-NLS-1$
@@ -350,12 +352,15 @@ public final class LogViewer extends ListActivity implements Constants
 				Menu.NONE,
 				R.string.send_log );
 		mi.setIcon( android.R.drawable.ic_menu_share );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_IF_ROOM );
 
 		mi = menu.add( Menu.NONE, MI_REFRESH, Menu.NONE, R.string.refresh );
 		mi.setIcon( android.R.drawable.ic_menu_rotate );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_IF_ROOM );
 
 		mi = menu.add( Menu.NONE, MI_PREFERENCE, Menu.NONE, R.string.preference );
 		mi.setIcon( android.R.drawable.ic_menu_preferences );
+		Util.setShowAsAction( mi, MenuItem.SHOW_AS_ACTION_NEVER );
 
 		return true;
 	}
@@ -369,19 +374,27 @@ public final class LogViewer extends ListActivity implements Constants
 
 			it.putExtra( DMESG_MODE, dmesgMode );
 
-			it.putExtra( PREF_KEY_CLOG_LEVL,
-					Util.getIntOption( this, PREF_KEY_CLOG_LEVL, Log.VERBOSE ) );
+			it.putExtra( PREF_KEY_CLOG_LEVL, Util.getIntOption( this,
+					PSTORE_LOGVIEWER,
+					PREF_KEY_CLOG_LEVL,
+					Log.VERBOSE ) );
 			it.putExtra( PREF_KEY_RING_BUFFER, Util.getIntOption( this,
+					PSTORE_LOGVIEWER,
 					PREF_KEY_RING_BUFFER,
 					RING_BUFFER_MAIN ) );
 			it.putExtra( PREF_KEY_TAG_FILTER,
 					Util.getStringOption( LogViewer.this,
+							PSTORE_LOGVIEWER,
 							PREF_KEY_TAG_FILTER,
 							null ) );
-			it.putExtra( PREF_KEY_PID_FILTER,
-					Util.getIntOption( this, PREF_KEY_PID_FILTER, 0 ) );
-			it.putExtra( PREF_KEY_DLOG_LEVL,
-					Util.getIntOption( this, PREF_KEY_DLOG_LEVL, DM_LVL_DEBUG ) );
+			it.putExtra( PREF_KEY_PID_FILTER, Util.getIntOption( this,
+					PSTORE_LOGVIEWER,
+					PREF_KEY_PID_FILTER,
+					0 ) );
+			it.putExtra( PREF_KEY_DLOG_LEVL, Util.getIntOption( this,
+					PSTORE_LOGVIEWER,
+					PREF_KEY_DLOG_LEVL,
+					DM_LVL_DEBUG ) );
 
 			startActivityForResult( it, 1 );
 
@@ -497,6 +510,7 @@ public final class LogViewer extends ListActivity implements Constants
 
 			if ( Util.updateIntOption( data,
 					this,
+					PSTORE_LOGVIEWER,
 					PREF_KEY_CLOG_LEVL,
 					Log.VERBOSE ) )
 			{
@@ -505,24 +519,33 @@ public final class LogViewer extends ListActivity implements Constants
 
 			if ( Util.updateIntOption( data,
 					this,
+					PSTORE_LOGVIEWER,
 					PREF_KEY_RING_BUFFER,
 					RING_BUFFER_MAIN ) )
 			{
 				needRefresh = true;
 			}
 
-			if ( Util.updateStringOption( data, this, PREF_KEY_TAG_FILTER ) )
-			{
-				needRefresh = true;
-			}
-
-			if ( Util.updateIntOption( data, this, PREF_KEY_PID_FILTER, 0 ) )
+			if ( Util.updateStringOption( data,
+					this,
+					PSTORE_LOGVIEWER,
+					PREF_KEY_TAG_FILTER ) )
 			{
 				needRefresh = true;
 			}
 
 			if ( Util.updateIntOption( data,
 					this,
+					PSTORE_LOGVIEWER,
+					PREF_KEY_PID_FILTER,
+					0 ) )
+			{
+				needRefresh = true;
+			}
+
+			if ( Util.updateIntOption( data,
+					this,
+					PSTORE_LOGVIEWER,
 					PREF_KEY_DLOG_LEVL,
 					DM_LVL_DEBUG ) )
 			{
@@ -803,18 +826,23 @@ public final class LogViewer extends ListActivity implements Constants
 			public void run( )
 			{
 				ArrayList<LogItem> logs = dmesgMode ? collectDLog( Util.getIntOption( LogViewer.this,
+						PSTORE_LOGVIEWER,
 						PREF_KEY_DLOG_LEVL,
 						DM_LVL_DEBUG ) )
 						: collectCLog( Util.getIntOption( LogViewer.this,
+								PSTORE_LOGVIEWER,
 								PREF_KEY_CLOG_LEVL,
 								Log.VERBOSE ),
 								Util.getIntOption( LogViewer.this,
+										PSTORE_LOGVIEWER,
 										PREF_KEY_RING_BUFFER,
 										RING_BUFFER_MAIN ),
 								Util.getStringOption( LogViewer.this,
+										PSTORE_LOGVIEWER,
 										PREF_KEY_TAG_FILTER,
 										null ),
 								Util.getIntOption( LogViewer.this,
+										PSTORE_LOGVIEWER,
 										PREF_KEY_PID_FILTER,
 										0 ) );
 

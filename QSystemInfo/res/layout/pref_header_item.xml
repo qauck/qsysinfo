@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="\?android:attr/listSeparatorTextViewStyle"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:ellipsize="marquee"
+    android:gravity="bottom|left"
+    android:minHeight="36dp"
+    android:paddingBottom="3dp"
+    android:paddingLeft="8dp"
+    android:paddingRight="8dp"
+    android:singleLine="true"
+    android:text="header"
+    android:textAllCaps="true" />
