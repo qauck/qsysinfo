@@ -183,6 +183,11 @@ public final class ApplicationManager extends ListFragment implements Constants
 		@Override
 		public void handleMessage( Message msg )
 		{
+			if ( aborted )
+			{
+				return;
+			}
+
 			Activity ctx = getActivity( );
 
 			ArrayAdapter<AppInfoHolder> adapter;
@@ -753,6 +758,10 @@ public final class ApplicationManager extends ListFragment implements Constants
 
 		handler.removeMessages( MSG_CHECK_FORCE_COMPRESSION );
 		handler.removeMessages( MSG_CONTENT_READY );
+		handler.removeMessages( MSG_REFRESH_PKG_LABEL );
+		handler.removeMessages( MSG_REFRESH_PKG_ICON );
+		handler.removeMessages( MSG_REFRESH_PKG_SIZE );
+		handler.removeMessages( MSG_REFRESH_BACKUP_STATE );
 
 		super.onPause( );
 	}

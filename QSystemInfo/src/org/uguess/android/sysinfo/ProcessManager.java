@@ -491,6 +491,8 @@ public final class ProcessManager extends ListFragment implements Constants
 	{
 		handler.removeCallbacks( task );
 		handler.removeMessages( MSG_INIT_OK );
+		handler.removeMessages( MSG_REFRESH_PKG_LABEL );
+		handler.removeMessages( MSG_REFRESH_PKG_ICON );
 
 		if ( resUpdater != null )
 		{
