@@ -1,5 +1,5 @@
-qsysinfo
-========
+Quick System Info
+=================
 
 Quick System Info is an utility application for quick access of the basic system information for your Android platform, including information for CPU, memory, SD Card, running processes, network states and installed applications. 
 
