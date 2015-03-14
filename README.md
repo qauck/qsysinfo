@@ -5,7 +5,7 @@ Quick System Info is an utility application for quick access of the basic system
 
 [Support this app to make it better.](http://qsysinfo.appspot.com/donate.jsp)
 
-See [who](http://qsysinfo.appspot.com/supporters.jsp) love this app most ! ( Have issue entering the unlock key? Please check [here](http://code.google.com/p/qsysinfo/wiki/FAQ?ts=1283073932&updated=FAQ#How_can_I_enter_the_unlock_key?) )
+See [who](http://qsysinfo.appspot.com/supporters.jsp) love this app most ! ( Have issue entering the unlock key? Please check [here](https://github.com/qauck/qsysinfo/wiki/FAQ#how-can-i-enter-the-unlock-key) )
 
 *(If you are using 2.3 system and the unlock code cannot be verified but worked before, please contact the author for a free upgrade.)*
 
