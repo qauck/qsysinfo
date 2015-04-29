@@ -12,6 +12,9 @@ See [who](http://qsysinfo.appspot.com/supporters.jsp) love this app most ! ( Hav
 Quick System Info is licensed under GPLv3. 
 ***
 
+Downloads [here](https://bitbucket.org/qauck/qsysinfo/downloads).
+***
+
 Thanks to following translation contributors:
 
 * **Spanish  - Alfonso Picón**  
