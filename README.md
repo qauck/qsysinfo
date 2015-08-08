@@ -34,4 +34,3 @@ Thanks to following translation contributors:
 * **Romanian	- Marius Maciuceanu**  
 * **Slovak	- Feri H**
 * **Greek	- Christos Vasdekis**
-
