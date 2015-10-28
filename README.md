@@ -34,3 +34,8 @@ Thanks to following translation contributors:
 * **Romanian	- Marius Maciuceanu**  
 * **Slovak	- Feri H**
 * **Greek	- Christos Vasdekis**
+
+[FAQ](https://github.com/qauck/qsysinfo/wiki/FAQ)
+=================
+[Features](https://github.com/qauck/qsysinfo/wiki/Features)
+=================
